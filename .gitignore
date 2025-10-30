@@ -1,39 +1,63 @@
 # Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.env
-.env.*
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
 venv/
 .venv/
-
-# Datasets and Models
-/data/raw/
-data/processed/
-models/**/*.bin
-models/**/*.pt
-models/**/*.onnx
-models/**/*.tflite
-
-# Notebooks
-.ipynb_checkpoints/
-
-# VSCode / PyCharm
-.vscode/
-.idea/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.mypy_cache/
+.dmypy.json
+.pytest_cache/
 
 # Flutter
-build/
 .dart_tool/
-pubspec.lock
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+ios/Flutter/.last_build_id
+ios/Runner/GeneratedPluginRegistrant.*
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Data
+data/raw/*
+data/processed/*
+!data/.gitkeep
+
+# Models
+models/*.pt
+models/*.bin
+models/*.tflite
+!models/.gitkeep
+
+# Misc
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
 
 # Logs
 logs/
 *.log
 
-# OS
-.DS_Store
-Thumbs.db
-
+# Env
 .env
+.env.local
