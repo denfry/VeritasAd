@@ -16,13 +16,69 @@
 
 ```
 veritasad/
-├── diploma/          # 🎓 Материалы диплома (LaTeX)
-├── mvp/              # 💻 Исходный код приложения (Backend + Frontend)
-├── data/             # 📊 Датасет и скрипты сбора
-├── models/           # 🤖 ML-модели и скрипты обучения
-├── commercial/       # 💼 Бизнес-материалы и презентации
-├── design/           # 🎨 Дизайн и UI/UX
-└── docs/             # 📚 Документация проекта
+├───.github
+│   └───workflows
+├───admin
+│   ├───static
+│   │   ├───css
+│   │   └───js
+│   └───templates
+├───analytics
+│   └───reports
+├───backend
+│   ├───routers
+│   ├───schemas
+│   ├───tests
+│   └───utils
+├───billing
+├───bot
+│   ├───handlers
+│   └───middlewares
+├───data
+│   ├───annotated
+│   ├───processed
+│   ├───raw
+│   └───samples
+├───docs
+│   ├───experiment
+│   ├───images
+│   ├───presentation
+│   └───thesis
+│       ├───appendices
+│       │   ├───code_samples
+│       │   └───reports
+│       └───images
+├───frontend
+│   ├───assets
+│   ├───lib
+│   │   ├───screens
+│   │   ├───services
+│   │   ├───theme
+│   │   ├───utils
+│   │   └───widgets
+│   └───platform
+│       ├───android
+│       ├───ios
+│       ├───web
+│       └───windows
+├───infra
+│   ├───ansible
+│   ├───docker
+│   ├───nginx
+│   ├───supervisor
+│   └───terraform
+├───models
+│   ├───audio
+│   ├───export
+│   ├───llm
+│   │   ├───llama-winline-lora
+│   │   └───tokenizer
+│   ├───ondevice
+│   └───vision
+├───parsers
+│   └───utils
+├───scripts
+└───setup
 ```
 
 ---
@@ -63,30 +119,6 @@ docker-compose up -d
 - **API Docs (Swagger)** → [http://localhost:8000/docs](http://localhost:8000/docs)
 - **Monitoring Dashboard** → [http://localhost:9090](http://localhost:9090)
 
----
-
-## 🎓 Дипломная часть
-
-**Тема:**  
-*Разработка универсальной подсистемы нейросетевого анализа артефактов рекламных интеграций в цифровых медиа.*
-
-| Раздел              | Страниц | Файл                        |
-|---------------------|---------|-----------------------------|
-| Введение            | 3–5     | `diploma/01_intro.tex`      |
-| Аналитический обзор | 12–15   | `dipl агент/02_analysis.tex`   |
-| Методология         | 10–12   | `diploma/03_methodology.tex`|
-| Разработка системы  | 15–18   | `diploma/04_development.tex`|
-| Эксперимент         | 8–10    | `diploma/05_experiment.tex` |
-| Заключение          | 2–3     | `diploma/06_conclusion.tex` |
-
-### Компиляция диплома (LaTeX)
-```bash
-cd diploma
-pdflatex thesis.tex
-bibtex thesis
-pdflatex thesis.tex
-pdflatex thesis.tex
-```
 
 ---
 
@@ -260,8 +292,8 @@ flutter test
 
 ## 📬 Контакты
 
-- **Email:** your.email@example.com
-- **Telegram:** [@yourusername](https://t.me/yourusername)
+- **Email:** dabinayo@pm.me
+- **Telegram:** [@kfcbossalbino](https://t.me/kfcbossalbino)
 - **GitHub:** [denfry](https://github.com/denfry)
 - **Website:** [veritasad.ai](https://veritasad.ai)
 
