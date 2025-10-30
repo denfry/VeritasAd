@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.*
+venv/
+.venv/
+
+# Datasets and Models
+/data/raw/
+data/processed/
+models/**/*.bin
+models/**/*.pt
+models/**/*.onnx
+models/**/*.tflite
+
+# Notebooks
+.ipynb_checkpoints/
+
+# VSCode / PyCharm
+.vscode/
+.idea/
+
+# Flutter
+build/
+.dart_tool/
+pubspec.lock
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+.env
