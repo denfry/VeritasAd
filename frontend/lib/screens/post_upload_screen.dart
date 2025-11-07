@@ -1,16 +1,14 @@
 import 'package:dio/dio.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
-class UploadScreen extends StatefulWidget {
-  const UploadScreen({super.key});
+class PostUploadScreen extends StatefulWidget {
+  const PostUploadScreen({super.key});
 
   @override
-  State<UploadScreen> createState() => _UploadScreenState();
+  State<PostUploadScreen> createState() => _PostUploadScreenState();
 }
 
-class _UploadScreenState extends State<UploadScreen> {
+class _PostUploadScreenState extends State<PostUploadScreen> {
   final _urlController = TextEditingController();
   bool _isLoading = false;
 
@@ -20,34 +18,25 @@ class _UploadScreenState extends State<UploadScreen> {
     receiveTimeout: const Duration(seconds: 60),
   ));
 
-  Future<void> _uploadFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.video,
-      allowCompression: true,
-    );
-
-    if (result == null || result.files.isEmpty) {
-      _showSnackBar('Файл не выбран', isError: true);
+  Future<void> _analyzePost() async {
+    final url = _urlController.text.trim();
+    if (url.isEmpty || !Uri.tryParse(url)!.hasScheme) {
+      _showSnackBar('Введите корректную ссылку', isError: true);
       return;
     }
 
     setState(() => _isLoading = true);
-    final file = result.files.first;
 
     try {
-      final formData = FormData.fromMap({
-        'file': kIsWeb
-            ? (file.bytes != null
-                ? MultipartFile.fromBytes(file.bytes!, filename: file.name)
-                : throw Exception('Нет данных файла (web)'))
-            : (file.path != null
-                ? await MultipartFile.fromFile(file.path!, filename: file.name)
-                : throw Exception('Нет пути к файлу (native)')),
-      });
+      final response = await dio.post('/analyze/post', data: {'url': url});
+      final data = response.data;
+      final message = data['message'] ?? 'Пост проанализирован';
 
-      final response = await dio.post('/upload/video', data: formData);
-      final message = response.data['message'] ?? 'Видео загружено';
       _showSuccess(message);
+      _urlController.clear();
+
+      // Показать превью
+      _showPostPreview(data);
     } on DioException catch (e) {
       final error = e.response?.data['detail'] ?? e.message;
       _showSnackBar('Ошибка: $error', isError: true);
@@ -58,28 +47,37 @@ class _UploadScreenState extends State<UploadScreen> {
     }
   }
 
-  Future<void> _uploadUrl() async {
-    final url = _urlController.text.trim();
-    if (url.isEmpty || !Uri.tryParse(url)!.hasScheme) {
-      _showSnackBar('Введите корректную ссылку', isError: true);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      final response = await dio.post('/upload/video', data: {'url': url});
-      final message = response.data['message'] ?? 'Видео обработано';
-      _showSuccess(message);
-      _urlController.clear();
-    } on DioException catch (e) {
-      final error = e.response?.data['detail'] ?? e.message;
-      _showSnackBar('Ошибка: $error', isError: true);
-    } catch (e) {
-      _showSnackBar('Ошибка: $e', isError: true);
-    } finally {
-      setState(() => _isLoading = false);
-    }
+  void _showPostPreview(Map<String, dynamic> data) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Пост проанализирован"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (data['title'] != null) ...[
+              const Text("Заголовок:",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(data['title'], maxLines: 2, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 8),
+            ],
+            if (data['uploader'] != null) ...[
+              const Text("Автор:",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(data['uploader']),
+              const SizedBox(height: 8),
+            ],
+            if (data['view_count'] != null)
+              Text("Просмотры: ${data['view_count']}"),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context), child: const Text("OK")),
+        ],
+      ),
+    );
   }
 
   void _showSuccess(String message) {
@@ -114,27 +112,16 @@ class _UploadScreenState extends State<UploadScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : _uploadFile,
-                      icon: const Icon(Icons.video_library),
-                      label: const Text("Загрузить видео"),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        textStyle: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
-                    ),
+                  const Text(
+                    "Анализ постов из соцсетей",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 24),
-                  const Divider(height: 1),
                   const SizedBox(height: 24),
                   TextField(
                     controller: _urlController,
                     decoration: InputDecoration(
-                      labelText: "Или вставьте ссылку",
-                      hintText: "https://youtube.com/... или t.me/...",
+                      labelText: "Ссылка на пост",
+                      hintText: "t.me/... или instagram.com/p/...",
                       prefixIcon: const Icon(Icons.link),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -142,18 +129,19 @@ class _UploadScreenState extends State<UploadScreen> {
                     ),
                     keyboardType: TextInputType.url,
                     textInputAction: TextInputAction.go,
-                    onSubmitted: (_) => _uploadUrl(),
+                    onSubmitted: (_) => _analyzePost(),
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _isLoading ? null : _uploadUrl,
-                      icon: const Icon(Icons.cloud_download),
-                      label: const Text("Обработать ссылку"),
-                      style: OutlinedButton.styleFrom(
+                    child: ElevatedButton.icon(
+                      onPressed: _isLoading ? null : _analyzePost,
+                      icon: const Icon(Icons.analytics),
+                      label: const Text("Анализировать пост"),
+                      style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: BorderSide(color: Colors.indigo.shade700),
+                        textStyle: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -163,10 +151,16 @@ class _UploadScreenState extends State<UploadScreen> {
                       children: [
                         CircularProgressIndicator(strokeWidth: 3),
                         SizedBox(height: 12),
-                        Text("Обработка видео...",
+                        Text("Анализ поста...",
                             style: TextStyle(color: Colors.grey)),
                       ],
                     ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Поддерживаются: Telegram, YouTube, Instagram, TikTok",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
             ),
