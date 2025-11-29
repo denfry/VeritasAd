@@ -1,18 +1,44 @@
-fastapi==0.121.0     # последняя версия 0.120.x для FastAPI :contentReference[oaicite:0]{index=0}
-uvicorn[standard]==0.22.0  # пример обновления до последней версии (если требуется)
-pydantic==2.12.4      # пример обновления до последних версий Pydantic 2.x
-sqlalchemy==2.0.44      # обновление до SQLAlchemy 2.1.x :contentReference[oaicite:1]{index=1}
-psycopg2-binary==2.9.11  # последнее из 2.x ветки (но обратите внимание на рекомендации перехода на psycopg3) :contentReference[oaicite:2]{index=2}
-redis==7.0.1           # небольшое обновление
-celery==5.6.0rc1          # обновление до версии 5.6.x
-python-dotenv==1.2.1   # обновлено до 1.2.2
-requests==2.32.5       # обновлено до 2.33.x
-aiohttp==3.8.6         # обновлено до 3.8.x
-torch==2.9.0     # остаётся ваша версия с GPU (если GPU нужен)
-transformers==4.57.1   # обновление до 4.63.x
-sentencepiece==0.2.1   # небольшое обновление
-pandas==2.3.3          # обновлено до 2.4.x
-numpy==2.3.4           # обновлено до 2.4.x
-jinja2==3.1.6          # остаётся, если не требуется обновлять
-reportlab==4.4.4       # обновлено до 4.5.x
-tqdm==4.67.1           # обновлено до 4.70.x
+# FastAPI framework
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+pydantic==2.7.0
+pydantic-settings==2.2.1
+python-dotenv==1.0.0
+python-multipart==0.0.9
+
+# Database
+sqlalchemy==2.0.30
+alembic==1.13.1
+
+# Video processing
+yt-dlp==2024.4.9
+opencv-python==4.9.0.80
+ffmpeg-python==0.2.0
+
+# Machine Learning
+torch==2.3.0
+transformers==4.40.0
+sentencepiece==0.2.0
+openai-whisper==20231117
+
+# Audio processing
+librosa==0.10.2
+
+# PDF generation
+reportlab==4.2.0
+
+# OCR
+pytesseract==0.3.10
+
+# Telegram
+python-telegram-bot==20.8
+
+# Testing
+pytest==8.1.1
+pytest-asyncio==0.23.6
+httpx~=0.26.0
+
+# Utilities
+pillow==10.3.0
+numpy==1.26.4
+requests==2.31.0

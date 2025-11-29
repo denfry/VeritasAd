@@ -1,0 +1,21 @@
+name: veritasad
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - python=3.11
+  - pip
+  - pytesseract
+  - opencv
+  - ffmpeg
+  - pip:
+    - fastapi==0.115.0
+    - uvicorn[standard]
+    - python-telegram-bot==20.8
+    - python-dotenv
+    - yt-dlp
+    - openai-whisper
+    - torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+    - transformers
+    - sentencepiece
+    - reportlab

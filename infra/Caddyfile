@@ -1,0 +1,81 @@
+# Caddyfile - Reverse Proxy Configuration for VeritasAD
+
+# Production domain
+veritasad.ai, www.veritasad.ai {
+    # Frontend (Next.js)
+    handle / {
+        reverse_proxy frontend:3000 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # API
+    handle /api/* {
+        reverse_proxy backend:8000 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Telegram Webhook
+    handle /webhook/telegram {
+        reverse_proxy bot:8080 {
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    # Flower (Celery monitoring) - protected
+    handle /flower* {
+        basicauth {
+            admin JDJhJDE0JHBmTlpCMkpxbFV3dGJJT08ybjVTTi5ZMzZ4SEdkOUFSeUVZcHhBYnZqTnpDU3M5UjNxdS9L
+        }
+        reverse_proxy flower:5555
+    }
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    }
+
+    # Enable gzip compression
+    encode gzip zstd
+
+    # Rate limiting
+    @api path /api/*
+    limit @api rate 100/m
+
+    # Logs
+    log {
+        output file /var/log/caddy/veritasad.log
+        format json
+    }
+}
+
+# Local development
+localhost:80, localhost {
+    handle / {
+        reverse_proxy frontend:3000
+    }
+
+    handle /api/* {
+        reverse_proxy backend:8000
+    }
+
+    handle /flower* {
+        reverse_proxy flower:5555
+    }
+
+    handle /webhook/telegram {
+        reverse_proxy bot:8080
+    }
+
+    encode gzip
+}

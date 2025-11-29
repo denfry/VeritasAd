@@ -1,0 +1,97 @@
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Boolean, Text, JSON
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from datetime import datetime
+from app.core.config import settings
+
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    api_key = Column(String(255), unique=True, index=True, nullable=False)
+    email = Column(String(255), unique=True, nullable=True)
+    plan = Column(String(50), default="free")  # free, pro, enterprise
+    limit = Column(Integer, default=5)
+    used = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+
+
+class Analysis(Base):
+    __tablename__ = "analyses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    video_id = Column(String(255), unique=True, index=True, nullable=False)
+    user_api_key = Column(String(255), nullable=False)
+
+    # Video info
+    source_url = Column(String(1000), nullable=True)
+    source_type = Column(String(50), nullable=True)  # file, url, telegram, youtube, etc
+    duration = Column(Float, nullable=True)
+    file_path = Column(String(1000), nullable=True)
+
+    # Analysis results
+    has_advertising = Column(Boolean, default=False)
+    confidence_score = Column(Float, default=0.0)
+
+    # Detailed scores
+    visual_score = Column(Float, default=0.0)  # Logo detection
+    audio_score = Column(Float, default=0.0)   # Audio analysis
+    text_score = Column(Float, default=0.0)    # Transcript analysis
+    disclosure_score = Column(Float, default=0.0)  # Disclosure detection
+
+    # Detected entities
+    detected_brands = Column(JSON, nullable=True)
+    detected_keywords = Column(JSON, nullable=True)
+    transcript = Column(Text, nullable=True)
+    disclosure_text = Column(Text, nullable=True)
+
+    # Metadata
+    status = Column(String(50), default="pending")  # pending, processing, completed, failed
+    error_message = Column(Text, nullable=True)
+    processing_time = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    # Report
+    report_path = Column(String(1000), nullable=True)
+
+
+class AnalysisFrame(Base):
+    """Store individual frame analysis results"""
+    __tablename__ = "analysis_frames"
+
+    id = Column(Integer, primary_key=True, index=True)
+    analysis_id = Column(Integer, index=True, nullable=False)
+    frame_number = Column(Integer, nullable=False)
+    timestamp = Column(Float, nullable=False)
+
+    # Frame-level detection
+    has_logo = Column(Boolean, default=False)
+    detected_brands = Column(JSON, nullable=True)
+    confidence = Column(Float, default=0.0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# Database setup
+engine = create_engine(
+    settings.DATABASE_URL,
+    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {}
+)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def init_db():
+    """Initialize database tables"""
+    Base.metadata.create_all(bind=engine)
+
+def get_db():
+    """Dependency for getting DB session"""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

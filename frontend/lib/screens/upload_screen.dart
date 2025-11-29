@@ -45,7 +45,7 @@ class _UploadScreenState extends State<UploadScreen> {
                 : throw Exception('Нет пути к файлу (native)')),
       });
 
-      final response = await dio.post('/upload/video', data: formData);
+      final response = await dio.post('/api/v1/upload/video', data: formData);
       final message = response.data['message'] ?? 'Видео загружено';
       _showSuccess(message);
     } on DioException catch (e) {
@@ -68,7 +68,7 @@ class _UploadScreenState extends State<UploadScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await dio.post('/upload/video', data: {'url': url});
+      final response = await dio.post('/api/v1/upload/video', data: {'url': url});
       final message = response.data['message'] ?? 'Видео обработано';
       _showSuccess(message);
       _urlController.clear();

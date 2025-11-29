@@ -28,7 +28,7 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await dio.post('/analyze/post', data: {'url': url});
+      final response = await dio.post('/api/v1/analyze/post', data: {'url': url});
       final data = response.data;
       final message = data['message'] ?? 'Пост проанализирован';
 

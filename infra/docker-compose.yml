@@ -1,0 +1,194 @@
+version: '3.9'
+
+services:
+  # ==================== DATABASE ====================
+  postgres:
+    image: postgres:16-alpine
+    container_name: veritasad-postgres
+    environment:
+      POSTGRES_DB: veritasad
+      POSTGRES_USER: veritasad
+      POSTGRES_PASSWORD: veritasad123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U veritasad"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - veritasad-network
+    restart: unless-stopped
+
+  # ==================== REDIS ====================
+  redis:
+    image: redis:7-alpine
+    container_name: veritasad-redis
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - veritasad-network
+    restart: unless-stopped
+
+  # ==================== BACKEND API ====================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: veritasad-backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://veritasad:veritasad123@postgres:5432/veritasad
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./backend:/app
+      - backend_data:/app/data
+      - models_cache:/app/models/cache
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - veritasad-network
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+  # ==================== CELERY WORKER ====================
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: veritasad-celery-worker
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://veritasad:veritasad123@postgres:5432/veritasad
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - ENVIRONMENT=production
+    volumes:
+      - ./backend:/app
+      - backend_data:/app/data
+      - models_cache:/app/models/cache
+    depends_on:
+      - postgres
+      - redis
+      - backend
+    networks:
+      - veritasad-network
+    restart: unless-stopped
+    command: celery -A app.core.celery:celery_app worker --loglevel=info --concurrency=2
+
+  # ==================== FLOWER (Celery Monitoring) ====================
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: veritasad-flower
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - celery-worker
+    networks:
+      - veritasad-network
+    restart: unless-stopped
+    command: celery -A app.core.celery:celery_app flower --port=5555
+
+  # ==================== FRONTEND ====================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: veritasad-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - veritasad-network
+    restart: unless-stopped
+
+  # ==================== TELEGRAM BOT ====================
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: veritasad-bot
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - API_URL=http://backend:8000
+      - REDIS_URL=redis://redis:6379/2
+    depends_on:
+      - backend
+      - redis
+    networks:
+      - veritasad-network
+    restart: unless-stopped
+
+  # ==================== REVERSE PROXY (Caddy) ====================
+  caddy:
+    image: caddy:2-alpine
+    container_name: veritasad-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - veritasad-network
+    restart: unless-stopped
+
+# ==================== VOLUMES ====================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_data:
+    driver: local
+  models_cache:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+
+# ==================== NETWORKS ====================
+networks:
+  veritasad-network:
+    driver: bridge
