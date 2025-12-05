@@ -1,11 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# **Import routers for modular API structure**
-from routers import upload, train
+from .database import init_db
+from .routers import jobs
 
 # **Initialize FastAPI app with descriptive title**
 app = FastAPI(title="VeritasAD API")
+
+
+@app.on_event("startup")
+def on_startup():
+    # Stage 1: create tables if missing (replace with Alembic later)
+    init_db()
+
 
 # **Configure CORS to allow frontend access from any origin**
 # ! In production: Replace ["*"] with specific domains (e.g., ["https://veritasad.app"])
@@ -18,9 +25,10 @@ app.add_middleware(
 )
 
 # **Mount routers under their prefixes**
-app.include_router(upload.router)
-# TODO: Add train.router when training endpoint is ready
-app.include_router(train.router)
+# Legacy routers (upload, train, analyze) are kept for backward compatibility but not mounted
+# Main API is through /jobs endpoint
+app.include_router(jobs.router)
+
 
 # **Root endpoint — health check & docs redirect**
 @app.get("/")
@@ -31,6 +39,7 @@ def home():
     """
     return {"message": "VeritasAD API запущен. Перейдите на /docs"}
 
-# ? Consider adding /health endpoint with DB & model status
-# ! Security: Disable debug mode in production
-# FIXME: Enable HTTPS & rate limiting in production deployment
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}

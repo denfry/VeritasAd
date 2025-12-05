@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'screens/upload_screen.dart';
-import 'screens/post_upload_screen.dart';
+import 'services/api_service.dart';
+import 'services/storage_service.dart';
+import 'screens/jobs_list_screen.dart';
+import 'screens/settings_screen.dart';
+import 'theme/app_theme.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -13,10 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'VeritasAD',
-      theme: ThemeData(
-        primarySwatch: Colors.indigo,
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
       home: const MainScreen(),
       debugShowCheckedModeBanner: false,
     );
@@ -30,40 +31,66 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
-  late final TabController _tabController;
+class _MainScreenState extends State<MainScreen> {
+  late ApiService _apiService;
+  final _storageService = StorageService();
+  bool _isInitializing = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _initializeServices();
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  Future<void> _initializeServices() async {
+    final apiKey = await _storageService.getApiKey() ?? 'dev-key';
+    final baseUrl = await _storageService.getBaseUrl() ?? 'http://localhost:8000';
+
+    setState(() {
+      _apiService = ApiService(baseUrl: baseUrl, apiKey: apiKey);
+      _isInitializing = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isInitializing) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("VeritasAD"),
-        centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.video_library), text: "Видео"),
-            Tab(icon: Icon(Icons.chat_bubble), text: "Посты"),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          UploadScreen(),
-          PostUploadScreen(),
+      body: JobsListScreen(apiService: _apiService),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: 0,
+        onDestinationSelected: (index) {
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SettingsScreen(
+                  apiService: _apiService,
+                  storageService: _storageService,
+                  onSettingsChanged: () {
+                    _initializeServices();
+                  },
+                ),
+              ),
+            );
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.analytics_outlined),
+            selectedIcon: Icon(Icons.analytics),
+            label: 'Задачи',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Настройки',
+          ),
         ],
       ),
     );

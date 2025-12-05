@@ -1,0 +1,85 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: veritasad_api
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://veritasad:veritasad@postgres:5432/veritasad
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      STORAGE_DIR: /data/raw
+      USE_MINIO: "true"
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: veritasad
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./data:/data
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: veritasad_worker
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://veritasad:veritasad@postgres:5432/veritasad
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      STORAGE_DIR: /data/raw
+      USE_MINIO: "true"
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: veritasad
+    command: ["celery", "-A", "backend.celery_app.celery_app", "worker", "-Q", "veritasad", "-l", "info"]
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./data:/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: veritasad_redis
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:15
+    container_name: veritasad_postgres
+    environment:
+      POSTGRES_USER: veritasad
+      POSTGRES_PASSWORD: veritasad
+      POSTGRES_DB: veritasad
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    container_name: veritasad_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+volumes:
+  pgdata:
+  minio_data:
+
