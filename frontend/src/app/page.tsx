@@ -1,93 +1,138 @@
+"use client"
+
 import Link from "next/link"
-import { ArrowRight, Shield, Zap, BarChart3 } from "lucide-react"
+import { motion } from "framer-motion"
+import { ArrowRight, CheckCircle2, Shield, Zap, BarChart3, Lock } from "lucide-react"
+import { SiteShell } from "@/components/SiteShell"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen">
+    <SiteShell>
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-              AI-Powered
-              <br />
-              <span className="bg-gradient-to-r from-primary to-cyan-500 bg-clip-text text-transparent">
-                Advertising Detection
-              </span>
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              Detect hidden advertising in videos using neural networks.
-              Analyze content for brand mentions, logos, and disclosure markers.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/analyze"
-                className="inline-flex items-center justify-center px-8 py-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:opacity-90 transition-opacity"
-              >
-                Start Analysis
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-              <Link
-                href="/docs"
-                className="inline-flex items-center justify-center px-8 py-4 border border-border rounded-lg font-semibold hover:bg-accent transition-colors"
-              >
-                View Documentation
-              </Link>
+      <section className="relative border-b bg-background pt-24 pb-32 overflow-hidden">
+        {/* Subtle Grid Background */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+        
+        {/* Radial mask for the grid */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,hsl(var(--background))_80%)]"></div>
+        
+        <div className="container relative mx-auto max-w-5xl px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+            className="inline-flex items-center rounded-full border bg-muted/30 px-3 py-1 text-xs font-medium text-muted-foreground mb-12 backdrop-blur-sm"
+          >
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
+            Intelligence for Advertising Compliance
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
+            className="text-5xl font-bold tracking-tight sm:text-7xl md:text-8xl leading-[1.1] bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/50"
+          >
+            Detect Hidden <br className="hidden sm:block" />
+            Advertising.
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            className="mx-auto mt-8 max-w-xl text-lg text-muted-foreground/80 leading-relaxed"
+          >
+            Verify integrations with multi-modal AI. Analyze visual, 
+            audio and text disclosure signals across all platforms.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
+            className="mt-12 flex items-center justify-center gap-4"
+          >
+            <Link href="/analyze" className="btn btn-primary h-12 px-10 rounded-full font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
+              Get Started
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+            <Link href="/docs" className="btn btn-outline h-12 px-10 rounded-full bg-background/50 backdrop-blur-sm">
+              Documentation
+            </Link>
+          </motion.div>
+
+          {/* Abstract UI Preview with sharper styles */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4, ease: [0.23, 1, 0.32, 1] }}
+            className="mt-24 relative mx-auto max-w-4xl"
+          >
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-border/50 via-primary/5 to-border/50 rounded-2xl blur-sm opacity-50"></div>
+            <div className="relative rounded-2xl border bg-card/30 p-2 shadow-2xl backdrop-blur-xl">
+              <div className="rounded-xl border bg-background/80 p-6 aspect-[16/9] flex flex-col gap-6 overflow-hidden">
+                <div className="flex items-center justify-between border-b pb-4">
+                  <div className="flex gap-2">
+                    <div className="h-3 w-3 rounded-full bg-red-500/20"></div>
+                    <div className="h-3 w-3 rounded-full bg-amber-500/20"></div>
+                    <div className="h-3 w-3 rounded-full bg-emerald-500/20"></div>
+                  </div>
+                  <div className="h-4 w-32 bg-muted rounded"></div>
+                </div>
+                <div className="flex-1 grid grid-cols-12 gap-6">
+                  <div className="col-span-8 flex flex-col gap-4">
+                    <div className="h-4 w-1/2 bg-muted rounded"></div>
+                    <div className="flex-1 bg-muted/20 rounded-lg border border-dashed flex items-center justify-center">
+                       <BarChart3 className="h-12 w-12 text-muted-foreground/10" />
+                    </div>
+                  </div>
+                  <div className="col-span-4 flex flex-col gap-4">
+                    <div className="h-24 bg-muted/40 rounded-lg"></div>
+                    <div className="h-24 bg-muted/40 rounded-lg"></div>
+                    <div className="h-24 bg-muted/40 rounded-lg"></div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-            Powerful Features
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard
-              icon={<Shield className="h-8 w-8" />}
-              title="Accurate Detection"
-              description="Multi-modal analysis combining visual, audio, and text signals for precise advertising detection."
+      {/* Features Grid */}
+      <section className="py-24 bg-muted/30 border-b">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
+            <Feature 
+              icon={Shield}
+              title="Brand Safety"
+              desc="Ensure all content meets regulatory requirements with automated disclosure checks."
             />
-            <FeatureCard
-              icon={<Zap className="h-8 w-8" />}
-              title="Real-time Progress"
-              description="Track analysis progress in real-time with Server-Sent Events. Know exactly what's happening."
+            <Feature 
+              icon={Zap}
+              title="Real-time Processing"
+              desc="Upload videos or paste URLs. Get comprehensive analysis in minutes, not hours."
             />
-            <FeatureCard
-              icon={<BarChart3 className="h-8 w-8" />}
-              title="Detailed Reports"
-              description="Get comprehensive PDF reports with timestamps, brand mentions, and confidence scores."
+            <Feature 
+              icon={Lock}
+              title="Enterprise Security"
+              desc="Your data is processed in isolated environments with strict retention policies."
             />
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t py-12 px-4">
-        <div className="container mx-auto max-w-6xl text-center text-muted-foreground">
-          <p>© 2025 VeritasAd. Built with Next.js 15 and FastAPI.</p>
-        </div>
-      </footer>
-    </div>
+    </SiteShell>
   )
 }
 
-function FeatureCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode
-  title: string
-  description: string
-}) {
+function Feature({ icon: Icon, title, desc }: { icon: any, title: string, desc: string }) {
   return (
-    <div className="p-6 border border-border rounded-lg hover:shadow-lg transition-shadow">
-      <div className="text-primary mb-4">{icon}</div>
-      <h3 className="text-xl font-semibold mb-2">{title}</h3>
-      <p className="text-muted-foreground">{description}</p>
+    <div className="group space-y-3">
+      <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg border bg-background shadow-sm transition-colors group-hover:border-primary/50">
+        <Icon className="h-6 w-6 text-foreground" />
+      </div>
+      <h3 className="text-xl font-semibold">{title}</h3>
+      <p className="text-muted-foreground">{desc}</p>
     </div>
   )
 }

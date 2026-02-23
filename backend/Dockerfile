@@ -1,4 +1,5 @@
-# Multi-stage Dockerfile for VeritasAD Backend
+# syntax=docker/dockerfile:1
+# Multi-stage Dockerfile for VeritasAD Backend - Production
 
 # ==================== BUILD STAGE ====================
 FROM python:3.11-slim AS builder
@@ -19,16 +20,18 @@ COPY requirements.txt ./
 
 # Install Python dependencies
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir \
+        --default-timeout=1000 \
+        --retries=10 \
+        -r requirements.txt
 
 # ==================== RUNTIME STAGE ====================
 FROM python:3.11-slim
 
-# Install runtime dependencies
+# Install ONLY runtime dependencies (minimal set)
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     tesseract-ocr \
-    tesseract-ocr-rus \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -43,7 +46,7 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy application code
+# Copy application code (исключая .dockerignore)
 COPY --chown=veritasad:veritasad . .
 
 # Switch to non-root user
@@ -65,5 +68,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Expose port
 EXPOSE 8000
 
-# Default command (can be overridden in docker-compose)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Default command: Gunicorn + Uvicorn workers for production
+CMD ["gunicorn", "app.main:app", "-c", "gunicorn_conf.py"]

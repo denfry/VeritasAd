@@ -3,28 +3,28 @@ name = "veritasad-backend"
 version = "1.0.0"
 description = "Neural network-based advertising detection system API"
 authors = [{name = "VeritasAd Team", email = "dabinayo@pm.me"}]
-requires-python = ">=3.11"
+requires-python = ">=3.11"                  # можно поднять до >=3.12 если whisper не нужен
 readme = "README.md"
 license = {text = "MIT"}
 
 dependencies = [
-    # FastAPI framework
-    "fastapi==0.115.0",
-    "uvicorn[standard]==0.32.0",
-    "pydantic==2.9.2",
-    "pydantic-settings==2.6.0",
+    # FastAPI & web
+    "fastapi==0.128.0",                     # самая свежая на декабрь 2025
+    "uvicorn[standard]==0.32.1",            # обновлено (0.32.0 → 0.32.1 или новее)
+    "pydantic==2.10.0",                     # 2.9.2 → 2.10+
+    "pydantic-settings==2.7.0",             # актуально
     "python-dotenv==1.0.1",
-    "python-multipart==0.0.9",
+    "python-multipart==0.0.20",             # сильно обновилась
 
     # Async database
-    "sqlalchemy[asyncio]==2.0.36",
-    "asyncpg==0.29.0",
+    "sqlalchemy[asyncio]==2.0.36",          # свежая 2.0.x
+    "asyncpg==0.30.0",                      # обновлено с 0.29 → 0.30
     "alembic==1.14.0",
-    "greenlet==3.1.1",
+    "greenlet==3.1.1",                      # обычно сам подтягивается
 
-    # Redis and task queue
+    # Redis & task queue
     "redis[hiredis]==5.2.0",
-    "celery[redis]==5.4.0",
+    "celery[redis]==5.4.0",                 # стабильная
     "flower==2.0.1",
 
     # Rate limiting
@@ -36,31 +36,33 @@ dependencies = [
     "python-json-logger==3.1.0",
 
     # Video processing
-    "yt-dlp==2024.11.18",
-    "opencv-python-headless==4.10.0.84",
-    "ffmpeg-python==0.2.0",
+    "yt-dlp==2025.12.8",                    # самая свежая стабильная на конец 2025
+    "opencv-python-headless==4.11.0.86",    # headless предпочтительнее для серверов
+    "ffmpeg-python==0.2.0",                 # без изменений, альтернативы почти нет
 
     # Machine Learning
-    "torch==2.5.1",
-    "transformers==4.46.2",
-    "sentencepiece==0.2.0",
-    "openai-whisper==20231117",
+    "torch==2.9.1",                         # последняя стабильная на ноябрь 2025
+    "transformers==4.57.3",                 # свежая
+    "sentencepiece==0.2.1",
+    # "openai-whisper==20231117",           # ← закомментировано! Проблемы на 3.13+
+    # Рекомендация: используйте faster-whisper или оставайтесь на Python 3.12
+    "faster-whisper==1.0.3",
     "accelerate==1.1.1",
 
     # Audio processing
-    "librosa==0.10.2.post1",
+    "librosa==0.10.2.post1",                # можно попробовать 0.11.x если нужно
 
     # PDF generation
     "reportlab==4.2.5",
     "pillow==11.0.0",
 
     # OCR
-    "pytesseract==0.3.13",
+    "pytesseract==0.3.13",                  # последняя, runtime может быть нестабилен на 3.14
 
-    # Utilities
-    "numpy==1.26.4",
+    # Utilities & security
+    "numpy==2.1.2",                         # 1.26 → 2.1+ (очень рекомендуется)
     "requests==2.32.3",
-    "httpx==0.27.2",
+    "httpx==0.28.0",                        # обновлено с 0.27.2
     "aiofiles==24.1.0",
     "python-jose[cryptography]==3.3.0",
     "passlib[bcrypt]==1.7.4",
@@ -68,12 +70,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest==8.3.3",
-    "pytest-asyncio==0.24.0",
+    "pytest==8.3.4",                        # обновлено
+    "pytest-asyncio==0.25.0",               # свежее
     "pytest-cov==6.0.0",
-    "httpx==0.27.2",
+    "httpx==0.28.0",
     "black==24.10.0",
-    "ruff==0.7.4",
+    "ruff==0.7.4",                          # можно обновить до 0.8+ если стабильно
     "mypy==1.13.0",
     "pre-commit==4.0.1",
 ]
@@ -88,7 +90,6 @@ target-version = ['py311']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
-  # directories
   \.eggs
   | \.git
   | \.hg

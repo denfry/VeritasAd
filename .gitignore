@@ -23,6 +23,8 @@ venv/
 ENV/
 env/
 .venv
+# Except frontend lib (TypeScript)
+!frontend/src/lib/
 
 # Environment
 .env
@@ -37,8 +39,16 @@ veritasad.db
 
 # Logs
 *.log
-logs/
-*.log.*
+logs/*.log
+logs/*.log.*
+logs/backend/*.log
+logs/backend/*.log.*
+logs/celery/*.log
+logs/celery/*.log.*
+# Keep logs directory structure
+!logs/.gitkeep
+!logs/backend/.gitkeep
+!logs/celery/.gitkeep
 
 # IDE
 .vscode/

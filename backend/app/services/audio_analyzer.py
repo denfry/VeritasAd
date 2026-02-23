@@ -1,7 +1,7 @@
-import whisper
+from faster_whisper import WhisperModel
 import torch
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 import subprocess
 import logging
 
@@ -18,19 +18,20 @@ class AudioAnalyzer:
         Args:
             model_size: Whisper model size (tiny, base, small, medium, large)
         """
-        logger.info(f"Loading Whisper model: {model_size}")
-        self.model = whisper.load_model(model_size)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        logger.info(f"Using device: {self.device}")
+        compute_type = "float16" if self.device == "cuda" else "int8"
+        logger.info(f"Loading Whisper model: {model_size} ({self.device}, {compute_type})")
+        self.model = WhisperModel(model_size, device=self.device, compute_type=compute_type)
 
         # Advertising keywords (Russian)
         self.ad_keywords = [
-            "@5:;0<0", "?@><>:>4", "A:84:0", "0:F8O", "A?>=A>@",
-            "?0@B=5@", "1>=CA", ":MH15:", ":C?>=", "@0A?@>4060",
-            "?@54;>65=85", "CAB0=>28BL", "A:0G0BL", "70@538AB@8@",
-            "?@8;>65=8", "A09B", "AAK;:0", ">?8A0=8", "?5@5E>4",
-            "28=;09=", "winline", "1C:<5:5@", "AB02:", ":>MDD8F85=B",
-            "D@815B", "freebet", "45?>78B", "2K2>4"
+            "реклама", "промокод", "скидка", "акция", "спонсор",
+            "партнер", "бонус", "кэшбек", "купон", "распродажа",
+            "предложение", "установить", "скачать", "зарегистрир",
+            "приложени", "сайт", "ссылка", "описани", "переход",
+            "винлайн", "winline", "букмекер", "ставка", "коэффициент",
+            "фрибет", "freebet", "депозит", "вывод",
+            "альфа", "альфабанк", "alfa bank", "alfabank",
         ]
 
     def extract_audio(self, video_path: Path) -> Optional[Path]:
@@ -74,7 +75,7 @@ class AudioAnalyzer:
             logger.error(f"Audio extraction failed: {str(e)}")
             return None
 
-    def transcribe(self, audio_path: Path) -> Dict[str, any]:
+    def transcribe(self, audio_path: Path) -> Dict[str, Any]:
         """
         Transcribe audio using Whisper
 
@@ -87,24 +88,35 @@ class AudioAnalyzer:
         try:
             logger.info(f"Transcribing audio: {audio_path}")
 
-            result = self.model.transcribe(
+            segments, info = self.model.transcribe(
                 str(audio_path),
-                language="ru",
+                language=None,
                 task="transcribe",
-                fp16=False if self.device == "cpu" else True
             )
 
+            transcript = []
+            segment_list = []
+            for segment in segments:
+                transcript.append(segment.text)
+                segment_list.append(
+                    {
+                        "start": segment.start,
+                        "end": segment.end,
+                        "text": segment.text,
+                    }
+                )
+
             return {
-                "text": result["text"],
-                "segments": result["segments"],
-                "language": result.get("language", "ru")
+                "text": " ".join(transcript).strip(),
+                "segments": segment_list,
+                "language": info.language or "unknown",
             }
 
         except Exception as e:
             logger.error(f"Transcription failed: {str(e)}")
-            return {"text": "", "segments": [], "language": "ru"}
+            return {"text": "", "segments": [], "language": "unknown"}
 
-    def detect_ad_keywords(self, text: str) -> Dict[str, any]:
+    def detect_ad_keywords(self, text: str) -> Dict[str, Any]:
         """
         Detect advertising keywords in text
 
@@ -135,7 +147,7 @@ class AudioAnalyzer:
             "total_keywords": len(detected)
         }
 
-    def analyze(self, video_path: Path) -> Dict[str, any]:
+    def analyze(self, video_path: Path) -> Dict[str, Any]:
         """
         Complete audio analysis pipeline
 

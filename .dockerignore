@@ -1,0 +1,75 @@
+# Root .dockerignore for docker-compose context
+
+# Ignore all subdirectories by default
+**/node_modules/
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.pyc
+**/.next/
+**/build/
+**/dist/
+
+# Environment files (should be mounted as secrets or set in compose)
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+!README_LOCAL.md
+
+# Tests
+**/coverage/
+**/.pytest_cache/
+**/htmlcov/
+
+# Logs
+**/*.log
+**/logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data directories (mounted as volumes)
+**/data/
+**/models/
+**/uploads/
+**/reports/
+**/temp/
+
+# Backend specific
+backend/.dockerignore
+backend/Dockerfile
+backend/docker-compose*.yml
+
+# Frontend specific
+frontend/.dockerignore
+frontend/Dockerfile
+frontend/docker-compose*.yml
+
+# Bot specific
+bot/.dockerignore
+bot/Dockerfile
+bot/docker-compose*.yml
+
+# Analytics
+analytics/
+
+# Admin
+admin/
+
+# Billing
+billing/

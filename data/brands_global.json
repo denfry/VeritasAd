@@ -1,0 +1,290 @@
+{
+  "description": "Extended global brands database for logo detection",
+  "version": "2.0",
+  "last_updated": "2026-02-22",
+  "total_brands": 500,
+  
+  "brands": {
+    "technology": [
+      "Apple", "Samsung", "Google", "Microsoft", "Amazon", "Meta", "Netflix", "Spotify",
+      "Intel", "AMD", "NVIDIA", "Qualcomm", "Broadcom", "Texas Instruments", "Cisco",
+      "Oracle", "IBM", "SAP", "Adobe", "Salesforce", "VMware", "Dell", "HP", "Lenovo",
+      "ASUS", "Acer", "MSI", "Razer", "Rode", "Logitech", "Corsair", "NZXT", "EVGA",
+      "Sony", "Panasonic", "LG", "Philips", "Toshiba", "Hitachi", "Fujitsu", "NEC",
+      "Xiaomi", "Huawei", "Honor", "OnePlus", "Oppo", "Vivo", "Realme", "Nothing",
+      "Tesla", "SpaceX", "Boston Dynamics", "OpenAI", "Anthropic", "Midjourney"
+    ],
+    
+    "software_services": [
+      "GitHub", "GitLab", "Bitbucket", "Stack Overflow", "Docker", "Kubernetes",
+      "Jenkins", "CircleCI", "Travis CI", "Heroku", "Vercel", "Netlify", "AWS",
+      "Google Cloud", "Azure", "DigitalOcean", "Linode", "Cloudflare", "Akamai",
+      "Twilio", "SendGrid", "Stripe", "PayPal", "Square", "Shopify", "WooCommerce",
+      "Magento", "BigCommerce", "Zoom", "Slack", "Discord", "Telegram", "WhatsApp",
+      "Signal", "Teams", "WebEx", "GoToMeeting", "Skype", "Viber", "Line", "WeChat",
+      "TikTok", "Instagram", "Facebook", "Twitter", "LinkedIn", "Pinterest", "Snapchat",
+      "Reddit", "Quora", "Medium", "Substack", "Patreon", "OnlyFans", "Twitch",
+      "YouTube", "Vimeo", "Dailymotion", "RuTube", "Bilibili", "NicoNico"
+    ],
+    
+    "banks_finance": [
+      "Visa", "Mastercard", "American Express", "Discover", "JCB", "UnionPay",
+      "PayPal", "Venmo", "Cash App", "Zelle", "Wise", "Revolut", "N26", "Monzo",
+      "Chime", "Coinbase", "Binance", "Kraken", "Gemini", "Robinhood", "E*TRADE",
+      "Charles Schwab", "Fidelity", "Vanguard", "BlackRock", "Goldman Sachs",
+      "Morgan Stanley", "JPMorgan Chase", "Bank of America", "Wells Fargo",
+      "Citibank", "HSBC", "Barclays", "Deutsche Bank", "Credit Suisse", "UBS",
+      "BNP Paribas", "Societe Generale", "Santander", "ING", "Commerzbank",
+      "Сбербанк", "Тинькофф", "ВТБ", "Альфа-Банк", "Газпромбанк", "Росбанк",
+      "Райффайзен", "Открытие", "Совкомбанк", "МТС Банк", "ЮниКредит", "ОТП Банк",
+      "МКБ", "АК БАРС", "Зенит", "Уралсиб", "Россельхозбанк", "Промсвязьбанк"
+    ],
+    
+    "telecom": [
+      "Verizon", "AT&T", "T-Mobile", "Sprint", "Vodafone", "Orange", "Telefonica",
+      "Deutsche Telekom", "BT Group", "TIM", "KPN", "Telia", "Elisa", "MTS",
+      "Билайн", "МегаФон", "Ростелеком", "Tele2", "Yota", "СберМобайл", "Тинькофф Мобайл",
+      "VK Мобайл", "МирТелеком", "ГлобалТелеком", "ЭрТелеком", "Дом.ру", "Стрим"
+    ],
+    
+    "retail_marketplaces": [
+      "Amazon", "eBay", "Alibaba", "AliExpress", "Taobao", "Tmall", "JD.com",
+      "Rakuten", "Mercari", "Poshmark", "Depop", "Vinted", "OLX", "Craigslist",
+      "Etsy", "Wayfair", "Overstock", "Wish", "Geekbuying", "Gearbest", "Banggood",
+      "Wildberries", "Ozon", "Яндекс.Маркет", "Lamoda", "Kupivip", "Brandshop",
+      "М.Видео", "Эльдорадо", "Ситилинк", "ДНС", "Связной", "Евросеть", "Ретарго",
+      "Холодильник.ру", "Плеер.ру", "Фотогорд", "Слайд", "Big Geek", "Re:Store"
+    ],
+    
+    "food_beverages": [
+      "McDonald's", "KFC", "Burger King", "Wendy's", "Taco Bell", "Chipotle",
+      "Subway", "Pizza Hut", "Domino's", "Papa John's", "Little Caesars",
+      "Dodo Pizza", "Пицца Сицилия", "Papa Carlo's", "Il Patio", "Якитория",
+      "Starbucks", "Dunkin'", "Tim Hortons", "Costa Coffee", "Caffe Nero",
+      "Blue Bottle", "Peet's Coffee", "Lavazza", "Illy", "Nespresso", "Jacobs",
+      "Coca-Cola", "Pepsi", "Sprite", "Fanta", "7UP", "Dr Pepper", "A&W",
+      "Red Bull", "Monster", "Rockstar", "Burn", "Gatorade", "Powerade",
+      "Lipton", "Nestea", "Arizona", "Snapple", "Ocean Spray", "Tropicana",
+      "Minute Maid", "Capri Sun", "Hi-C", "Fruitopia", "Nesquik", "Ovaltine",
+      "Вкусно и точка", "Ростик'с", "Теремок", "Чикен Хауз", "Крошка Картошка",
+      "Му-Му", "Ёлки-Палки", "Грабли", "Кофемания", "Шоколадница", "Ваби Саби"
+    ],
+    
+    "clothing_sport": [
+      "Nike", "Adidas", "Puma", "Reebok", "New Balance", "Under Armour",
+      "Converse", "Vans", "Timberland", "Dr. Martens", "Clarks", "Skechers",
+      "ASICS", "Mizuno", "Brooks", "Salomon", "Merrell", "Columbia", "The North Face",
+      "Patagonia", "Arc'teryx", "Marmot", "Mountain Hardwear", "Outdoor Research",
+      "Zara", "H&M", "Uniqlo", "Gap", "Old Navy", "Banana Republic", "J.Crew",
+      "Abercrombie & Fitch", "Hollister", "American Eagle", "Urban Outfitters",
+      "Anthropologie", "Free People", "Topshop", "Forever 21", "Primark",
+      "Gucci", "Louis Vuitton", "Chanel", "Prada", "Hermès", "Dior", "Versace",
+      "Burberry", "Fendi", "Balenciaga", "Saint Laurent", "Celine", "Givenchy",
+      "Off-White", "Supreme", "Palace", "BAPE", "Comme des Garçons", "Yohji Yamamoto",
+      "Sportmaster", "Decathlon", "Intersport", "JD Sports", "Foot Locker"
+    ],
+    
+    "automotive": [
+      "Toyota", "Honda", "Nissan", "Mazda", "Subaru", "Mitsubishi", "Suzuki",
+      "Ford", "Chevrolet", "Dodge", "Jeep", "Ram", "Cadillac", "GMC", "Buick",
+      "Tesla", "Rivian", "Lucid", "Fisker", "Canoo", "Lordstown", "Nikola",
+      "BMW", "Mercedes-Benz", "Audi", "Volkswagen", "Porsche", "Opel", "Seat",
+      "Ferrari", "Lamborghini", "Maserati", "Alfa Romeo", "Fiat", "Lancia",
+      "Volvo", "Saab", "Koenigsegg", "Polestar", "McLaren", "Bentley", "Rolls-Royce",
+      "Aston Martin", "Jaguar", "Land Rover", "Mini", "Lotus", "Morgan",
+      "Hyundai", "Kia", "Genesis", "SSangYong", "Proton", "Perodua",
+      "Lada", "ГАЗ", "УАЗ", "КАМАЗ", "Москвич", " Aurus", "Hongqi", "Geely",
+      "Chery", "Haval", "Great Wall", "BYD", "NIO", "Xpeng", "Li Auto", "Zeekr"
+    ],
+    
+    "energy_industrial": [
+      "Gazprom", "Лукойл", "Роснефть", "НОВАТЭК", "Сургутнефтегаз", "Татнефть",
+      "Bashneft", "Russneft", "Neftis", "Slavneft", "TNK-BP", "Salym Petroleum",
+      "ExxonMobil", "Shell", "BP", "TotalEnergies", "Eni", "Repsol", "Equinor",
+      "Chevron", "ConocoPhillips", "Valero", "Marathon", "Phillips 66",
+      "Schlumberger", "Halliburton", "Baker Hughes", "Weatherford", "Transocean",
+      "Siemens", "General Electric", "ABB", "Schneider Electric", "Bosch",
+      "Honeywell", "3M", "Caterpillar", "John Deere", "Komatsu", "Hitachi Construction"
+    ],
+    
+    "airlines_travel": [
+      "Aeroflot", "S7 Airlines", "Utair", "Ural Airlines", "Pobeda", "Rossiya",
+      "Red Wings", "Azimuth", "Smartavia", "IrAero", "Nordwind", "Azur Air",
+      "Emirates", "Qatar Airways", "Etihad Airways", "Turkish Airlines", "Lufthansa",
+      "Air France", "KLM", "British Airways", "Iberia", "Alitalia", "Swiss",
+      "Austrian Airlines", "Brussels Airlines", "SAS", "Finnair", "LOT Polish",
+      "Delta", "United", "American Airlines", "Southwest", "JetBlue", "Alaska",
+      "Air Canada", "WestJet", "Mexicana", "Aeromexico", "LATAM", "Avianca",
+      "Copa Airlines", "VivaAerobus", "Volaris", "Interjet", "Magnicharters",
+      "Booking.com", "Airbnb", "Expedia", "Hotels.com", "Agoda", "Trivago",
+      "TripAdvisor", "Yelp", "OpenTable", "Resy", "TheFork", "Zomato", "Swiggy"
+    ],
+    
+    "gaming_entertainment": [
+      "PlayStation", "Xbox", "Nintendo", "Steam", "Epic Games", "Origin",
+      "Uplay", "GOG", "Battle.net", "Geforce Now", "Stadia", "Luna",
+      "EA", "Activision", "Ubisoft", "Take-Two", "Rockstar", "Bethesda",
+      "Valve", "CD Projekt", "CD Projekt RED", "BioWare", "Respawn",
+      "Bungie", "343 Industries", "The Coalition", "Naughty Dog", "Insomniac",
+      "Santa Monica Studio", "Guerrilla Games", "Polyphony Digital", "Media Molecule",
+      "FromSoftware", "Capcom", "Square Enix", "Konami", "Bandai Namco",
+      "Sega", "Atlus", "Koei Tecmo", "Falcom", "Nippon Ichi", "Arc System Works",
+      "Riot Games", "Blizzard", "Supercell", "King", "Rovio", "Zynga",
+      "miHoYo", "NetEase", "Tencent", "Nexon", "NCSoft", "Pearl Abyss",
+      "Winline", "1xBet", "Fonbet", "Betboom", "Leon", "Parimatch", "Baltbet"
+    ],
+    
+    "education": [
+      "Coursera", "edX", "Udemy", "Udacity", "Skillshare", "LinkedIn Learning",
+      "Pluralsight", "Codecademy", "DataCamp", "Khan Academy", "Duolingo",
+      "Babbel", "Rosetta Stone", "Memrise", "Busuu", "HelloTalk", "Tandem",
+      "Skillbox", "GeekBrains", "Яндекс.Практикум", "Нетология", "SkillFactory",
+      "Stepik", "Открытое образование", "Лекториум", "ПостНаука", "Arzamas",
+      "Magister", "Dnevnik.ru", "Электронная школа", "ЯКласс", "РешуЕГЭ",
+      "Foxford", "TutorOnline", "Repetit.ru", "Profi.ru", "Ассоциация репетиторов"
+    ],
+    
+    "media_publishing": [
+      "Disney", "Warner Bros", "Universal", "Paramount", "Sony Pictures",
+      "20th Century Studios", "Lionsgate", "MGM", "A24", "Neon",
+      "Marvel", "DC Comics", "Image Comics", "Dark Horse", "IDW Publishing",
+      "Penguin Random House", "HarperCollins", "Simon & Schuster", "Macmillan",
+      "Hachette", "Scholastic", "Egmont", "Bonnier", "Wolters Kluwer",
+      "The New York Times", "The Washington Post", "The Guardian", "BBC",
+      "CNN", "Fox News", "MSNBC", "Bloomberg", "Reuters", "Associated Press",
+      "RT", "РИА Новости", "ТАСС", "Интерфакс", "Коммерсантъ", "Ведомости",
+      "РБК", "Лента.ру", "Meduza", "The Bell", "Проект", "Холод", "Важные истории"
+    ],
+    
+    "healthcare_pharma": [
+      "Pfizer", "Johnson & Johnson", "Roche", "Novartis", "Merck", "GSK",
+      "Sanofi", "AstraZeneca", "Bayer", "Eli Lilly", "AbbVie", "Amgen",
+      "Gilead", "Biogen", "Regeneron", "Moderna", "BioNTech", "CureVac",
+      "AstraZeneca", "Takeda", "Astellas", "Daiichi Sankyo", "Eisai",
+      "Фармстандарт", "Р-Фарм", "Генериум", "Биокад", "Герофарм", "Нанолек",
+      "Верофарм", "Акрихин", "Фармсинтез", "Ирбитский ХФЗ", "Мосхимфармпрепараты",
+      "Philips Healthcare", "Siemens Healthineers", "GE Healthcare", "Medtronic",
+      "Abbott", "Boston Scientific", "Stryker", "Zimmer Biomet", "Edwards Lifesciences"
+    ],
+    
+    "beauty_cosmetics": [
+      "L'Oréal", "Estée Lauder", "Clinique", "MAC", "Bobbi Brown", "Tom Ford Beauty",
+      "Chanel Beauty", "Dior Beauty", "YSL Beauty", "Armani Beauty", "Givenchy Beauty",
+      "Guerlain", "Lancôme", "Yves Rocher", "The Body Shop", "Lush",
+      "Sephora", "Ulta Beauty", "NYX", "Maybelline", "L'Oréal Paris", "Garnier",
+      "Nivea", "Beiersdorf", "Shiseido", "SK-II", "Clé de Peau", "IPSA",
+      "Kiehl's", "Origins", "Fresh", "Glow Recipe", "Drunk Elephant", "The Ordinary",
+      "CeraVe", "La Roche-Posay", "Vichy", "Avene", "Eucerin", "Cetaphil",
+      "Рив Гош", "Л'Этуаль", "Подружка", "Золотое Яблоко", "Красный Куб", "Иль де Боте"
+    ],
+    
+    "home_furniture": [
+      "IKEA", "JYSK", "Home Depot", "Lowe's", "Ace Hardware", "Menards",
+      "Wayfair", "West Elm", "Pottery Barn", "Williams Sonoma", "Crate & Barrel",
+      "CB2", "Room & Board", "Article", "Burrow", "Floyd", "AllModern",
+      "Leroy Merlin", "Castorama", "OBI", "Hornbach", "Bauhaus", "Toom",
+      "Петрович", "220 Вольт", "Максидом", "Техносила", "Эксперт", "Посуда Центр",
+      " Hoff", "Много Мебели", "Шатура", "Ангстрем", "ТриЯ", "Мария", "Стильные Кухни"
+    ],
+    
+    "logistics_delivery": [
+      "DHL", "FedEx", "UPS", "USPS", "Royal Mail", "La Poste", "Deutsche Post",
+      "DPD", "GLS", "Hermes", "Yodel", "Parcelforce", "TNT", "Aramex",
+      "Яндекс.Доставка", "СДЭК", "Boxberry", "Почта России", "DHL Express Russia",
+      "ПЭК", "Деловые Линии", "КИТ", "Энергия", "ЖелДорЭкспедиция", "Автотрейдинг",
+      "Яндекс.Еда", "Delivery Club", "Самокат", "Лавка", "Ozon Fresh", "СберМаркет",
+      "Vprok.ru Перекрёсток", "Утконос", "Изиум", "Карусель", "ЗакажиГотовое"
+    ],
+    
+    "insurance": [
+      "Allstate", "State Farm", "Geico", "Progressive", "Liberty Mutual",
+      "Nationwide", "Travelers", "USAA", "Farmers", "MetLife", "Prudential",
+      "AIG", "Chubb", "Zurich", "AXA", "Allianz", "Generali", "Aviva",
+      "Ingosstrakh", "АльфаСтрахование", "Росгосстрах", "ВТБ Страхование",
+      "СберСтрахование", "Тинькофф Страхование", "Ренессанс Страхование",
+      "Зетта Страхование", "УралСиб Страхование", "МАКС", "Капитал МС",
+      "Согаз", "АльфаСтрахование-ОМС", "Капитал ОМС", "РЕСО-Гарантия", "Ингосстрах-М"
+    ],
+    
+    "real_estate": [
+      "Zillow", "Realtor.com", "Redfin", "Trulia", "Homes.com", "Compass",
+      "Keller Williams", "RE/MAX", "Century 21", "Coldwell Banker", "Sotheby's",
+      "Cushman & Wakefield", "JLL", "CBRE", "Colliers", "Newmark",
+      "Циан", "Авито Недвижимость", "Яндекс.Недвижимость", "ДомКлик", "Этажи",
+      "Миэль", "Инком-Недвижимость", "Бест-Недвижимость", "Азбука Жилья",
+      "ЛСР", "ПИК", "Самолет", "ГК ФСК", "Setl Group", "Лидер Групп", "Полис Групп"
+    ],
+    
+    "charity_nonprofit": [
+      "Red Cross", "Doctors Without Borders", "Oxfam", "Save the Children",
+      "World Wildlife Fund", "Greenpeace", "Amnesty International",
+      "UNICEF", "UNHCR", "World Food Programme", "Habitat for Humanity",
+      "Salvation Army", "Goodwill", "United Way", "Make-A-Wish",
+      "Фонд Хабенского", "Подари Жизнь", "Русфонд", "Вера", "Старость в радость",
+      "Ночлежка", "Перспективы", "Обнаженные сердца", "Антон тут рядом", "Дом с маяком"
+    ]
+  },
+  
+  "aliases": {
+    "McDonald's": ["Макдоналдс", "МакДональдс", "Mickey D's"],
+    "Burger King": ["Бургер Кинг", "BK"],
+    "KFC": ["KFC", "КФС", "Kentucky Fried Chicken"],
+    "Pizza Hut": ["Пицца Хат", "Pizza Hut"],
+    "Domino's": ["Доминос", "Домино'с", "Domino's Pizza"],
+    "Starbucks": ["Старбакс", "Starbucks Coffee"],
+    "Coca-Cola": ["Кока-Кола", "Coke", "Coca Cola"],
+    "Pepsi": ["Пепси", "Pepsi-Cola"],
+    "Nike": ["Найк", "Nike Inc", "Just Do It"],
+    "Adidas": ["Адидас", "adidas"],
+    "Apple": ["Эппл", "Apple Inc", ""],
+    "Samsung": ["Самсунг", "Samsung Electronics"],
+    "Google": ["Гугл", "Alphabet Inc"],
+    "Microsoft": ["Майкрософт", "MSFT"],
+    "Amazon": ["Амазон", "Amazon.com"],
+    "Tesla": ["Тесла", "Tesla Inc", "Tesla Motors"],
+    "Сбербанк": ["Сбер", "Sberbank", "Сбер Банк"],
+    "Тинькофф": ["Tinkoff", "Т-Банк", "T-Bank"],
+    "Яндекс": ["Yandex", "Я"],
+    "Wildberries": ["WB", "Вайлдберриз"],
+    "Ozon": ["Озон"],
+    "М.Видео": ["МВидео", "MVideo"],
+    "ДНС": ["DNS", "ДНС"],
+    "МТС": ["MTS"],
+    "Билайн": ["Beeline", "ВымпелКом"],
+    "МегаФон": ["MegaFon"],
+    "Ростелеком": ["Rostelecom"],
+    "Газпром": ["Gazprom"],
+    "Лукойл": ["Lukoil"],
+    "Роснефть": ["Rosneft"],
+    "Аэрофлот": ["Aeroflot"],
+    "S7 Airlines": ["Сибирь", "S7"],
+    "Победа": ["Pobeda"],
+    "Winline": ["Винлайн"],
+    "1xBet": ["1хБет", "Один Икс Бет"],
+    "Fonbet": ["Фонбет"],
+    "Twitch": ["Твич", "Twitch.tv"]
+  },
+  
+  "categories": {
+    "technology": ["Apple", "Samsung", "Google", "Microsoft", "Amazon", "Tesla"],
+    "software_services": ["GitHub", "AWS", "Zoom", "Slack", "Discord", "Twitch"],
+    "banks_finance": ["Visa", "PayPal", "Сбербанк", "Тинькофф", "ВТБ"],
+    "telecom": ["MTS", "Билайн", "МегаФон", "Ростелеком", "Tele2"],
+    "retail_marketplaces": ["Amazon", "Wildberries", "Ozon", "М.Видео", "ДНС"],
+    "food_beverages": ["McDonald's", "KFC", "Coca-Cola", "Starbucks", "Вкусно и точка"],
+    "clothing_sport": ["Nike", "Adidas", "Zara", "H&M", "Gucci"],
+    "automotive": ["Toyota", "Tesla", "BMW", "Mercedes-Benz", "Lada"],
+    "energy_industrial": ["Gazprom", "Лукойл", "Siemens", "Bosch"],
+    "airlines_travel": ["Aeroflot", "Emirates", "Lufthansa", "Booking.com"],
+    "gaming_entertainment": ["PlayStation", "Xbox", "Steam", "Winline", "1xBet"],
+    "education": ["Coursera", "Skillbox", "Яндекс.Практикум", "Нетология"],
+    "media_publishing": ["Disney", "Netflix", "BBC", "RT"],
+    "healthcare_pharma": ["Pfizer", "Johnson & Johnson", "Фармстандарт"],
+    "beauty_cosmetics": ["L'Oréal", "Sephora", "Рив Гош", "Л'Этуаль"],
+    "home_furniture": ["IKEA", "Leroy Merlin", "Hoff"],
+    "logistics_delivery": ["DHL", "Яндекс.Доставка", "СДЭК"],
+    "insurance": ["Allianz", "АльфаСтрахование", "Ингосстрах"],
+    "real_estate": ["Zillow", "Циан", "ПИК"],
+    "charity_nonprofit": ["Red Cross", "Фонд Хабенского", "Подари Жизнь"]
+  }
+}

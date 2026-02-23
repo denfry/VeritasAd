@@ -1,0 +1,236 @@
+# Docker Compose для локальной разработки VeritasAd
+# Запуск: docker-compose -f docker-compose.local.yml up --build
+
+services:
+  # ==================== BACKEND ====================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: veritasad-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Project
+      - PROJECT_NAME=VeritasAD
+      - ENVIRONMENT=development
+      - DEBUG=True
+
+      # Server
+      - HOST=0.0.0.0
+      - PORT=8000
+
+      # Database - SQLite для локальной разработки (проще)
+      - DATABASE_URL=sqlite+aiosqlite:///./veritasad_dev.db
+
+      # Redis (для кеширования и rate limiting)
+      - REDIS_URL=redis://redis:6379/0
+
+      # Security - генерируются автоматически при отсутствии
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production-min-32-chars}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-jwt-secret-key-change-in-production-min-64-chars-long-enough-for-security}
+
+      # Development - отключить авторизацию для тестирования
+      - DISABLE_AUTH=true
+
+      # Rate limiting
+      - FREE_TIER_DAILY_LIMIT=100
+      - PRO_TIER_DAILY_LIMIT=10000
+      - RATE_LIMIT_PER_MINUTE=60
+
+      # File processing
+      - MAX_VIDEO_DURATION=600
+      - MAX_FILE_SIZE=2147483648
+      - ALLOWED_VIDEO_EXTENSIONS=.mp4,.avi,.mov,.mkv,.webm
+
+      # Video download
+      - DOWNLOAD_TIMEOUT=180
+      - DOWNLOAD_RETRIES=3
+      - DOWNLOAD_CONCURRENT_FRAGMENTS=4
+      - USE_ARIA2C=false
+
+      # ML Models
+      - USE_LLM=false
+      - WHISPER_MODEL=tiny
+      - TORCH_DEVICE=cpu
+
+      # Paths
+      - DATA_DIR=/app/data
+      - MODELS_DIR=/app/models
+      - UPLOAD_DIR=/app/data/uploads
+      - REPORTS_DIR=/app/data/reports
+
+      # Logging
+      - LOG_LEVEL=DEBUG
+      - LOG_FORMAT=text
+
+      # CORS
+      - CORS_ORIGINS=["http://localhost:3000","http://localhost:8000"]
+
+      # Telegram Bot (опционально)
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+
+      # Payment (опционально)
+      - YOOKASSA_SHOP_ID=${YOOKASSA_SHOP_ID:-}
+      - YOOKASSA_SECRET_KEY=${YOOKASSA_SECRET_KEY:-}
+      - YOOKASSA_RETURN_URL=http://localhost:8000/payment/success
+
+      # Monitoring
+      - SENTRY_DSN=${SENTRY_DSN:-}
+
+    volumes:
+      # Backend code (для разработки с hot reload)
+      - ./backend/app:/app/app:ro
+      - ./backend/scripts:/app/scripts:ro
+      # Data persistence
+      - backend_data:/app/data
+      # Logs (for easy access)
+      - ./logs/backend:/app/data/logs
+      - ./models:/app/models:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+  # ==================== CELERY WORKER ====================
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: veritasad-celery
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=sqlite+aiosqlite:///./veritasad_dev.db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - LOG_LEVEL=DEBUG
+      - LOG_FORMAT=text
+      - USE_LLM=false
+      - WHISPER_MODEL=tiny
+      - TORCH_DEVICE=cpu
+      - DATA_DIR=/app/data
+      - MODELS_DIR=/app/models
+      - DOWNLOAD_CONCURRENT_FRAGMENTS=4
+      - USE_ARIA2C=false
+    volumes:
+      - ./backend/app:/app/app:ro
+      - ./backend/scripts:/app/scripts:ro
+      - backend_data:/app/data
+      # Logs (for easy access)
+      - ./logs/celery:/app/data/logs
+      - ./models:/app/models:ro
+    depends_on:
+      - redis
+      - backend
+    command: celery -A app.core.celery:celery_app worker --loglevel=debug --concurrency=2 --pool=solo
+    entrypoint: /app/entrypoint.sh
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+  # ==================== REDIS ====================
+  redis:
+    image: redis:7-alpine
+    container_name: veritasad-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+  # ==================== FRONTEND ====================
+  # NEXT_PUBLIC_* переменные передаются через build args (встраиваются в бандл при сборке)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    container_name: veritasad-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+  # ==================== TELEGRAM BOT ====================
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: veritasad-bot
+    environment:
+      # Required
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-your_bot_token_here}
+
+      # API
+      - API_URL=http://backend:8000
+
+      # Redis (опционально, для FSM)
+      - REDIS_URL=redis://redis:6379/2
+
+      # Environment
+      - ENVIRONMENT=development
+
+      # Bot admin IDs (comma-separated user IDs)
+      - BOT_ADMIN_IDS=${BOT_ADMIN_IDS:-}
+    volumes:
+      - ./bot:/app:ro
+    depends_on:
+      - backend
+      - redis
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+  # ==================== POSTGRESQL (опционально) ====================
+  # Для локальной разработки используется SQLite по умолчанию
+  # Раскомментируйте для использования PostgreSQL
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: veritasad-postgres
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     POSTGRES_DB: veritasad
+  #     POSTGRES_USER: veritasad
+  #     POSTGRES_PASSWORD: veritasad123
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U veritasad"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   restart: unless-stopped
+  #   networks:
+  #     - veritasad-network
+
+# ==================== VOLUMES ====================
+volumes:
+  backend_data:
+    driver: local
+  redis_data:
+    driver: local
+  # postgres_data:
+  #   driver: local
+
+# ==================== NETWORKS ====================
+networks:
+  veritasad-network:
+    driver: bridge

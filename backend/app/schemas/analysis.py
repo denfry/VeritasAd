@@ -33,6 +33,8 @@ class AnalysisResult(BaseModel):
     detected_keywords: List[str] = []
     transcript: Optional[str] = None
     disclosure_text: Optional[str] = None
+    ad_classification: Optional[str] = None
+    ad_reason: Optional[str] = None
 
     # Metadata
     status: str
@@ -65,6 +67,8 @@ class AnalysisUpdate(BaseModel):
     detected_keywords: Optional[List[str]] = None
     transcript: Optional[str] = None
     disclosure_text: Optional[str] = None
+    ad_classification: Optional[str] = None
+    ad_reason: Optional[str] = None
     processing_time: Optional[float] = None
     error_message: Optional[str] = None
     report_path: Optional[str] = None

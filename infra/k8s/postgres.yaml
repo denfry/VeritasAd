@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: veritasad-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: veritasad-postgres
+  template:
+    metadata:
+      labels:
+        app: veritasad-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: veritasad-secrets

@@ -1,44 +1,64 @@
-# FastAPI framework
-fastapi==0.115.0
-uvicorn[standard]==0.30.0
-pydantic==2.7.0
-pydantic-settings==2.2.1
-python-dotenv==1.0.0
-python-multipart==0.0.9
+# FastAPI & связанные
+fastapi==0.128.0
+uvicorn[standard]==0.32.1          # или новее, если вышло
+gunicorn==23.0.0                   # production WSGI/ASGI server
+pydantic==2.10.0                   # или 2.11+
+pydantic-settings==2.7.0           # обновилась довольно сильно
+python-dotenv==1.0.1
+python-multipart==0.0.20           # сильно обновилась
+slowapi==0.1.9                     # rate limiting
+structlog==24.4.0                  # structured logging
 
 # Database
-sqlalchemy==2.0.30
-alembic==1.13.1
+sqlalchemy==2.0.35                 # или самая последняя 2.0.x
+alembic==1.14.0                    # или новее
+asyncpg==0.30.0                    # для PostgreSQL
+aiosqlite==0.20.0                  # для SQLite в разработке
+
+# Redis & task queue
+redis[hiredis]==5.2.0
+celery[redis]==5.4.0
 
 # Video processing
-yt-dlp==2024.4.9
-opencv-python==4.9.0.80
-ffmpeg-python==0.2.0
+yt-dlp==2026.1.6.233142.dev0                # или самая свежая 2026.x
+opencv-python==4.11.0.86           # или новее
+ffmpeg-python==0.2.0               # старая, но стабильная, альтернативы почти нет
 
 # Machine Learning
-torch==2.3.0
-transformers==4.40.0
-sentencepiece==0.2.0
-openai-whisper==20231117
+torch==2.9.1                       # + torchvision torchaudio по желанию
+transformers==4.57.3
+sentencepiece==0.2.1
+faster-whisper==1.0.3              # faster inference via CTranslate2
 
 # Audio processing
-librosa==0.10.2
+librosa==0.11.0                    # или новее
 
 # PDF generation
-reportlab==4.2.0
+reportlab==4.3.0                   # или 4.2.x+ обновления
 
 # OCR
-pytesseract==0.3.10
+pytesseract==0.3.13                # ставится, но возможны runtime проблемы
 
 # Telegram
-python-telegram-bot==20.8
+python-telegram-bot==21.5          # или новее (v21+)
 
 # Testing
-pytest==8.1.1
-pytest-asyncio==0.23.6
-httpx~=0.26.0
+pytest==8.3.4
+pytest-asyncio==0.25.0
+httpx==0.28.0
+
+# Observability
+opentelemetry-api>=1.28.0
+opentelemetry-sdk>=1.28.0
+opentelemetry-instrumentation-fastapi>=0.48b0
+opentelemetry-exporter-otlp>=1.28.0
+sentry-sdk[fastapi]>=2.0.0
 
 # Utilities
-pillow==10.3.0
-numpy==1.26.4
-requests==2.31.0
+pillow==11.0.0
+numpy==2.1.2                       # или 2.2.x если стабильна
+requests==2.32.3
+PyJWT==2.9.0                       # JWT token verification
+python-jose[cryptography]==3.3.0   # Additional JWT support
+pyqrcode==1.2.1                    # QR code generation for 2FA
+pypng==0.20220715.0                # PNG support for pyqrcode

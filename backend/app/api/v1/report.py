@@ -2,8 +2,10 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
 from pathlib import Path
 import logging
+import re
 
 from app.core.dependencies import get_api_key
+from app.core.config import settings
 from app.services.report_generator import ReportGenerator
 
 logger = logging.getLogger(__name__)
@@ -28,11 +30,38 @@ async def get_report(
         PDF file download
     """
     try:
-        # Find report file
-        report_dir = Path("../data/reports")
-
+        # Validate video_id format - only alphanumeric, underscore, dash allowed
+        # This prevents path traversal and command injection
+        if not re.match(r'^[a-zA-Z0-9_-]+$', video_id):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid video_id format. Only alphanumeric characters, underscores, and hyphens are allowed."
+            )
+        
+        # Use absolute path from settings and resolve any symlinks
+        report_dir = settings.reports_path.resolve()
+        
+        # Ensure report directory exists
+        if not report_dir.exists():
+            raise HTTPException(
+                status_code=404,
+                detail="Reports directory not found"
+            )
+        
         # Search for report with this video_id
-        matching_reports = list(report_dir.glob(f"report_{video_id}_*.pdf"))
+        matching_reports = []
+        for report_file in report_dir.glob("report_*.pdf"):
+            # Check if video_id is in filename
+            if f"report_{video_id}_" in report_file.name:
+                # Verify file is within report_dir (prevent symlink attacks)
+                try:
+                    resolved = report_file.resolve()
+                    # Ensure the resolved path is still within report_dir
+                    if str(resolved).startswith(str(report_dir)):
+                        matching_reports.append(report_file)
+                except Exception:
+                    # Skip files that can't be resolved
+                    continue
 
         if not matching_reports:
             raise HTTPException(
@@ -52,7 +81,9 @@ async def get_report(
         return FileResponse(
             path=str(latest_report),
             media_type="application/pdf",
-            filename=latest_report.name
+            filename=f"report_{video_id}.pdf",
+            # Prevent caching of sensitive reports
+            headers={"Cache-Control": "private, no-store"}
         )
 
     except HTTPException:
@@ -81,6 +112,13 @@ async def generate_report(
         Report generation status and file path
     """
     try:
+        # Validate video_id format
+        if not re.match(r'^[a-zA-Z0-9_-]+$', video_id):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid video_id format"
+            )
+        
         # In a real implementation, you would:
         # 1. Fetch analysis data from database
         # 2. Generate report using ReportGenerator

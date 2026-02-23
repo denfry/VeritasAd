@@ -1,0 +1,58 @@
+# syntax=docker/dockerfile:1
+# Development Dockerfile с hot reload и кэшированием
+
+FROM python:3.11-slim
+
+# Устанавливаем зависимости для разработки
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    ffmpeg \
+    tesseract-ocr \
+    tesseract-ocr-rus \
+    nodejs \
+    npm \
+    aria2 \
+    yt-dlp \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Копируем только файлы зависимостей для кэширования
+COPY requirements.txt pyproject.toml ./
+
+# Кэшируем установку pip зависимостей
+RUN pip install --no-cache-dir \
+    --default-timeout=1000 \
+    --retries=10 \
+    -r requirements.txt
+
+# Копируем остальной код (исключая .dockerignore)
+COPY . .
+
+# Создаём директорию для данных
+RUN mkdir -p /app/data /app/models
+
+# Expose port
+EXPOSE 8000
+
+# Скрипт запуска с выполнением миграций
+COPY <<EOF /app/entrypoint.sh
+#!/bin/bash
+set -e
+
+# Выполняем миграции Alembic перед запуском
+echo "Running Alembic migrations..."
+alembic upgrade head
+
+# Запускаем основную команду
+exec "\$@"
+EOF
+
+RUN chmod +x /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# Запуск с hot reload через uvicorn
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

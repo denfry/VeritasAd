@@ -1,26 +1,180 @@
-version: '3.9'
+# Docker Compose для production VeritasAd
+# Запуск: docker-compose up -d
 
 services:
+  # ==================== BACKEND ====================
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: veritasad-backend
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - ./backend/.env
+    environment:
+      # Database
+      - DATABASE_URL=postgresql+asyncpg://veritasad:veritasad123@postgres:5432/veritasad
+
+      # Redis
+      - REDIS_URL=redis://redis:6379/0
+
+      # Celery
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+
+      # Environment
+      - ENVIRONMENT=production
+      - DEBUG=False
+
+      # Development/Testing - отключение авторизации (DISABLE_AUTH=true для тестирования)
+      - DISABLE_AUTH=${DISABLE_AUTH:-false}
+
+      # Video processing
+      - DOWNLOAD_CONCURRENT_FRAGMENTS=8
+      - USE_ARIA2C=true
+
+      # CORS (update for your domain)
+      - CORS_ORIGINS=["https://veritasad.ai","https://www.veritasad.ai"]
+
+      # Trusted hosts
+      - TRUSTED_HOSTS=["veritasad.ai","*.veritasad.ai","localhost"]
     volumes:
-      - ./data:/app/data
-      - ./models:/app/models
+      - backend_data:/app/data
+      - ./models:/app/models:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ==================== CELERY WORKER ====================
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: veritasad-celery
+    env_file:
+      - ./backend/.env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://veritasad:veritasad123@postgres:5432/veritasad
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - ENVIRONMENT=production
+      - DOWNLOAD_CONCURRENT_FRAGMENTS=8
+      - USE_ARIA2C=true
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+    volumes:
+      - backend_data:/app/data
+      - ./models:/app/models:ro
     depends_on:
       - redis
+      - postgres
+      - backend
+    command: celery -A app.core.celery:celery_app worker --loglevel=info --concurrency=4
+    restart: unless-stopped
+    networks:
+      - veritasad-network
 
+  # ==================== FRONTEND ====================
+  # NEXT_PUBLIC_* переменные передаются через build args (встраиваются в бандл при сборке)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://api.veritasad.ai
+        NEXT_PUBLIC_DISABLE_AUTH: ${NEXT_PUBLIC_DISABLE_AUTH:-false}
+    container_name: veritasad-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_DISABLE_AUTH=${NEXT_PUBLIC_DISABLE_AUTH:-false}
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+  # ==================== TELEGRAM BOT ====================
   bot:
-    build: ./bot
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: veritasad-bot
     env_file:
       - .env
-    volumes:
-      - ./data:/app/data
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - API_URL=http://backend:8000
+      - REDIS_URL=redis://redis:6379/2
+      - ENVIRONMENT=production
+    depends_on:
+      - backend
+      - redis
+    restart: unless-stopped
+    networks:
+      - veritasad-network
 
+  # ==================== POSTGRESQL ====================
+  postgres:
+    image: postgres:15-alpine
+    container_name: veritasad-postgres
+    environment:
+      POSTGRES_DB: veritasad
+      POSTGRES_USER: veritasad
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-veritasad123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U veritasad"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+  # ==================== REDIS ====================
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    container_name: veritasad-redis
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+# ==================== VOLUMES ====================
+volumes:
+  backend_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# ==================== NETWORKS ====================
+networks:
+  veritasad-network:
+    driver: bridge
