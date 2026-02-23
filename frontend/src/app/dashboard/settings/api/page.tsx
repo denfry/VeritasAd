@@ -1,17 +1,30 @@
 "use client"
 
 import { useState } from "react"
-import { Copy, RefreshCw, AlertTriangle, Key } from "lucide-react"
+import { Copy, RefreshCw, AlertTriangle, Key, Loader2, Check } from "lucide-react"
 import { motion } from "framer-motion"
+import { useAuth } from "@/contexts/auth-context"
+import { toast } from "sonner"
 
 export default function ApiSettingsPage() {
+  const { user, loading } = useAuth()
   const [copied, setCopied] = useState(false)
-  const apiKey = "vk_live_8f3d9c2e1b4a7...9x5z" // Mock key
+  const [showKey, setShowKey] = useState(false)
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(apiKey)
+    if (!user?.api_key) return
+    navigator.clipboard.writeText(user.api_key)
     setCopied(true)
+    toast.success("API key copied to clipboard")
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
   return (
@@ -19,7 +32,7 @@ export default function ApiSettingsPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">API Settings</h1>
         <p className="text-muted-foreground mt-1">
-          Manage your API keys and access tokens for programmatic access.
+          Manage your API keys and access tokens for programmatic access to VeritasAd.
         </p>
       </div>
 
@@ -28,75 +41,106 @@ export default function ApiSettingsPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Key className="h-4 w-4 text-primary" />
-              Active API Key
+              Your API Key
             </h2>
-            <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-              Created: Feb 23, 2026
+            <div className="text-[10px] uppercase font-bold text-muted-foreground bg-muted px-2 py-1 rounded">
+              {user?.plan} PLAN
             </div>
           </div>
           
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <div className="relative flex-1">
               <input
-                type="text"
+                type={showKey ? "text" : "password"}
                 readOnly
-                value={apiKey}
-                className="input-field font-mono pr-12 bg-muted/30"
+                value={user?.api_key || "No API key generated"}
+                className="input-field font-mono pr-20 bg-muted/30"
               />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground text-xs">
-                HIDDEN
-              </div>
+              <button 
+                onClick={() => setShowKey(!showKey)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-primary text-xs font-semibold hover:underline"
+              >
+                {showKey ? "HIDE" : "SHOW"}
+              </button>
             </div>
             <button 
               onClick={copyToClipboard}
-              className="btn btn-outline min-w-[100px]"
+              disabled={!user?.api_key}
+              className="btn btn-outline min-w-[120px]"
             >
-              {copied ? "Copied!" : (
+              {copied ? (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Copied
+                </>
+              ) : (
                 <>
                   <Copy className="mr-2 h-4 w-4" />
-                  Copy
+                  Copy Key
                 </>
               )}
             </button>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-amber-500/80 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20">
-            <AlertTriangle className="h-4 w-4" />
-            <p>Your secret key is only shown once. Keep it safe.</p>
+          <div className="flex items-start gap-3 text-sm text-amber-600 bg-amber-500/5 p-4 rounded-lg border border-amber-500/10">
+            <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-semibold">Security Warning</p>
+              <p className="opacity-90">
+                Your API key grants full access to your account's analysis credits. 
+                Never share it in client-side code, public repositories, or with unauthorized persons.
+              </p>
+            </div>
           </div>
         </div>
 
         <div className="card p-6">
-          <h2 className="text-lg font-semibold mb-4">Usage Quotas</h2>
-          <div className="space-y-4">
+          <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+            <Activity className="h-4 w-4 text-primary" />
+            Usage & Quotas
+          </h2>
+          <div className="space-y-6">
             <div>
               <div className="flex justify-between text-sm mb-2">
-                <span>Monthly Requests</span>
-                <span className="font-mono">8,542 / 10,000</span>
+                <span className="font-medium">Daily Analysis Limit</span>
+                <span className="font-mono text-muted-foreground">
+                  <span className="text-foreground font-bold">{user?.daily_used || 0}</span> / {user?.daily_limit || 0}
+                </span>
               </div>
               <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
-                <div className="bg-primary h-full w-[85%] rounded-full" />
+                <div 
+                  className="bg-primary h-full transition-all duration-500" 
+                  style={{ width: `${Math.min(100, ((user?.daily_used || 0) / (user?.daily_limit || 1)) * 100)}%` }}
+                />
               </div>
+              <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-wider">
+                Resets every 24 hours at 00:00 UTC
+              </p>
             </div>
             
-            <div>
+            <div className="pt-4 border-t border-dashed">
               <div className="flex justify-between text-sm mb-2">
-                <span>Video Processing Hours</span>
-                <span className="font-mono">42.5 / 100</span>
+                <span className="font-medium">Total Lifetime Analyses</span>
+                <span className="font-mono font-bold">{user?.total_analyses || 0}</span>
               </div>
-              <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
-                <div className="bg-emerald-500 h-full w-[42%] rounded-full" />
-              </div>
+              <p className="text-xs text-muted-foreground">
+                You have processed {user?.total_analyses} videos since joining the platform.
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end">
-           <button className="btn btn-outline text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20">
-             Revoke all keys
-           </button>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-muted/20 rounded-xl border border-dashed">
+          <div className="text-sm text-muted-foreground">
+             Need a higher limit or custom integration assistance?
+          </div>
+          <Link href="/pricing" className="btn btn-primary btn-sm">
+             View Enterprise Plans
+          </Link>
         </div>
       </div>
     </div>
   )
 }
+
+import Link from "next/link"

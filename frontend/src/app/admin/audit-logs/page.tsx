@@ -7,39 +7,64 @@ import { useAuth } from "@/contexts/auth-context"
 import { listAuditLogs, getAuditStats } from "@/lib/api-client"
 import type { AuditLogListItem, CursorPaginationResponse } from "@/types/api"
 import { toast } from "sonner"
-import { Loader2, Shield, Search, Filter, ChevronDown, ChevronUp, Calendar, Download, * as Icons } from "lucide-react"
+import { 
+  Loader2, 
+  Shield, 
+  Search, 
+  Filter, 
+  ChevronDown, 
+  ChevronUp, 
+  Calendar, 
+  Download,
+  Key,
+  LogOut,
+  AlertTriangle,
+  UserPlus,
+  UserMinus as UserX,
+  Ban,
+  CheckCircle,
+  RefreshCw,
+  CreditCard,
+  Eye,
+  List,
+  Edit,
+  BarChart3,
+  Lock,
+  Unlock,
+  FileText
+} from "lucide-react"
 import { formatDistanceToNow, format } from "date-fns"
-import { ru } from "date-fns/locale"
+import Link from "next/link"
 
 type SortOrder = "asc" | "desc"
 
 // Event type icons and colors
-const EVENT_TYPE_CONFIG: Record<string, { icon: string; color: string }> = {
+const EVENT_TYPE_CONFIG: Record<string, { icon: any; color: string }> = {
   // Auth
-  login: { icon: "key", color: "text-blue-500" },
-  logout: { icon: "log-out", color: "text-gray-500" },
-  login_failed: { icon: "alert-triangle", color: "text-yellow-500" },
+  login: { icon: Key, color: "text-blue-500" },
+  logout: { icon: LogOut, color: "text-gray-500" },
+  login_failed: { icon: AlertTriangle, color: "text-yellow-500" },
 
   // User
-  "user.created": { icon: "user-plus", color: "text-green-500" },
-  "user.updated": { icon: "user-edit", color: "text-blue-500" },
-  "user.deleted": { icon: "user-x", color: "text-red-500" },
-  "user.banned": { icon: "ban", color: "text-red-500" },
-  "user.unbanned": { icon: "check-circle", color: "text-green-500" },
-  "role.changed": { icon: "refresh-cw", color: "text-purple-500" },
-  "plan.changed": { icon: "credit-card", color: "text-amber-500" },
+  "user.created": { icon: UserPlus, color: "text-green-500" },
+  "user.updated": { icon: Edit, color: "text-blue-500" },
+  "user.deleted": { icon: UserX, color: "text-red-500" },
+  "user.banned": { icon: Ban, color: "text-red-500" },
+  "user.unbanned": { icon: CheckCircle, color: "text-green-500" },
+  "role.changed": { icon: RefreshCw, color: "text-purple-500" },
+  "plan.changed": { icon: CreditCard, color: "text-amber-500" },
 
   // Admin
-  "admin.login": { icon: "shield", color: "text-indigo-500" },
-  "admin.user.view": { icon: "eye", color: "text-blue-400" },
-  "admin.user.list": { icon: "list", color: "text-blue-400" },
-  "admin.user.update": { icon: "edit", color: "text-amber-500" },
-  "admin.analytics.view": { icon: "bar-chart", color: "text-cyan-500" },
+  "admin.login": { icon: Shield, color: "text-indigo-500" },
+  "admin.user.view": { icon: Eye, color: "text-blue-400" },
+  "admin.user.list": { icon: List, color: "text-blue-400" },
+  "admin.user.update": { icon: Edit, color: "text-amber-500" },
+  "admin.analytics.view": { icon: BarChart3, color: "text-cyan-500" },
 
   // Security
-  "session.revoked": { icon: "lock", color: "text-red-500" },
-  "api_key.created": { icon: "key", color: "text-green-500" },
-  "api_key.revoked": { icon: "unlock", color: "text-red-500" },
+  "session.revoked": { icon: Lock, color: "text-red-500" },
+  "api_key.created": { icon: Key, color: "text-green-500" },
+  "api_key.revoked": { icon: Unlock, color: "text-red-500" },
 }
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string }> = {
@@ -339,18 +364,14 @@ export default function AuditLogsPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {logsResponse?.data.map((log) => {
-                  const config = EVENT_TYPE_CONFIG[log.event_type] || { icon: "file-text", color: "text-gray-500" }
+                  const config = EVENT_TYPE_CONFIG[log.event_type] || { icon: FileText, color: "text-gray-500" }
                   const statusConfig = STATUS_CONFIG[log.status] || { color: "text-gray-600", bg: "bg-gray-50" }
+                  const Icon = config.icon
                   
                   return (
                     <tr key={log.id} className="hover:bg-muted/20">
                       <td className="px-4 py-3">
-                        {(() => {
-                          const IconComponent = Icons[config.icon as keyof typeof Icons]
-                          return IconComponent ? (
-                            <IconComponent className={`h-5 w-5 ${config.color}`} />
-                          ) : null
-                        })()}
+                        <Icon className={`h-5 w-5 ${config.color}`} />
                       </td>
                       <td className="px-4 py-3">
                         <div className="space-y-1">
@@ -396,7 +417,7 @@ export default function AuditLogsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="space-y-1">
-                          <p className="text-sm">{formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: ru })}</p>
+                          <p className="text-sm">{formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}</p>
                           <p className="text-xs text-muted-foreground">
                             {format(new Date(log.created_at), "MMM d, HH:mm")}
                           </p>
@@ -436,6 +457,3 @@ export default function AuditLogsPage() {
     </SiteShell>
   )
 }
-
-// Add Link import
-import Link from "next/link"

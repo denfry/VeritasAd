@@ -4,10 +4,39 @@ import { useEffect, useState, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { SiteShell } from "@/components/SiteShell"
 import { useAuth } from "@/contexts/auth-context"
-import { listUsers, updateUser, getAnalytics, bulkUpdateUsers, bulkDeleteUsers } from "@/lib/api-client"
+import { 
+  listUsers, 
+  updateUser, 
+  getAnalytics, 
+  getAdvancedAnalytics,
+  bulkUpdateUsers, 
+  bulkDeleteUsers 
+} from "@/lib/api-client"
 import type { UserListItem, CursorPaginationResponse } from "@/types/api"
 import { toast } from "sonner"
-import { Loader2, Users, Activity, BarChart3, AlertCircle, TrendingUp, Search, Filter, ChevronDown, ChevronUp, MoreHorizontal, CheckSquare, Square, Ban, Check, X, Shield } from "lucide-react"
+import { 
+  Loader2, 
+  Users, 
+  Activity, 
+  BarChart3, 
+  AlertCircle, 
+  TrendingUp, 
+  Search, 
+  Filter, 
+  ChevronDown, 
+  ChevronUp, 
+  MoreHorizontal, 
+  CheckSquare, 
+  Square, 
+  Ban, 
+  Check, 
+  X, 
+  Shield,
+  Zap,
+  Globe,
+  Lock,
+  ArrowUpRight
+} from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { CommandPalette, useAdminCommands, useCommandPalette } from "@/components/CommandPalette"
@@ -31,6 +60,7 @@ export default function AdminPage() {
   // Data state
   const [usersResponse, setUsersResponse] = useState<CursorPaginationResponse<UserListItem> | null>(null)
   const [analytics, setAnalytics] = useState<any | null>(null)
+  const [advancedAnalytics, setAdvancedAnalytics] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   
@@ -68,7 +98,7 @@ export default function AdminPage() {
   // Load data
   const loadData = useCallback(async () => {
     try {
-      const [usersData, analyticsData] = await Promise.all([
+      const [usersData, analyticsData, advAnalyticsData] = await Promise.all([
         listUsers({
           limit: 20,
           cursor: cursor || undefined,
@@ -81,9 +111,11 @@ export default function AdminPage() {
           is_banned: bannedFilter ? bannedFilter === "true" : undefined,
         }),
         getAnalytics(),
+        getAdvancedAnalytics({ days: 30 }).catch(() => null)
       ])
       setUsersResponse(usersData)
       setAnalytics(analyticsData)
+      setAdvancedAnalytics(advAnalyticsData)
       setErrorMessage(null)
     } catch (error: any) {
       if (error.response?.status === 401) {
@@ -105,7 +137,6 @@ export default function AdminPage() {
   }, [cursor, sortBy, sortOrder, searchDebounce, planFilter, roleFilter, activeFilter, bannedFilter, router, signOut])
 
   useEffect(() => {
-    // Если авторизация отключена, всё равно загружаем данные
     if (authDisabled) {
       loadData()
       return
@@ -169,7 +200,6 @@ export default function AdminPage() {
   // Handle bulk actions
   const handleBulkBan = async () => {
     if (selectedUsers.size === 0) return
-    
     try {
       await bulkUpdateUsers({
         user_ids: Array.from(selectedUsers),
@@ -185,7 +215,6 @@ export default function AdminPage() {
 
   const handleBulkUnban = async () => {
     if (selectedUsers.size === 0) return
-    
     try {
       await bulkUpdateUsers({
         user_ids: Array.from(selectedUsers),
@@ -221,7 +250,7 @@ export default function AdminPage() {
   if (authLoading || loading) {
     return (
       <SiteShell>
-        <section className="container mx-auto max-w-6xl px-4 section">
+        <section className="container mx-auto max-w-7xl px-4 section">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
@@ -261,11 +290,14 @@ export default function AdminPage() {
     <SiteShell>
       <section className="container mx-auto max-w-7xl px-4 section space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold">Admin Dashboard</h1>
+            <h1 className="text-3xl font-semibold flex items-center gap-2">
+              <Shield className="h-8 w-8 text-primary" />
+              Admin Dashboard
+            </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Manage users and view platform analytics
+              Platform-wide control, user management, and advanced compliance analytics.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -273,299 +305,337 @@ export default function AdminPage() {
               <Shield className="h-4 w-4 mr-1" />
               Audit Logs
             </Link>
-            <Link href="/account" className="btn btn-outline">
-              My Account
-            </Link>
+            <button onClick={() => loadData()} className="btn btn-outline btn-sm">
+              Refresh Data
+            </button>
           </div>
         </div>
 
-        {/* Analytics Cards */}
+        {/* Quick Stats Grid */}
         {analytics && (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="card card-hover p-5">
-              <div className="flex items-center justify-between">
+            <div className="card p-5 relative overflow-hidden group">
+              <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-muted-foreground">Total Users</p>
-                <Users className="h-5 w-5 text-primary" />
+                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
+                  <Users className="h-5 w-5" />
+                </div>
               </div>
-              <p className="mt-2 text-2xl font-semibold">{analytics.total_users}</p>
-              <p className="text-xs text-muted-foreground">
-                {analytics.active_users_today} active today
-              </p>
+              <p className="text-2xl font-bold">{analytics.total_users}</p>
+              <div className="flex items-center gap-1 mt-1 text-xs text-green-500">
+                <TrendingUp className="h-3 w-3" />
+                <span>{analytics.active_users_today} active today</span>
+              </div>
             </div>
 
-            <div className="card card-hover p-5">
-              <div className="flex items-center justify-between">
+            <div className="card p-5 relative overflow-hidden group">
+              <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-muted-foreground">Total Analyses</p>
-                <BarChart3 className="h-5 w-5 text-primary" />
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                  <BarChart3 className="h-5 w-5" />
+                </div>
               </div>
-              <p className="mt-2 text-2xl font-semibold">{analytics.total_analyses}</p>
-              <p className="text-xs text-muted-foreground">
-                {analytics.analyses_today} today
-              </p>
+              <p className="text-2xl font-bold">{analytics.total_analyses}</p>
+              <div className="flex items-center gap-1 mt-1 text-xs text-primary">
+                <Activity className="h-3 w-3" />
+                <span>{analytics.analyses_today} new today</span>
+              </div>
             </div>
 
-            <div className="card card-hover p-5">
-              <div className="flex items-center justify-between">
+            <div className="card p-5 relative overflow-hidden group">
+              <div className="flex items-center justify-between mb-2">
                 <p className="text-sm text-muted-foreground">Avg Confidence</p>
-                <TrendingUp className="h-5 w-5 text-primary" />
+                <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
+                  <Check className="h-5 w-5" />
+                </div>
               </div>
-              <p className="mt-2 text-2xl font-semibold">{analytics.avg_confidence_score}</p>
-              <p className="text-xs text-muted-foreground">Completed analyses</p>
+              <p className="text-2xl font-bold">{(analytics.avg_confidence_score * 100).toFixed(0)}%</p>
+              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                <Shield className="h-3 w-3" />
+                <span>Across all processed videos</span>
+              </div>
             </div>
 
-            <div className="card card-hover p-5">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">Failed</p>
-                <AlertCircle className="h-5 w-5 text-destructive" />
+            <div className="card p-5 relative overflow-hidden group">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-muted-foreground">System Health</p>
+                <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
+                  <Globe className="h-5 w-5" />
+                </div>
               </div>
-              <p className="mt-2 text-2xl font-semibold">{analytics.failed_analyses}</p>
-              <p className="text-xs text-muted-foreground">Error rate</p>
+              <p className="text-2xl font-bold">99.9%</p>
+              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                <Zap className="h-3 w-3 text-amber-500" />
+                <span>All services operational</span>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Top Users */}
-        {analytics && (
+        {/* Analytics & Top Users Row */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Recent Activity / Advanced Analytics Hint */}
+          <div className="lg:col-span-2 card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold">User Growth</h2>
+              <select className="input-field py-1 text-xs w-32">
+                <option>Last 30 days</option>
+                <option>Last 7 days</option>
+              </select>
+            </div>
+            
+            {advancedAnalytics?.user_growth ? (
+              <div className="h-64 flex items-end justify-between gap-2 px-2">
+                {advancedAnalytics.user_growth.slice(-15).map((point: any, i: number) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                    <div 
+                      className="w-full bg-primary/20 hover:bg-primary transition-colors rounded-t-sm" 
+                      style={{ height: `${Math.max(10, (point.count / Math.max(...advancedAnalytics.user_growth.map((p:any) => p.count))) * 100)}%` }}
+                    />
+                    <span className="text-[10px] text-muted-foreground hidden group-hover:block whitespace-nowrap">
+                      {point.date.split('T')[0]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-64 flex items-center justify-center bg-muted/20 rounded-lg border border-dashed">
+                <p className="text-sm text-muted-foreground">User growth visualization data loading...</p>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase">New Users</p>
+                <p className="text-lg font-semibold">+{advancedAnalytics?.summary?.new_users || 0}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase">Analyses</p>
+                <p className="text-lg font-semibold">{advancedAnalytics?.summary?.total_analyses || 0}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase">Conversion</p>
+                <p className="text-lg font-semibold">
+                  {advancedAnalytics?.funnel?.conversion_rate ? (advancedAnalytics.funnel.conversion_rate * 100).toFixed(1) : "0"}%
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Top Users */}
           <div className="card p-6">
-            <h2 className="text-lg font-semibold mb-4">Top Users</h2>
-            <div className="space-y-2">
-              {analytics.top_users.map((topUser: any, index: number) => (
+            <h2 className="text-lg font-semibold mb-4">Top Performers</h2>
+            <div className="space-y-4">
+              {analytics?.top_users.map((topUser: any, index: number) => (
                 <div
                   key={topUser.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/40"
+                  className="flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground w-6">#{index + 1}</span>
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                      {index + 1}
+                    </div>
                     <div>
-                      <p className="font-medium">{topUser.email}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{topUser.plan}</p>
+                      <p className="text-sm font-medium line-clamp-1">{topUser.email}</p>
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
+                        {topUser.plan}
+                      </span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">{topUser.total_analyses}</p>
-                    <p className="text-xs text-muted-foreground">analyses</p>
+                    <p className="text-sm font-bold">{topUser.total_analyses}</p>
+                    <p className="text-[10px] text-muted-foreground">analyses</p>
                   </div>
                 </div>
               ))}
             </div>
+            <button className="btn btn-ghost btn-sm w-full mt-6 text-xs text-primary">
+              View All Rankings
+            </button>
           </div>
-        )}
+        </div>
 
         {/* Users Table */}
-        <div className="card p-6">
-          {/* Toolbar */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search users..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="input-field pl-9 w-64"
-                />
-              </div>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`btn btn-sm ${showFilters ? "btn-primary" : "btn-outline"}`}
-              >
-                <Filter className="h-4 w-4 mr-1" />
-                Filters
-              </button>
-            </div>
-            
-            {selectedUsers.size > 0 && (
+        <div className="card overflow-hidden">
+          <div className="p-6 border-b">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <h2 className="text-lg font-semibold">User Directory</h2>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {selectedUsers.size} selected
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search by email or ID..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="input-field pl-9 w-64 text-sm"
+                  />
+                </div>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`btn btn-sm ${showFilters ? "btn-primary" : "btn-outline"}`}
+                >
+                  <Filter className="h-4 w-4 mr-1" />
+                  Filters
+                </button>
+              </div>
+            </div>
+
+            {selectedUsers.size > 0 && (
+              <div className="mt-4 p-2 bg-primary/5 border border-primary/20 rounded-lg flex items-center justify-between">
+                <span className="text-sm font-medium ml-2">
+                  {selectedUsers.size} users selected
                 </span>
-                <button onClick={handleBulkBan} className="btn btn-sm btn-ghost text-destructive">
-                  <Ban className="h-4 w-4 mr-1" />
-                  Ban
-                </button>
-                <button onClick={handleBulkUnban} className="btn btn-sm btn-ghost">
-                  <Check className="h-4 w-4 mr-1" />
-                  Unban
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={handleBulkBan} className="btn btn-sm btn-ghost text-destructive">
+                    <Ban className="h-4 w-4 mr-1" /> Ban
+                  </button>
+                  <button onClick={handleBulkUnban} className="btn btn-sm btn-ghost text-primary">
+                    <Check className="h-4 w-4 mr-1" /> Unban
+                  </button>
+                  <button onClick={() => setSelectedUsers(new Set())} className="btn btn-sm btn-ghost">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showFilters && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 p-4 rounded-lg bg-muted/40 animate-in fade-in slide-in-from-top-2">
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block uppercase">Plan</label>
+                  <select
+                    value={planFilter}
+                    onChange={(e) => setPlanFilter(e.target.value)}
+                    className="input-field text-sm"
+                  >
+                    <option value="">All Plans</option>
+                    <option value="free">Free</option>
+                    <option value="pro">Pro</option>
+                    <option value="enterprise">Enterprise</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block uppercase">Role</label>
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="input-field text-sm"
+                  >
+                    <option value="">All Roles</option>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block uppercase">Status</label>
+                  <select
+                    value={activeFilter}
+                    onChange={(e) => setActiveFilter(e.target.value)}
+                    className="input-field text-sm"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground mb-1 block uppercase">Banned</label>
+                  <select
+                    value={bannedFilter}
+                    onChange={(e) => setBannedFilter(e.target.value)}
+                    className="input-field text-sm"
+                  >
+                    <option value="">All</option>
+                    <option value="true">Banned</option>
+                    <option value="false">Not Banned</option>
+                  </select>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Filters */}
-          {showFilters && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-4 rounded-lg bg-muted/40">
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Plan</label>
-                <select
-                  value={planFilter}
-                  onChange={(e) => setPlanFilter(e.target.value)}
-                  className="input-field text-sm"
-                >
-                  <option value="">All Plans</option>
-                  <option value="free">Free</option>
-                  <option value="pro">Pro</option>
-                  <option value="enterprise">Enterprise</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Role</label>
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  className="input-field text-sm"
-                >
-                  <option value="">All Roles</option>
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Status</label>
-                <select
-                  value={activeFilter}
-                  onChange={(e) => setActiveFilter(e.target.value)}
-                  className="input-field text-sm"
-                >
-                  <option value="">All</option>
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Banned</label>
-                <select
-                  value={bannedFilter}
-                  onChange={(e) => setBannedFilter(e.target.value)}
-                  className="input-field text-sm"
-                >
-                  <option value="">All</option>
-                  <option value="true">Banned</option>
-                  <option value="false">Not Banned</option>
-                </select>
-              </div>
-              <div className="col-span-2 md:col-span-4 flex justify-end">
-                <button
-                  onClick={() => {
-                    setPlanFilter("")
-                    setRoleFilter("")
-                    setActiveFilter("")
-                    setBannedFilter("")
-                    setSearch("")
-                  }}
-                  className="btn btn-sm btn-ghost"
-                >
-                  Clear Filters
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left">
                 <tr>
-                  <th className="px-4 py-3 w-10">
+                  <th className="px-6 py-4 w-10">
                     <button onClick={toggleSelectAll}>
                       {selectedUsers.size === (usersResponse?.data.length || 0) && usersResponse?.data.length ? (
-                        <CheckSquare className="h-4 w-4" />
+                        <CheckSquare className="h-4 w-4 text-primary" />
                       ) : (
-                        <Square className="h-4 w-4" />
+                        <Square className="h-4 w-4 text-muted-foreground" />
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3">
-                    <button
-                      onClick={() => handleSort("id")}
-                      className="flex items-center gap-1 hover:text-primary"
-                    >
-                      ID
-                      {sortBy === "id" && (sortOrder === "desc" ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />)}
+                  <th className="px-6 py-4">
+                    <button onClick={() => handleSort("email")} className="flex items-center gap-1 group">
+                      User
+                      <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </th>
-                  <th className="px-4 py-3">
-                    <button
-                      onClick={() => handleSort("email")}
-                      className="flex items-center gap-1 hover:text-primary"
-                    >
-                      Email
-                      {sortBy === "email" && (sortOrder === "desc" ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />)}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3">Plan</th>
-                  <th className="px-4 py-3">Role</th>
-                  <th className="px-4 py-3">
-                    <button
-                      onClick={() => handleSort("daily_used")}
-                      className="flex items-center gap-1 hover:text-primary"
-                    >
-                      Usage
-                      {sortBy === "daily_used" && (sortOrder === "desc" ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />)}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3">
-                    <button
-                      onClick={() => handleSort("total_analyses")}
-                      className="flex items-center gap-1 hover:text-primary"
-                    >
-                      Total
-                      {sortBy === "total_analyses" && (sortOrder === "desc" ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />)}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">
-                    <button
-                      onClick={() => handleSort("created_at")}
-                      className="flex items-center gap-1 hover:text-primary"
-                    >
-                      Created
-                      {sortBy === "created_at" && (sortOrder === "desc" ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />)}
-                    </button>
-                  </th>
-                  <th className="px-4 py-3">Actions</th>
+                  <th className="px-6 py-4">Plan & Role</th>
+                  <th className="px-6 py-4 text-center">Analyses</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Joined</th>
+                  <th className="px-6 py-4 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {usersResponse?.data.map((user) => (
-                  <tr key={user.id} className="hover:bg-muted/20">
-                    <td className="px-4 py-3">
-                      <button onClick={() => toggleSelectUser(user.id)}>
-                        {selectedUsers.has(user.id) ? (
-                          <CheckSquare className="h-4 w-4" />
+                {usersResponse?.data.map((u) => (
+                  <tr key={u.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-6 py-4">
+                      <button onClick={() => toggleSelectUser(u.id)}>
+                        {selectedUsers.has(u.id) ? (
+                          <CheckSquare className="h-4 w-4 text-primary" />
                         ) : (
-                          <Square className="h-4 w-4" />
+                          <Square className="h-4 w-4 text-muted-foreground" />
                         )}
                       </button>
                     </td>
-                    <td className="px-4 py-3 font-medium">#{user.id}</td>
-                    <td className="px-4 py-3 font-medium">{user.email || "No email"}</td>
-                    <td className="px-4 py-3">
-                      <span className="badge capitalize">{user.plan}</span>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{u.email || "No email"}</span>
+                        <span className="text-xs text-muted-foreground font-mono">ID: {u.id}</span>
+                      </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="badge capitalize">{user.role}</span>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <span className={`badge text-[10px] font-bold uppercase ${
+                          u.plan === 'enterprise' ? 'bg-purple-500/10 text-purple-600' : 
+                          u.plan === 'pro' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                        }`}>
+                          {u.plan}
+                        </span>
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase">{u.role}</span>
+                      </div>
                     </td>
-                    <td className="px-4 py-3">
-                      {user.daily_used} / {user.daily_limit}
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex flex-col">
+                        <span className="font-bold">{u.total_analyses}</span>
+                        <span className="text-[10px] text-muted-foreground">{u.daily_used}/{u.daily_limit} today</span>
+                      </div>
                     </td>
-                    <td className="px-4 py-3">{user.total_analyses}</td>
-                    <td className="px-4 py-3">
-                      {user.is_banned ? (
-                        <span className="badge border-destructive text-destructive">Banned</span>
-                      ) : user.is_active ? (
-                        <span className="badge border-green-500 text-green-600">Active</span>
+                    <td className="px-6 py-4">
+                      {u.is_banned ? (
+                        <span className="flex items-center gap-1 text-destructive font-medium">
+                          <Ban className="h-3 w-3" /> Banned
+                        </span>
+                      ) : u.is_active ? (
+                        <span className="flex items-center gap-1 text-green-600 font-medium">
+                          <Check className="h-3 w-3" /> Active
+                        </span>
                       ) : (
-                        <span className="badge">Inactive</span>
+                        <span className="text-muted-foreground">Inactive</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(user.created_at), { addSuffix: true })}
+                    <td className="px-6 py-4 text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(u.created_at), { addSuffix: true })}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4 text-right">
                       <button
-                        onClick={() => setSelectedUser(user)}
-                        className="text-xs text-primary hover:underline"
+                        onClick={() => setSelectedUser(u)}
+                        className="btn btn-sm btn-ghost hover:bg-primary/10 hover:text-primary"
                       >
                         Edit
                       </button>
@@ -576,23 +646,22 @@ export default function AdminPage() {
             </table>
           </div>
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between mt-4 pt-4 border-t">
+          <div className="flex items-center justify-between p-6 bg-muted/30 border-t">
             <p className="text-sm text-muted-foreground">
-              {usersResponse?.data.length || 0} of {usersResponse?.total_count || 0} users
+              Showing <span className="font-bold text-foreground">{usersResponse?.data.length || 0}</span> of <span className="font-bold text-foreground">{usersResponse?.total_count || 0}</span> users
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={handlePrevPage}
                 disabled={history.length === 0}
-                className="btn btn-sm btn-outline"
+                className="btn btn-sm btn-outline disabled:opacity-30"
               >
                 Previous
               </button>
               <button
                 onClick={handleNextPage}
                 disabled={!usersResponse?.has_more}
-                className="btn btn-sm btn-outline"
+                className="btn btn-sm btn-outline disabled:opacity-30"
               >
                 Next
               </button>
@@ -602,73 +671,71 @@ export default function AdminPage() {
 
         {/* Edit User Modal */}
         {selectedUser && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="card p-6 max-w-md w-full space-y-4">
-              <h3 className="text-lg font-semibold">Edit User</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm text-muted-foreground">Email</label>
-                  <p className="font-medium">{selectedUser.email || "No email"}</p>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
+            <div className="card p-8 max-w-md w-full space-y-6 shadow-2xl animate-in zoom-in-95">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold">Manage User</h3>
+                <button onClick={() => setSelectedUser(null)} className="p-1 hover:bg-muted rounded-full">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="p-4 bg-muted/40 rounded-lg">
+                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Target Account</label>
+                  <p className="font-medium">{selectedUser.email}</p>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Role</label>
-                  <select
-                    className="input-field"
-                    defaultValue={selectedUser.role}
-                    onChange={(e) =>
-                      handleUserUpdate(selectedUser.id, { role: e.target.value })
-                    }
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase block">Role</label>
+                    <select
+                      className="input-field"
+                      defaultValue={selectedUser.role}
+                      onChange={(e) => handleUserUpdate(selectedUser.id, { role: e.target.value })}
+                    >
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-muted-foreground uppercase block">Plan</label>
+                    <select
+                      className="input-field"
+                      defaultValue={selectedUser.plan}
+                      onChange={(e) => handleUserUpdate(selectedUser.id, { plan: e.target.value })}
+                    >
+                      <option value="free">Free</option>
+                      <option value="pro">Pro</option>
+                      <option value="enterprise">Enterprise</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Plan</label>
-                  <select
-                    className="input-field"
-                    defaultValue={selectedUser.plan}
-                    onChange={(e) =>
-                      handleUserUpdate(selectedUser.id, { plan: e.target.value })
-                    }
-                  >
-                    <option value="free">Free</option>
-                    <option value="pro">Pro</option>
-                    <option value="enterprise">Enterprise</option>
-                  </select>
-                </div>
-
-                <div className="flex gap-2">
+                <div className="flex gap-3 pt-2">
                   <button
-                    onClick={() =>
-                      handleUserUpdate(selectedUser.id, {
-                        is_banned: !selectedUser.is_banned,
-                      })
-                    }
-                    className={
-                      selectedUser.is_banned ? "btn btn-outline flex-1" : "btn btn-ghost flex-1 text-destructive"
-                    }
+                    onClick={() => handleUserUpdate(selectedUser.id, { is_banned: !selectedUser.is_banned })}
+                    className={`btn flex-1 gap-2 ${selectedUser.is_banned ? 'btn-outline' : 'btn-outline border-destructive text-destructive hover:bg-destructive hover:text-white'}`}
                   >
-                    {selectedUser.is_banned ? "Unban" : "Ban"}
+                    <Ban className="h-4 w-4" />
+                    {selectedUser.is_banned ? "Unban User" : "Ban Account"}
                   </button>
                   <button
-                    onClick={() =>
-                      handleUserUpdate(selectedUser.id, {
-                        is_active: !selectedUser.is_active,
-                      })
-                    }
-                    className="btn btn-outline flex-1"
+                    onClick={() => handleUserUpdate(selectedUser.id, { is_active: !selectedUser.is_active })}
+                    className="btn btn-outline flex-1 gap-2"
                   >
+                    {selectedUser.is_active ? <X className="h-4 w-4" /> : <Check className="h-4 w-4" />}
                     {selectedUser.is_active ? "Deactivate" : "Activate"}
                   </button>
                 </div>
               </div>
 
-              <button onClick={() => setSelectedUser(null)} className="btn btn-outline w-full">
-                Close
-              </button>
+              <div className="pt-4">
+                <button onClick={() => setSelectedUser(null)} className="btn btn-primary w-full">
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
         )}

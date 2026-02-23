@@ -1,34 +1,16 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { Activity, Clock, ShieldCheck, TrendingUp } from "lucide-react"
+import { Activity, Clock, ShieldCheck, TrendingUp, ChevronRight, PlayCircle, FileText, AlertCircle } from "lucide-react"
+import Link from "next/link"
+import { formatDistanceToNow } from "date-fns"
 import { SiteShell } from "@/components/SiteShell"
 import { StatCard } from "@/components/StatCard"
 import { Skeleton, SkeletonTable } from "@/components/ui/Skeleton"
-
-const recentAnalyses = [
-  {
-    id: "analysis-1",
-    title: "YouTube - influencer integration",
-    status: "Completed",
-    score: 0.83,
-    createdAt: "2 hours ago",
-  },
-  {
-    id: "analysis-2",
-    title: "Telegram post - promo code",
-    status: "Completed",
-    score: 0.62,
-    createdAt: "Yesterday",
-  },
-  {
-    id: "analysis-3",
-    title: "Instagram story - brand mention",
-    status: "Processing",
-    score: 0.0,
-    createdAt: "Just now",
-  },
-]
+import { useAuth } from "@/contexts/auth-context"
+import { fetchAnalysisHistory } from "@/lib/api-client"
+import type { AnalysisHistoryItem } from "@/types/api"
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -50,6 +32,56 @@ const itemVariants = {
 }
 
 export default function DashboardPage() {
+  const { user, loading: authLoading } = useAuth()
+  const [history, setHistory] = useState<AnalysisHistoryItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      if (!user) return
+      
+      try {
+        const data = await fetchAnalysisHistory({ limit: 5 })
+        setHistory(data)
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (!authLoading && user) {
+      loadDashboardData()
+    }
+  }, [user, authLoading])
+
+  if (authLoading || (loading && !user)) {
+    return (
+      <SiteShell>
+        <section className="container mx-auto max-w-6xl px-4 section space-y-10">
+          <div className="space-y-4">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+          <div className="card p-6">
+            <SkeletonTable rows={5} />
+          </div>
+        </section>
+      </SiteShell>
+    )
+  }
+
+  const avgConfidence = history.length > 0 
+    ? history.reduce((acc, curr) => acc + (curr.confidence_score || 0), 0) / history.length
+    : 0
+
   return (
     <SiteShell>
       <section className="container mx-auto max-w-6xl px-4 section space-y-10">
@@ -82,8 +114,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            Track analysis throughput, quality signals, and ongoing tasks across the compliance
-            pipeline.
+            Welcome back, {user?.email}. Track your video analysis history and platform usage.
           </motion.p>
         </motion.div>
 
@@ -95,120 +126,145 @@ export default function DashboardPage() {
           animate="visible"
         >
           <StatCard
-            label="Monthly analyses"
-            value="128"
-            helper="+14% vs last month"
+            label="Total analyses"
+            value={user?.total_analyses.toString() || "0"}
+            helper="All time"
             icon={<TrendingUp className="h-5 w-5" />}
           />
           <StatCard
+            label="Daily Usage"
+            value={`${user?.daily_used || 0}/${user?.daily_limit || 0}`}
+            helper="Resets daily"
+            icon={<Activity className="h-5 w-5" />}
+          />
+          <StatCard
             label="Avg. confidence"
-            value="0.78"
-            helper="Across 30 latest reports"
+            value={avgConfidence.toFixed(2)}
+            helper="Latest analyses"
             icon={<ShieldCheck className="h-5 w-5" />}
           />
           <StatCard
-            label="Avg. processing time"
-            value="47s"
-            helper="For 2-min videos"
+            label="Current Plan"
+            value={user?.plan.toUpperCase() || "FREE"}
+            helper={user?.role === "admin" ? "Administrator" : "Standard user"}
             icon={<Clock className="h-5 w-5" />}
           />
-          <StatCard
-            label="Active tasks"
-            value="3"
-            helper="Currently running"
-            icon={<Activity className="h-5 w-5" />}
-          />
         </motion.div>
 
-        {/* Recent Analyses Table */}
-        <motion.div
-          className="card p-6"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-        >
-          <div className="flex items-center justify-between">
-            <motion.h2
-              className="text-xl font-semibold"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              Recent analyses
-            </motion.h2>
-            <motion.button
-              className="text-sm text-primary hover:underline"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              View all
-            </motion.button>
-          </div>
-          
+        {/* Recent Analyses */}
+        <div className="grid gap-6 lg:grid-cols-3">
           <motion.div
-            className="mt-6 divide-y divide-border"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
+            className="lg:col-span-2 card p-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
           >
-            {recentAnalyses.map((analysis, index) => (
-              <motion.div
-                key={analysis.id}
-                className="flex flex-col md:flex-row md:items-center md:justify-between py-4"
-                variants={itemVariants}
-                whileHover={{ 
-                  backgroundColor: "hsl(var(--muted) / 0.3)",
-                  x: 4,
-                }}
-                transition={{ duration: 0.2 }}
-              >
-                <div>
-                  <p className="font-medium">{analysis.title}</p>
-                  <p className="text-sm text-muted-foreground">{analysis.createdAt}</p>
-                </div>
-                <div className="mt-3 md:mt-0 flex items-center gap-4">
-                  <motion.span
-                    className="badge"
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    {analysis.status}
-                  </motion.span>
-                  <span className="text-sm text-muted-foreground">
-                    Score: {analysis.score.toFixed(2)}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
-
-        {/* Loading State Example (for demonstration) */}
-        <motion.div
-          className="space-y-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-        >
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">
-            Loading states (for reference)
-          </p>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-          <div className="card p-6">
             <div className="flex items-center justify-between mb-6">
-              <Skeleton className="h-6 w-40" />
-              <Skeleton className="h-4 w-20" />
+              <h2 className="text-xl font-semibold">Recent analyses</h2>
+              <Link href="/history" className="text-sm text-primary hover:underline flex items-center gap-1">
+                View all <ChevronRight className="h-4 w-4" />
+              </Link>
             </div>
-            <SkeletonTable rows={4} />
+            
+            {loading ? (
+              <SkeletonTable rows={3} />
+            ) : history.length > 0 ? (
+              <div className="divide-y divide-border">
+                {history.map((analysis) => (
+                  <div
+                    key={analysis.id}
+                    className="flex flex-col md:flex-row md:items-center md:justify-between py-4 group"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1 p-2 rounded-lg bg-primary/10 text-primary">
+                        <PlayCircle className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium line-clamp-1">{analysis.video_id || "Untitled Analysis"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 md:mt-0 flex items-center gap-4">
+                      <span className={`badge ${
+                        analysis.status === "completed" ? "badge-success" : 
+                        analysis.status === "failed" ? "badge-destructive" : ""
+                      }`}>
+                        {analysis.status}
+                      </span>
+                      {analysis.confidence_score !== null && (
+                        <span className="text-sm font-medium">
+                          {(analysis.confidence_score * 100).toFixed(0)}%
+                        </span>
+                      )}
+                      <Link 
+                        href={`/analyze/result?taskId=${analysis.task_id}`}
+                        className="p-1 hover:bg-muted rounded"
+                      >
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-12 text-center space-y-3">
+                <FileText className="h-12 w-12 text-muted-foreground/30 mx-auto" />
+                <p className="text-muted-foreground">No analyses found yet.</p>
+                <Link href="/analyze" className="btn btn-primary btn-sm">
+                  Start your first analysis
+                </Link>
+              </div>
+            )}
+          </motion.div>
+
+          <motion.div
+            className="space-y-6"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <div className="card p-6 bg-primary text-primary-foreground">
+              <h3 className="text-lg font-semibold mb-2">Upgrade to Pro</h3>
+              <p className="text-sm opacity-90 mb-4">
+                Get higher daily limits, faster processing, and detailed PDF reports.
+              </p>
+              <Link href="/pricing" className="btn bg-white text-primary hover:bg-white/90 w-full">
+                Upgrade Now
+              </Link>
+            </div>
+
+            <div className="card p-6">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+                Platform Status
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    Analysis Engine
+                  </span>
+                  <span className="text-muted-foreground">Operational</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                    API Gateway
+                  </span>
+                  <span className="text-muted-foreground">Operational</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                    Report Generation
+                  </span>
+                  <span className="text-muted-foreground">Delayed</span>
+                </div>
+              </div>
+            </div>
           </div>
-        </motion.div>
+        </div>
       </section>
     </SiteShell>
   )
