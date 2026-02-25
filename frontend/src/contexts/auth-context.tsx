@@ -21,19 +21,21 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  /** Только для DEV: обновить данные текущего мок-пользователя */
+  updateMockUser: (updates: Partial<User>) => void
 }
 
 // Mock user для режима без авторизации
-const MOCK_ADMIN_USER: User = {
+const DEFAULT_MOCK_USER: User = {
   id: '0',
-  email: 'test@veritasad.ai',
+  email: 'dev-mode@veritasad.ai',
   role: 'admin',
   plan: 'enterprise',
   created_at: new Date().toISOString(),
 }
 
-const MOCK_SESSION: Session = {
-  user: MOCK_ADMIN_USER,
+const DEFAULT_MOCK_SESSION: Session = {
+  user: DEFAULT_MOCK_USER,
   access_token: 'mock-token',
   refresh_token: 'mock-refresh-token',
   expires_at: Date.now() + 86400000, // 24 hours
@@ -46,14 +48,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Проверяем, отключена ли авторизация через переменную окружения
-  const authDisabled = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true'
+  // Проверяем, отключена ли авторизация через переменную окружения или в режиме разработки без Supabase
+  const authDisabled = 
+    process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true' || 
+    (process.env.NODE_ENV === 'development' && !process.env.NEXT_PUBLIC_SUPABASE_URL)
 
   useEffect(() => {
     if (authDisabled) {
       // Режим без авторизации - сразу устанавливаем mock-пользователя
-      setSession(MOCK_SESSION)
-      setUser(MOCK_ADMIN_USER)
+      setSession(DEFAULT_MOCK_SESSION)
+      setUser(DEFAULT_MOCK_USER)
       setLoading(false)
       return
     }
@@ -82,9 +86,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     if (authDisabled) {
-      // В режиме без авторизации просто устанавливаем mock-пользователя
-      setSession(MOCK_SESSION)
-      setUser(MOCK_ADMIN_USER)
+      setSession(DEFAULT_MOCK_SESSION)
+      setUser(DEFAULT_MOCK_USER)
       return
     }
     const { error } = await supabase.auth.signInWithPassword({
@@ -96,8 +99,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     if (authDisabled) {
-      setSession(MOCK_SESSION)
-      setUser(MOCK_ADMIN_USER)
+      setSession(DEFAULT_MOCK_SESSION)
+      setUser(DEFAULT_MOCK_USER)
       return
     }
 
@@ -111,15 +114,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (error) throw error
 
-    // Check if email confirmation is required (only for real Supabase)
-    if (!isMockAuth && data.user && !data.session) {
+    if (data.user && !data.session) {
       console.log("Email confirmation required for:", email)
     }
   }
 
   const signOut = async () => {
     if (authDisabled) {
-      // В режиме без авторизации просто очищаем пользователя
       setSession(null)
       setUser(null)
       return
@@ -128,16 +129,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error
   }
 
+  const updateMockUser = (updates: Partial<User>) => {
+    if (authDisabled || process.env.NODE_ENV === 'development') {
+      const newUser = user ? { ...user, ...updates } : { ...DEFAULT_MOCK_USER, ...updates }
+      setUser(newUser as User)
+      setSession(prev => prev ? { ...prev, user: newUser as User } : { ...DEFAULT_MOCK_SESSION, user: newUser as User })
+    }
+  }
+
   const value = {
     user,
     session,
     loading,
-    supabaseConfigured: !isMockAuth && !authDisabled,
-    isMock: isMockAuth && !authDisabled,
+    supabaseConfigured: !authDisabled,
+    isMock: authDisabled,
     authDisabled,
     signIn,
     signUp,
     signOut,
+    updateMockUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -20,3 +20,9 @@ class UserProfile(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UserUpdate(BaseModel):
+    """User profile update request."""
+
+    email: Optional[str] = None

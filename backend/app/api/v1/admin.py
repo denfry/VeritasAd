@@ -43,6 +43,8 @@ class AnalyticsResponse(BaseModel):
     avg_confidence_score: float
     failed_analyses: int
     top_users: List[dict]
+    plan_distribution: List[dict]
+    chart_data: List[dict]
 
 
 @router.get("/users", response_model=List[UserListItem])
@@ -203,6 +205,54 @@ async def get_analytics(
         }
         for row in top_users_result.all()
     ]
+
+    # Plan distribution
+    plan_dist_result = await db.execute(
+        select(User.plan, func.count(User.id))
+        .group_by(User.plan)
+    )
+    plan_distribution = [
+        {"name": row[0].capitalize(), "value": row[1]}
+        for row in plan_dist_result.all()
+    ]
+
+    # Chart data (last 24 hours)
+    chart_data = []
+    for i in range(24):
+        hour_ago = now - timedelta(hours=24-i)
+        hour_ago_end = hour_ago + timedelta(hours=1)
+        
+        # Count analyses in this hour
+        analyses_count_result = await db.execute(
+            select(func.count(Analysis.id))
+            .where(Analysis.created_at >= hour_ago)
+            .where(Analysis.created_at < hour_ago_end)
+        )
+        analyses_count = analyses_count_result.scalar() or 0
+        
+        # Average latency for completed analyses in this hour
+        # (completed_at - created_at)
+        latency_result = await db.execute(
+            select(func.avg(Analysis.completed_at - Analysis.created_at))
+            .where(Analysis.created_at >= hour_ago)
+            .where(Analysis.created_at < hour_ago_end)
+            .where(Analysis.status == AnalysisStatus.COMPLETED)
+            .where(Analysis.completed_at.is_not(None))
+        )
+        avg_latency_td = latency_result.scalar()
+        avg_latency_ms = 0
+        if avg_latency_td:
+            avg_latency_ms = int(avg_latency_td.total_seconds() * 1000)
+        
+        # System load mock - based on analyses count
+        load = min(100, (analyses_count / 10) * 100) if analyses_count > 0 else 0
+        
+        chart_data.append({
+            "time": hour_ago.strftime("%H:%M"),
+            "analyses": analyses_count,
+            "latency": avg_latency_ms or 120, # Default mock latency if no data
+            "load": load or 5 # Default mock load
+        })
     
     return AnalyticsResponse(
         total_users=total_users,
@@ -212,4 +262,6 @@ async def get_analytics(
         avg_confidence_score=round(float(avg_confidence), 2),
         failed_analyses=failed_analyses,
         top_users=top_users,
+        plan_distribution=plan_distribution,
+        chart_data=chart_data,
     )

@@ -1,32 +1,32 @@
 # syntax=docker/dockerfile:1
-# Multi-stage Dockerfile for VeritasAD Backend - Production
+# Multi-stage Dockerfile for VeritasAD Backend - Production using UV
 
 # ==================== BUILD STAGE ====================
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     git \
-    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy dependencies file
-COPY pyproject.toml ./
-COPY requirements.txt ./
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
+# Copy dependencies only to leverage caching
+COPY pyproject.toml uv.lock ./
 
-# Install Python dependencies
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir \
-        --default-timeout=1000 \
-        --retries=10 \
-        -r requirements.txt
+# Install dependencies using uv
+# --frozen ensures we use the exact versions from uv.lock
+RUN uv sync --frozen --no-dev --no-install-project
 
 # ==================== RUNTIME STAGE ====================
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Install ONLY runtime dependencies (minimal set)
 RUN apt-get update && apt-get install -y \
@@ -42,11 +42,13 @@ RUN useradd -m -u 1000 veritasad && \
 
 WORKDIR /app
 
-# Copy Python packages from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# Copy the virtualenv from the builder stage
+COPY --from=builder --chown=veritasad:veritasad /app/.venv /app/.venv
 
-# Copy application code (исключая .dockerignore)
+# Place the venv on the PATH
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Copy application code
 COPY --chown=veritasad:veritasad . .
 
 # Switch to non-root user

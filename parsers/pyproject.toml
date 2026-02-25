@@ -1,0 +1,17 @@
+[project]
+name = "veritasad-parsers"
+version = "1.0.0"
+description = "Social media parsers for VeritasAd"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "yt-dlp==2026.1.6.233142.dev0",
+    "telethon==1.38.1",
+    "requests==2.32.3",
+]
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["instagram_parser", "telegram_parser", "vk_parser", "youtube_parser"]

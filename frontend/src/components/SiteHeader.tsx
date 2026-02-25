@@ -201,7 +201,7 @@ export function SiteHeader() {
 /**
  * Compact currency selector for header
  */
-function CurrencySelectorCompact() {
+export function CurrencySelectorCompact() {
   const { selectedCurrency, setSelectedCurrency } = useCurrency()
   
   return (

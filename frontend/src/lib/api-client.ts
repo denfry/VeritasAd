@@ -266,6 +266,14 @@ export async function getCurrentUserProfile(): Promise<UserProfile> {
   })
 }
 
+export async function updateCurrentUserProfile(data: { email?: string }): Promise<UserProfile> {
+  return request<UserProfile>("/api/v1/users/me", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  })
+}
+
 export type UserListParams = {
   limit?: number
   cursor?: string
@@ -577,5 +585,34 @@ export async function linkTelegramAccount(params: {
 export async function unlinkTelegramAccount(): Promise<{ success: boolean; message: string }> {
   return request("/api/v1/telegram/unlink", {
     method: "POST",
+  })
+}
+
+// ==================== SECURITY & SESSIONS ====================
+
+export type UserSession = {
+  id: string
+  ip_address: string
+  user_agent: string
+  created_at: string
+  last_active: string
+  is_current: boolean
+}
+
+export async function listUserSessions(): Promise<{ sessions: UserSession[]; total: number }> {
+  return request("/api/v1/security/sessions", {
+    method: "GET",
+  })
+}
+
+export async function revokeUserSession(sessionId: string): Promise<{ status: string }> {
+  return request(`/api/v1/security/sessions/${sessionId}/revoke`, {
+    method: "POST",
+  })
+}
+
+export async function getTwoFactorStatus(): Promise<{ enabled: boolean }> {
+  return request("/api/v1/security/2fa/status", {
+    method: "GET",
   })
 }

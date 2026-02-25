@@ -1,17 +1,43 @@
 # syntax=docker/dockerfile:1
-FROM python:3.11-slim
+# Multi-stage Dockerfile for VeritasAD Bot using UV
+
+# ==================== BUILD STAGE ====================
+FROM python:3.12-slim AS builder
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# Копируем только requirements для кэширования
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
 
-# Копируем application (исключая .dockerignore)
-COPY . .
+# Copy dependencies only
+COPY pyproject.toml uv.lock ./
 
-# Create non-root user for security
-RUN useradd -m -u 1000 botuser && chown -R botuser:botuser /app
+# Install dependencies
+RUN uv sync --frozen --no-dev --no-install-project
+
+# ==================== RUNTIME STAGE ====================
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Create non-root user
+RUN useradd -m -u 1000 botuser && \
+    mkdir -p /app && \
+    chown -R botuser:botuser /app
+
+# Copy the virtualenv from the builder stage
+COPY --from=builder --chown=botuser:botuser /app/.venv /app/.venv
+
+# Place the venv on the PATH
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Copy application code
+COPY --chown=botuser:botuser . .
+
+# Switch to non-root user
 USER botuser
 
 # Health check

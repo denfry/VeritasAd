@@ -113,6 +113,16 @@ export type AnalyticsResponse = {
     plan: string
     total_analyses: number
   }>
+  plan_distribution: Array<{
+    name: string
+    value: number
+  }>
+  chart_data: Array<{
+    time: string
+    analyses: number
+    latency: number
+    load: number
+  }>
 }
 
 export type PaymentCreateResponse = {

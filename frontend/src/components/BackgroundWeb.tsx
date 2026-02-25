@@ -47,11 +47,11 @@ export function BackgroundWeb() {
 
     // Colors based on theme
     const lineColor = isDark 
-      ? 'rgba(148, 163, 184, 0.15)'  // slate-400 с низкой прозрачностью
-      : 'rgba(100, 116, 139, 0.12)'  // slate-500 с низкой прозрачностью
+      ? 'rgba(148, 163, 184, 0.15)'  // slate-400 with low transparency
+      : 'rgba(71, 85, 105, 0.2)'     // slate-600 with better visibility
     const particleColor = isDark
       ? 'rgba(148, 163, 184, 0.3)'
-      : 'rgba(100, 116, 139, 0.25)'
+      : 'rgba(71, 85, 105, 0.35)'
 
     // Update and draw particles
     particles.forEach((particle, i) => {

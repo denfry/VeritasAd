@@ -51,10 +51,10 @@ export function InteractiveSpiderweb() {
       
       // Get theme-aware color
       const isDark = document.documentElement.classList.contains("dark")
-      const color = isDark ? "255, 255, 255" : "0, 0, 0"
+      const color = isDark ? "255, 255, 255" : "71, 85, 105" // slate-600 for light mode
       
-      ctx.fillStyle = `rgba(${color}, 0.15)`
-      ctx.strokeStyle = `rgba(${color}, 0.08)`
+      ctx.fillStyle = isDark ? `rgba(${color}, 0.15)` : `rgba(${color}, 0.25)`
+      ctx.strokeStyle = isDark ? `rgba(${color}, 0.08)` : `rgba(${color}, 0.15)`
       ctx.lineWidth = 0.5
 
       for (let i = 0; i < particles.length; i++) {
@@ -142,7 +142,7 @@ export function InteractiveSpiderweb() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 z-0 pointer-events-none opacity-50 transition-opacity duration-1000"
+      className="fixed inset-0 z-0 pointer-events-none opacity-60 dark:opacity-40 transition-opacity duration-1000"
       style={{ mixBlendMode: 'normal' }}
     />
   )

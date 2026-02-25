@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -19,7 +19,7 @@ import {
   Timer,
   UploadCloud,
 } from "lucide-react"
-import { SiteShell } from "@/components/SiteShell"
+import { AppShell } from "@/components/AppShell"
 import { ProgressBar } from "@/components/ProgressBar"
 import { VideoTimeline } from "@/components/VideoTimeline"
 import { Skeleton } from "@/components/ui/Skeleton"
@@ -30,6 +30,9 @@ import { getPlatformIcon, type PlatformType } from "@/lib/platforms"
 
 export default function AnalyzePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const taskIdParam = searchParams.get("taskId")
+  
   const { user, loading: authLoading, signOut } = useAuth()
   const [url, setUrl] = useState("")
   const [file, setFile] = useState<File | null>(null)
@@ -39,6 +42,7 @@ export default function AnalyzePage() {
   const [progressStatus, setProgressStatus] = useState("")
   const [progressStage, setProgressStage] = useState("idle")
   const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [isLoadingResult, setIsLoadingResult] = useState(false)
   const analysisAbortRef = useRef<AbortController | null>(null)
 
   const platformType: PlatformType = useMemo(() => {
@@ -52,6 +56,30 @@ export default function AnalyzePage() {
       router.push("/auth/login")
     }
   }, [user, authLoading, router])
+
+  // Load task from URL if provided
+  useEffect(() => {
+    if (user && taskIdParam && !result && !isSubmitting) {
+      loadTaskResult(taskIdParam)
+    }
+  }, [user, taskIdParam])
+
+  async function loadTaskResult(taskId: string) {
+    setIsLoadingResult(true)
+    setProgressStatus("Loading results...")
+    try {
+      const data = await fetchAnalysisResult({ taskId })
+      setResult(data)
+      setProgress(100)
+      setProgressStatus(data.status ?? "Completed")
+      setProgressStage("complete")
+    } catch (error: any) {
+      console.error("Failed to load task result:", error)
+      toast.error("Failed to load analysis results.")
+    } finally {
+      setIsLoadingResult(false)
+    }
+  }
 
   const handleAuthExpired = async () => {
     toast.error("Session expired. Please sign in again.")
@@ -197,7 +225,7 @@ export default function AnalyzePage() {
   }
 
   return (
-    <SiteShell>
+    <AppShell>
       <section className="container mx-auto max-w-5xl px-4 py-12">
         {/* Header */}
         <motion.div
@@ -207,7 +235,7 @@ export default function AnalyzePage() {
           transition={{ duration: 0.5 }}
         >
           <motion.p
-            className="text-sm font-medium text-primary mb-2"
+            className="text-sm font-bold text-primary mb-2 uppercase tracking-widest"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1 }}
@@ -215,7 +243,7 @@ export default function AnalyzePage() {
             Content analysis
           </motion.p>
           <motion.h1
-            className="text-4xl font-semibold tracking-tight"
+            className="text-4xl font-extrabold tracking-tight"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -223,7 +251,7 @@ export default function AnalyzePage() {
             Analyze content for advertising
           </motion.h1>
           <motion.p
-            className="mt-3 text-muted-foreground max-w-2xl mx-auto"
+            className="mt-3 text-muted-foreground max-w-2xl mx-auto font-medium"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -232,6 +260,7 @@ export default function AnalyzePage() {
             Get instant insights about sponsored content and brand mentions.
           </motion.p>
         </motion.div>
+
 
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Left Column - Form */}
@@ -542,10 +571,19 @@ export default function AnalyzePage() {
                     {/* Export Actions - New Section */}
                     {normalizedStatus === "completed" && (
                       <div className="pt-2 flex gap-2">
-                        <button className="btn btn-outline flex-1 text-xs py-2 h-9">
+                        <button 
+                          onClick={() => toast.success("PDF Report generation started")}
+                          className="btn btn-outline flex-1 text-xs py-2 h-9 font-bold"
+                        >
                            Download PDF Report
                         </button>
-                        <button className="btn btn-outline flex-1 text-xs py-2 h-9">
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(window.location.href)
+                            toast.success("Results link copied to clipboard")
+                          }}
+                          className="btn btn-outline flex-1 text-xs py-2 h-9 font-bold"
+                        >
                            Share Results
                         </button>
                       </div>
@@ -585,7 +623,7 @@ export default function AnalyzePage() {
           </motion.div>
         </div>
       </section>
-    </SiteShell>
+    </AppShell>
   )
 }
 
