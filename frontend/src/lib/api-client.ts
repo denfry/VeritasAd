@@ -340,6 +340,16 @@ export async function getAnalytics(): Promise<AnalyticsResponse> {
   })
 }
 
+export async function getAdvancedAnalytics(params: { days?: number } = {}): Promise<any> {
+  const search = new URLSearchParams()
+  if (params.days) {
+    search.set("days", String(params.days))
+  }
+  return request(`/api/v1/admin/analytics/advanced${search.toString() ? `?${search.toString()}` : ""}`, {
+    method: "GET",
+  })
+}
+
 // ==================== PAYMENTS & SUBSCRIPTIONS ====================
 
 // Legacy function - use createSubscription instead
