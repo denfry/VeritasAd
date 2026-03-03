@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 import re
 import logging
 
@@ -13,8 +13,29 @@ class DisclosureDetector:
         """
         Initialize disclosure detector
         """
-        self.use_llm = use_llm
+        from app.core.config import settings
+        
+        self.use_llm = use_llm or settings.USE_LLM
         self.llm_model = None
+        
+        if self.use_llm:
+            try:
+                import sys
+                from pathlib import Path
+                # Add models root if necessary
+                models_path = str(Path(__file__).parent.parent.parent.parent / 'models')
+                if models_path not in sys.path:
+                    sys.path.append(models_path)
+                    
+                from llm.inference import DisclosureLLM
+                # The adapter path in models/llm/inference.py defaults to ./llama-winline-lora
+                # We should build an absolute path
+                adapter_path = str(Path(__file__).parent.parent.parent.parent / 'models' / 'llm' / 'llama-winline-lora')
+                self.llm_model = DisclosureLLM(adapter_path=adapter_path)
+                logger.info("Successfully loaded DisclosureLLM")
+            except Exception as e:
+                logger.error(f"Failed to load DisclosureLLM: {e}")
+                self.use_llm = False
 
         # Disclosure patterns (RU/EN)
         self.disclosure_patterns = [
@@ -81,8 +102,9 @@ class DisclosureDetector:
                 if match_idx == -1: continue
 
                 # Look for capitalized words near the marker (100 chars before/after)
-                start = max(0, match_idx - 150)
-                end = min(len(text), match_idx + 150)
+                m_idx = int(match_idx)
+                start = max(0, m_idx - 150)
+                end = min(len(text), m_idx + 150)
                 context = text[start:end]
 
                 # Pattern for potential brands: 
@@ -106,7 +128,7 @@ class DisclosureDetector:
                 
         return discovered_brands
 
-    def detect_rule_based(self, text: str) -> Dict[str, any]:
+    def detect_rule_based(self, text: str) -> Dict[str, Any]:
         """
         Rule-based disclosure detection using regex patterns
         """
@@ -174,7 +196,7 @@ class DisclosureDetector:
             "method": "rule-based"
         }
 
-    def analyze(self, text: str, description: str = "") -> Dict[str, any]:
+    def analyze(self, text: str, description: str = "") -> Dict[str, Any]:
         """
         Complete disclosure analysis
         """
@@ -192,6 +214,21 @@ class DisclosureDetector:
                 unique_discovered[name] = b
         
         result["discovered_brands"] = list(unique_discovered.values())
+        
+        # LLM Analysis (if enabled and confidence isn't already 1.0)
+        llm_disclosure = False
+        if self.use_llm and self.llm_model and result["confidence"] < 1.0 and combined_text.strip():
+            try:
+                # We only take the first 1000 chars for LLM to avoid context limits
+                llm_response = self.llm_model.predict(combined_text[:1000])
+                llm_disclosure = llm_response.get("disclosure", False)
+                if llm_disclosure:
+                    # Boost confidence and set has_disclosure to True
+                    result["has_disclosure"] = True
+                    result["confidence"] = min(1.0, result["confidence"] + 0.5)
+                    result["method"] = "rule-based + llm"
+            except Exception as e:
+                logger.error(f"LLM prediction failed: {e}")
 
         return {
             "has_disclosure": result["has_disclosure"],
@@ -203,7 +240,8 @@ class DisclosureDetector:
             "erids": result["erids"],
             "promo_codes": result["promo_codes"],
             "discovered_brands": result["discovered_brands"],
-            "method": result["method"]
+            "method": result["method"],
+            "llm_disclosure": llm_disclosure
         }
 
     def extract_disclosure_text(self, text: str) -> Optional[str]:
@@ -220,8 +258,10 @@ class DisclosureDetector:
             match = pattern.search(text)
             if match:
                 # Extract surrounding context (50 chars before and after)
-                start = max(0, match.start() - 50)
-                end = min(len(text), match.end() + 50)
+                m_start = int(match.start())
+                m_end = int(match.end())
+                start = max(0, m_start - 50)
+                end = min(len(text), m_end + 50)
                 return text[start:end].strip()
 
         return None

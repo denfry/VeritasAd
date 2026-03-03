@@ -149,7 +149,7 @@ class Settings(BaseSettings):
     # Enable zero-shot detection for unknown brands
     ENABLE_ZERO_SHOT: bool = True
     # Detection threshold (0.0-1.0) - lowered for better sensitivity
-    BRAND_DETECTION_THRESHOLD: float = 0.08
+    BRAND_DETECTION_THRESHOLD: float = 0.05
     # Max frames to sample for brand detection (increased for long videos)
     BRAND_MAX_FRAMES: int = 100
     # Frame sample interval in seconds (adaptive based on video duration)

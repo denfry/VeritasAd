@@ -62,3 +62,5 @@ PyJWT==2.9.0                       # JWT token verification
 python-jose[cryptography]==3.3.0   # Additional JWT support
 pyqrcode==1.2.1                    # QR code generation for 2FA
 pypng==0.20220715.0                # PNG support for pyqrcode
+httpx==0.28.0
+beautifulsoup4==4.14.3

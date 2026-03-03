@@ -257,6 +257,9 @@ class AnalysisService:
         increment_usage_fn: Any,
     ) -> Dict[str, Any]:
         """Analyze social post metadata without video download."""
+        info = None
+        info_error = None
+        
         try:
             with YoutubeDL({
                 "skip_download": True,
@@ -265,13 +268,36 @@ class AnalysisService:
             }) as ydl:
                 info = ydl.extract_info(url, download=False)
         except Exception as exc:
+            info_error = str(exc)
+            
+        # Fallback to custom scrapers if yt-dlp fails or returns no info
+        if not info:
+            logger.info(f"yt-dlp failed or returned no info for {url}, attempting custom social parser...")
+            from app.services.social_parsers import extract_social_post
+            custom_info = await extract_social_post(url)
+            if custom_info:
+                info = custom_info
+                info_error = None
+        
+        if not info and info_error:
             return {
                 "analysis_type": "post",
                 "status": "failed",
                 "video_id": "post",
                 "url": url,
-                "error": str(exc),
+                "error": info_error,
             }
+            
+        # Just in case both fail
+        if not info:
+            return {
+                "analysis_type": "post",
+                "status": "failed",
+                "video_id": "post",
+                "url": url,
+                "error": "Failed to extract post content using any available parser.",
+            }
+
         await increment_usage_fn(user, session)
         return self._build_post_response(url, info, _infer_source_type(url))
 
