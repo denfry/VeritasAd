@@ -4,7 +4,7 @@ import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Cookie, Settings, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Switch } from "./Switch"
+import { Switch } from "@/components/ui/Switch"
 
 interface CookieCategory {
   id: string
