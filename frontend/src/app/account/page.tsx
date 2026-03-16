@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, ReactNode } from "react"
+import { useEffect, useState, useCallback, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { AppShell } from "@/components/AppShell"
 import { useAuth } from "@/contexts/auth-context"
@@ -18,15 +18,14 @@ import type { UserProfile } from "@/types/api"
 import type { UserCreditsResponse, CreditTransactionItem } from "@/lib/api-client"
 import { toast } from "sonner"
 import { 
-  Loader2, LogOut, User as UserIcon, Key, BarChart3, Zap, 
+  Loader2, LogOut, User as UserIcon, BarChart3, Zap, 
   Calendar, History, Shield, Mail, BadgeCheck, 
-  ArrowUpRight, Settings, CreditCard, ChevronRight,
+  ArrowUpRight, CreditCard, ChevronRight,
   Monitor, Smartphone, Globe, Trash2, ShieldCheck,
-  Smartphone as Phone, Lock, Save
+  Lock, Save
 } from "lucide-react"
 import Link from "next/link"
 import { format, formatDistanceToNow } from "date-fns"
-import { useCurrency, Price } from "@/contexts/currency-context"
 import { motion, AnimatePresence } from "framer-motion"
 
 type AccountTab = "overview" | "profile" | "security" | "billing"
@@ -48,20 +47,7 @@ export default function AccountPage() {
   const [emailInput, setEmailInput] = useState("")
   const [isUpdating, setIsUpdating] = useState(false)
 
-  const { formatPrice } = useCurrency()
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/auth/login")
-      return
-    }
-
-    if (user) {
-      loadAllData()
-    }
-  }, [user, authLoading, router])
-
-  const loadAllData = async () => {
+  const loadAllData = useCallback(async () => {
     setLoading(true)
     try {
       const [profileData, creditsData, historyData] = await Promise.all([
@@ -84,7 +70,7 @@ export default function AccountPage() {
         setSessions(sessionData.sessions)
         setIs2faEnabled(twoFactorData.enabled)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.warn("Failed to load account data:", error)
       // Fallback for dev mode
       if (process.env.NODE_ENV === 'development') {
@@ -109,7 +95,18 @@ export default function AccountPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [activeTab, user])
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/auth/login")
+      return
+    }
+
+    if (user) {
+      loadAllData()
+    }
+  }, [user, authLoading, router, loadAllData])
 
   // Reload security data when switching to security tab
   useEffect(() => {
@@ -126,7 +123,7 @@ export default function AccountPage() {
       const updated = await updateCurrentUserProfile({ email: emailInput })
       setProfile(updated)
       toast.success("Profile updated successfully")
-    } catch (error) {
+    } catch {
       toast.error("Failed to update profile")
     } finally {
       setIsUpdating(false)
@@ -138,7 +135,7 @@ export default function AccountPage() {
       await revokeUserSession(sessionId)
       setSessions(prev => prev.filter(s => s.id !== sessionId))
       toast.success("Session revoked")
-    } catch (error) {
+    } catch {
       toast.error("Failed to revoke session")
     }
   }
@@ -148,7 +145,7 @@ export default function AccountPage() {
       await signOut()
       toast.success("Signed out successfully")
       router.push("/")
-    } catch (error: any) {
+    } catch {
       toast.error("Failed to sign out")
     }
   }
@@ -610,26 +607,5 @@ function SettingsLink({ icon, label, onClick }: { icon: ReactNode, label: string
       </div>
       <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
     </button>
-  )
-}
-
-function PlusCircle(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 8v8" />
-      <path d="M8 12h8" />
-    </svg>
   )
 }

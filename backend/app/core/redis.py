@@ -111,6 +111,7 @@ class RedisClient:
         status: str,
         message: Optional[str] = None,
         stage: Optional[str] = None,
+        error_code: Optional[str] = None,
     ) -> bool:
         """Set task progress in Redis"""
         data = {
@@ -118,6 +119,7 @@ class RedisClient:
             "status": status,
             "message": message,
             "stage": stage,
+            "error_code": error_code,
         }
         return await self.set_json(f"task:{task_id}", data, ex=3600)
     

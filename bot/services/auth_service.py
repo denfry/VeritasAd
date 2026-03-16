@@ -69,6 +69,7 @@ class BotAuthService:
                     "link_token": link_token,
                     "username": username,
                 },
+                headers={"X-Bot-Secret": settings.BOT_SECRET_KEY},
             )
 
             if response.status_code == 200:
@@ -100,15 +101,13 @@ class BotAuthService:
         Returns:
             Account status dict
         """
-        # Use API key for authentication (tg_{telegram_id})
-        api_key = f"tg_{telegram_id}"
-
         client = await self._get_client()
 
         try:
             response = await client.get(
                 f"{self.api_url}/api/v1/telegram/status",
-                headers={"X-API-Key": api_key},
+                params={"telegram_id": telegram_id},
+                headers={"X-Bot-Secret": settings.BOT_SECRET_KEY},
             )
 
             if response.status_code == 200:
@@ -136,13 +135,15 @@ class BotAuthService:
         Returns:
             User profile dict or None
         """
-        api_key = f"tg_{telegram_id}"
         client = await self._get_client()
 
         try:
             response = await client.get(
                 f"{self.api_url}/api/v1/users/me",
-                headers={"X-API-Key": api_key},
+                headers={
+                    "X-Bot-Secret": settings.BOT_SECRET_KEY,
+                    "X-API-Key": f"tg_{telegram_id}"
+                },
             )
 
             if response.status_code == 200:
@@ -167,13 +168,15 @@ class BotAuthService:
         Returns:
             Tuple of (success, error_message)
         """
-        api_key = f"tg_{telegram_id}"
         client = await self._get_client()
 
         try:
             response = await client.post(
                 f"{self.api_url}/api/v1/telegram/unlink",
-                headers={"X-API-Key": api_key},
+                headers={
+                    "X-Bot-Secret": settings.BOT_SECRET_KEY,
+                    "X-API-Key": f"tg_{telegram_id}"
+                },
             )
 
             if response.status_code == 200:

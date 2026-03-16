@@ -1,8 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
-import { Plus, Search, Activity, PauseCircle, PlayCircle, MoreHorizontal, Settings2, Trash2 } from "lucide-react"
+import { Plus, Search, Activity, PauseCircle, PlayCircle, Settings2 } from "lucide-react"
 
 // Mock data
 const monitors = [

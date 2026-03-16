@@ -1,17 +1,15 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useCallback, useEffect, useState, useMemo } from "react"
 import { 
   Download, Filter, RefreshCw, Search, 
-  ExternalLink, FileText, CheckCircle2, 
-  AlertCircle, Clock, ChevronRight, BarChart2,
-  X, FilterX
+  FileText, CheckCircle2, AlertCircle, Clock, ChevronRight, FilterX
 } from "lucide-react"
 import { AppShell } from "@/components/AppShell"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { fetchAnalysisHistory } from "@/lib/api-client"
+import { fetchAnalysisHistory, ApiError } from "@/lib/api-client"
 import type { AnalysisHistoryItem } from "@/types/api"
 import { motion, AnimatePresence } from "framer-motion"
 import { formatDistanceToNow } from "date-fns"
@@ -63,20 +61,14 @@ export default function HistoryPage() {
     }
   }, [user, authLoading, router])
 
-  useEffect(() => {
-    if (user) {
-      loadHistory()
-    }
-  }, [user])
-
-  async function loadHistory() {
+  const loadHistory = useCallback(async () => {
     setIsLoading(true)
     try {
       const data = await fetchAnalysisHistory({ limit: 100 })
       setHistory(data)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load history:", error)
-      if (error.response?.status === 401) {
+      if (error instanceof ApiError && error.response.status === 401) {
         toast.error("Session expired")
         router.push("/auth/login")
       } else {
@@ -85,7 +77,13 @@ export default function HistoryPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    if (user) {
+      loadHistory()
+    }
+  }, [user, loadHistory])
 
   const filteredHistory = useMemo(() => {
     return history.filter(item => {

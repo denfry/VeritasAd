@@ -1,12 +1,14 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState } from "react"
-import { supabase, isMockAuth } from "@/lib/supabase"
+import { supabase } from "@/lib/supabase"
 import type { MockUser, MockSession } from "@/lib/mock-auth"
 
 // Unified types that work with both Supabase and Mock
 type User = MockUser
 type Session = MockSession
+type AuthSubscription = { unsubscribe: () => void }
+type AuthStateChangeResult = { data: { subscription: AuthSubscription } } | { subscription: AuthSubscription }
 
 type AuthContextType = {
   user: User | null
@@ -32,6 +34,10 @@ const DEFAULT_MOCK_USER: User = {
   role: 'admin',
   plan: 'enterprise',
   created_at: new Date().toISOString(),
+  api_key: 'veritasad_dev_mock_key',
+  daily_used: 12,
+  daily_limit: 100,
+  total_analyses: 156,
 }
 
 const DEFAULT_MOCK_SESSION: Session = {
@@ -74,12 +80,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
-    })
+    }) as AuthStateChangeResult
 
     // Поддержка обоих форматов: { data: { subscription } } (Supabase) и { subscription } (Mock)
     const subscription = 'data' in authStateChangeResult
-      ? (authStateChangeResult as any).data.subscription
-      : (authStateChangeResult as any).subscription
+      ? authStateChangeResult.data.subscription
+      : authStateChangeResult.subscription
 
     return () => subscription.unsubscribe()
   }, [authDisabled])

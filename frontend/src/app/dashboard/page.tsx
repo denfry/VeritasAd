@@ -1,18 +1,18 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useCallback, useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { 
   Activity, Clock, ShieldCheck, TrendingUp, History, 
-  ArrowRight, ExternalLink, RefreshCw, FileText, Zap, Settings 
+  ArrowRight, ExternalLink, RefreshCw, Settings 
 } from "lucide-react"
 import Link from "next/link"
+import { Skeleton } from "@/components/ui/Skeleton"
 import { StatCard } from "@/components/StatCard"
-import { Skeleton, SkeletonTable } from "@/components/ui/Skeleton"
 import { fetchAnalysisHistory } from "@/lib/api-client"
 import type { AnalysisHistoryItem } from "@/types/api"
-import { toast, Toaster } from "sonner"
+import { Toaster } from "sonner"
 import { formatDistanceToNow } from "date-fns"
 import { useAuth } from "@/contexts/auth-context"
 
@@ -26,22 +26,13 @@ const containerVariants = {
   },
 }
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4 },
-  },
-}
-
 export default function DashboardPage() {
   const { user, loading: authLoading, updateMockUser } = useAuth()
   const router = useRouter()
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user) return
     setIsLoading(true)
     try {
@@ -54,7 +45,7 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [user])
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -66,7 +57,7 @@ export default function DashboardPage() {
     if (user) {
       loadData()
     }
-  }, [user])
+  }, [user, loadData])
 
   const stats = useMemo(() => {
     if (history.length === 0) {
@@ -394,49 +385,6 @@ function StatusCard({ label, status }: { label: string, status: 'operational' | 
         <span className={`text-[10px] font-black uppercase tracking-tighter ${colors[status].split(' ')[1]}`}>{status}</span>
         <div className={`h-2 w-2 rounded-full ${colors[status].split(' ')[0]} shadow-lg animate-pulse`} />
       </div>
-    </div>
-  )
-}
-
-function StatusItem({ label, status }: { label: string, status: 'operational' | 'degraded' | 'down' }) {
-  const colors = {
-    operational: 'bg-emerald-500',
-    degraded: 'bg-amber-500',
-    down: 'bg-red-500'
-  }
-  
-  return (
-    <div className="flex items-center justify-between group">
-      <span className="text-sm font-bold text-muted-foreground group-hover:text-foreground transition-colors">{label}</span>
-      <div className="flex items-center gap-2">
-        <span className="text-[10px] uppercase font-bold text-muted-foreground/60">{status}</span>
-        <div className={`h-2.5 w-2.5 rounded-full ${colors[status]} shadow-[0_0_8px_rgba(0,0,0,0.1)] group-hover:scale-125 transition-transform`} />
-      </div>
-    </div>
-  )
-}
-
-function QuickLink({ href, label, icon }: { href: string, label: string, icon?: ReactNode }) {
-  return (
-    <Link 
-      href={href} 
-      className="flex items-center justify-center gap-2 text-xs font-bold p-3 rounded-xl bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all text-center border border-transparent hover:border-primary/20"
-    >
-      {icon}
-      {label}
-    </Link>
-  )
-}
-
-function SkeletonCard() {
-  return (
-    <div className="card p-5 space-y-4">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-8 w-8 rounded-lg" />
-      </div>
-      <Skeleton className="h-8 w-32" />
-      <Skeleton className="h-3 w-40" />
     </div>
   )
 }

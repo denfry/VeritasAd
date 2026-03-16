@@ -73,6 +73,7 @@ export function CurrencySelector({ selectedCurrency, onCurrencyChange }: Currenc
         aria-expanded={isOpen}
       >
         <div className="flex items-center gap-2">
+           {/* eslint-disable-next-line @next/next/no-img-element */}
            <img 
              src={getFlagUrl(selectedCurrency)} 
              alt="" 
@@ -137,6 +138,7 @@ export function CurrencySelector({ selectedCurrency, onCurrencyChange }: Currenc
                         currency.code === selectedCurrency ? 'bg-primary/10 text-primary' : 'text-foreground/80'
                       }`}
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={getFlagUrl(currency.code)} alt="" className="w-5 h-3.5 rounded-[1px] object-cover" />
                       <span className="text-xs font-bold">{currency.code}</span>
                     </button>
@@ -194,6 +196,7 @@ function CurrencyItem({ currency, isSelected, onSelect }: CurrencyItemProps) {
       }`}
     >
       <div className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img 
           src={getFlagUrl(currency.code)} 
           alt="" 

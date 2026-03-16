@@ -7,6 +7,7 @@ Create Date: 2026-01-24
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
 
 # revision identifiers, used by Alembic.
 revision = '001'
@@ -19,74 +20,69 @@ def upgrade() -> None:
     # Get the dialect to determine database type
     bind = op.get_bind()
     dialect = bind.dialect.name
-    
+
     # Create user_role enum type for PostgreSQL
     if dialect == 'postgresql':
-        # Check if enum type already exists
-        result = bind.execute(
-            sa.text("SELECT 1 FROM pg_type WHERE typname = 'user_role'")
-        )
-        if result.fetchone() is None:
-            op.execute("CREATE TYPE user_role AS ENUM ('user', 'admin')")
-        
-        # Create user_plan enum type for PostgreSQL
-        result = bind.execute(
-            sa.text("SELECT 1 FROM pg_type WHERE typname = 'user_plan'")
-        )
-        if result.fetchone() is None:
-            op.execute("CREATE TYPE user_plan AS ENUM ('free', 'starter', 'pro', 'business', 'enterprise')")
-        
-        # Create source_type enum type for PostgreSQL
-        result = bind.execute(
-            sa.text("SELECT 1 FROM pg_type WHERE typname = 'source_type'")
-        )
-        if result.fetchone() is None:
-            op.execute("""
-                CREATE TYPE source_type AS ENUM (
-                    'file', 'url', 'youtube', 'telegram', 
-                    'instagram', 'tiktok', 'vk'
-                )
-            """)
-        
-        # Create analysis_status enum type for PostgreSQL
-        result = bind.execute(
-            sa.text("SELECT 1 FROM pg_type WHERE typname = 'analysis_status'")
-        )
-        if result.fetchone() is None:
-            op.execute("""
-                CREATE TYPE analysis_status AS ENUM (
-                    'pending', 'queued', 'processing', 'completed', 'failed'
-                )
-            """)
-        
-        # Create payment_status enum type for PostgreSQL
-        result = bind.execute(
-            sa.text("SELECT 1 FROM pg_type WHERE typname = 'payment_status'")
-        )
-        if result.fetchone() is None:
-            op.execute("""
-                CREATE TYPE payment_status AS ENUM (
-                    'pending', 'succeeded', 'canceled', 'failed'
-                )
-            """)
-        
-        # Create payment_provider enum type for PostgreSQL
-        result = bind.execute(
-            sa.text("SELECT 1 FROM pg_type WHERE typname = 'payment_provider'")
-        )
-        if result.fetchone() is None:
-            op.execute("""
-                CREATE TYPE payment_provider AS ENUM ('yookassa')
-            """)
+        # PostgreSQL doesn't support IF NOT EXISTS for CREATE TYPE,
+        # so we check existence first using pg_type catalog or DO block
+        op.execute("""
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+                    CREATE TYPE user_role AS ENUM ('user', 'admin');
+                END IF;
+            END $$;
+        """)
+        op.execute("""
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_plan') THEN
+                    CREATE TYPE user_plan AS ENUM ('free', 'starter', 'pro', 'business', 'enterprise');
+                END IF;
+            END $$;
+        """)
+        op.execute("""
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'source_type') THEN
+                    CREATE TYPE source_type AS ENUM (
+                        'file', 'url', 'youtube', 'telegram',
+                        'instagram', 'tiktok', 'vk'
+                    );
+                END IF;
+            END $$;
+        """)
+        op.execute("""
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'analysis_status') THEN
+                    CREATE TYPE analysis_status AS ENUM (
+                        'pending', 'queued', 'processing', 'completed', 'failed'
+                    );
+                END IF;
+            END $$;
+        """)
+        op.execute("""
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_status') THEN
+                    CREATE TYPE payment_status AS ENUM (
+                        'pending', 'succeeded', 'canceled', 'failed'
+                    );
+                END IF;
+            END $$;
+        """)
+        op.execute("""
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_provider') THEN
+                    CREATE TYPE payment_provider AS ENUM ('yookassa');
+                END IF;
+            END $$;
+        """)
     
     # Define enum types for SQLAlchemy
     if dialect == 'postgresql':
-        role_type = sa.Enum('user', 'admin', name='user_role')
-        plan_type = sa.Enum('free', 'starter', 'pro', 'business', 'enterprise', name='user_plan')
-        source_type = sa.Enum('file', 'url', 'youtube', 'telegram', 'instagram', 'tiktok', 'vk', name='source_type')
-        analysis_status_type = sa.Enum('pending', 'queued', 'processing', 'completed', 'failed', name='analysis_status')
-        payment_status_type = sa.Enum('pending', 'succeeded', 'canceled', 'failed', name='payment_status')
-        payment_provider_type = sa.Enum('yookassa', name='payment_provider')
+        role_type = PG_ENUM('user', 'admin', name='user_role', create_type=False)
+        plan_type = PG_ENUM('free', 'starter', 'pro', 'business', 'enterprise', name='user_plan', create_type=False)
+        source_type = PG_ENUM('file', 'url', 'youtube', 'telegram', 'instagram', 'tiktok', 'vk', name='source_type', create_type=False)
+        analysis_status_type = PG_ENUM('pending', 'queued', 'processing', 'completed', 'failed', name='analysis_status', create_type=False)
+        payment_status_type = PG_ENUM('pending', 'succeeded', 'canceled', 'failed', name='payment_status', create_type=False)
+        payment_provider_type = PG_ENUM('yookassa', name='payment_provider', create_type=False)
     else:
         # For SQLite, use String
         role_type = sa.String(length=10)

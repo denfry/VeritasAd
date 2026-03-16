@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Menu, ShieldCheck, Sparkles, X, User, Globe } from "lucide-react"
+import { Menu, ShieldCheck, Sparkles, X, User } from "lucide-react"
 import { ThemeToggle } from "./ThemeToggle"
 import { CurrencySelector } from "./CurrencySelector"
 import { useAuth } from "@/contexts/auth-context"

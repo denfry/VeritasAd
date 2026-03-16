@@ -1,5 +1,6 @@
 # Docker Compose для production VeritasAd
 # Запуск: docker-compose up -d
+# Документация: см. DOCKER_COMMANDS.md
 
 services:
   # ==================== BACKEND ====================
@@ -75,6 +76,7 @@ services:
       - USE_ARIA2C=true
       - LOG_LEVEL=INFO
       - LOG_FORMAT=json
+      - SKIP_MIGRATIONS=true
     volumes:
       - backend_data:/app/data
       - ./models:/app/models:ro
@@ -83,6 +85,39 @@ services:
       - postgres
       - backend
     command: celery -A app.core.celery:celery_app worker --loglevel=info --concurrency=4
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "from app.core.celery import celery_app; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ==================== YT COOKIES REFRESHER ====================
+  yt-cookies-refresh:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: veritasad-yt-cookies-refresh
+    env_file:
+      - ./backend/.env
+    environment:
+      - SKIP_MIGRATIONS=true
+      - LOG_LEVEL=INFO
+      # Default cookie target inside shared backend volume
+      - YTDLP_COOKIES_FILE=/app/data/cookies/youtube_cookies.txt
+      # Refresh once per 12 hours by default
+      - YTDLP_COOKIES_REFRESH_INTERVAL_SECONDS=43200
+    volumes:
+      - backend_data:/app/data
+      # Optional: place externally managed cookies in ./backend/cookies
+      - ./backend/cookies:/cookies:ro
+    depends_on:
+      - backend
+    command: sh /app/scripts/run_cookie_refresh_loop.sh
+    entrypoint: /app/entrypoint.sh
     restart: unless-stopped
     networks:
       - veritasad-network
@@ -107,6 +142,12 @@ services:
     restart: unless-stopped
     networks:
       - veritasad-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ==================== TELEGRAM BOT ====================
   bot:
@@ -127,6 +168,12 @@ services:
     restart: unless-stopped
     networks:
       - veritasad-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   # ==================== POSTGRESQL ====================
   postgres:

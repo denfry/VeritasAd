@@ -10,7 +10,7 @@ import { Loader2 } from "lucide-react"
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { signUp, supabaseConfigured, isMock } = useAuth()
+  const { signUp, isMock } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -47,8 +47,8 @@ export default function RegisterPage() {
           router.push("/auth/login?registered=true")
         }, 2000)
       }
-    } catch (error: any) {
-      const errorMessage = error.message || "Failed to create account"
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to create account"
       toast.error(errorMessage)
     } finally {
       setLoading(false)

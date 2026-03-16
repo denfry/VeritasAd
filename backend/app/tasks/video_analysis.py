@@ -9,6 +9,7 @@ from app.core.redis import RedisClient
 from app.core.config import settings
 from app.services.video_processor import VideoProcessor
 from app.services.link_detector import LinkDetector
+from app.services.video_download_errors import classify_processing_error
 from app.models.database import AsyncSessionLocal, Analysis, AnalysisStatus
 from app.utils.ad_classification import classify_advertising
 from sqlalchemy import select
@@ -68,12 +69,19 @@ def analyze_video_task(
             )
 
             async with AsyncSessionLocal() as db:
-                # Get analysis record
-                result = await db.execute(select(Analysis).where(Analysis.task_id == task_id))
+                from sqlalchemy.orm import joinedload
+                # Get analysis record with user to check plan
+                result = await db.execute(
+                    select(Analysis)
+                    .options(joinedload(Analysis.user))
+                    .where(Analysis.task_id == task_id)
+                )
                 analysis = result.scalar_one_or_none()
 
                 if not analysis:
                     raise ValueError(f"Analysis not found: {task_id}")
+
+                user_plan = analysis.user.plan if analysis.user else "free"
 
                 # Update status
                 analysis.status = AnalysisStatus.PROCESSING
@@ -102,10 +110,15 @@ def analyze_video_task(
                         # Log but don't fail the whole analysis if just a progress update failed
                         logger.warning("progress_db_update_failed", error=str(db_err), task_id=task_id)
 
+                url_metadata = {}
                 # Download video with progress tracking (for URL sources)
                 if source_type != "file" and source_url:
+                    # Fetch URL metadata (description, title, etc.)
+                    await update_progress(5, "Fetching video info", "prepare")
+                    url_metadata = await processor.get_url_metadata(source_url)
+                    
                     # Download with progress tracking
-                    await update_progress(0, "Uploading source", "upload")
+                    await update_progress(10, "Uploading source", "upload")
                     downloaded_path = processor.download_video(
                         source_url,
                         progress_callback=update_progress
@@ -161,17 +174,17 @@ def analyze_video_task(
                 audio_result = await asyncio.to_thread(processor.audio_analyzer.analyze, Path(video_path_current))
 
                 await update_progress(80, "Detecting disclosure and CTA", "analyze")
-                # analyze метод DisclosureDetector - синхронный, выполняем в thread pool
+                # analyze метод DisclosureDetector - теперь асинхронный
                 transcript = audio_result.get("transcript", "")
                 
-                # Get description from metadata for link/CTA detection
-                description = metadata.get("description", "")
+                # Get description from URL metadata if available, fallback to video metadata
+                description = url_metadata.get("description") or metadata.get("description", "")
                 
                 # Run disclosure detection
-                disclosure_result = await asyncio.to_thread(
-                    processor.disclosure_detector.analyze,
+                disclosure_result = await processor.disclosure_detector.analyze(
                     text=transcript,
-                    description=description
+                    description=description,
+                    plan=user_plan
                 )
                 
                 # Run link detection for hidden advertising
@@ -248,7 +261,8 @@ def analyze_video_task(
                     analysis.erids = disclosure_result.get("erids", [])
                     analysis.promo_codes = disclosure_result.get("promo_codes", [])
                     analysis.ad_classification = classification["classification"]
-                    analysis.ad_reason = classification["reason"]
+                    analysis.ad_reason = disclosure_result.get("ad_reason") or classification["reason"]
+                    analysis.method = disclosure_result.get("method")
                     analysis.status = AnalysisStatus.COMPLETED
                     analysis.progress = 100
                     analysis.completed_at = datetime.now(timezone.utc)
@@ -293,6 +307,7 @@ def analyze_video_task(
                 
         except Exception as e:
             logger.exception("analysis_failed", task_id=task_id, error=str(e))
+            error_info = classify_processing_error(str(e))
             
             # Update database
             async with AsyncSessionLocal() as db:
@@ -300,7 +315,7 @@ def analyze_video_task(
                 analysis = result.scalar_one_or_none()
                 if analysis:
                     analysis.status = AnalysisStatus.FAILED
-                    analysis.error_message = str(e)
+                    analysis.error_message = error_info["user_message"]
                     analysis.progress = 0
                     await db.commit()
             
@@ -309,8 +324,9 @@ def analyze_video_task(
                 task_id,
                 progress=0,
                 status="failed",
-                message=str(e),
+                message=error_info["user_message"],
                 stage="failed",
+                error_code=error_info["error_code"],
             )
             
             raise

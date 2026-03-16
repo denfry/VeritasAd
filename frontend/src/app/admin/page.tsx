@@ -1,27 +1,22 @@
 "use client"
 
-import { useEffect, useState, useCallback, useMemo } from "react"
+import { useEffect, useState, useCallback, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { AppShell } from "@/components/AppShell"
 import { useAuth } from "@/contexts/auth-context"
-import { listUsers, updateUser, getAnalytics, bulkUpdateUsers, listAuditLogs } from "@/lib/api-client"
+import { listUsers, getAnalytics, listAuditLogs } from "@/lib/api-client"
 import type { UserListItem, CursorPaginationResponse, AuditLogListItem } from "@/types/api"
 import { toast } from "sonner"
 import { 
-  Loader2, Users, Activity, BarChart3, AlertCircle, 
-  TrendingUp, Search, Filter, ChevronDown, ChevronUp, 
-  Ban, Check, Shield, RefreshCw, 
-  ArrowUpRight, ArrowDownRight, UserPlus, FileSearch,
-  CheckSquare, Square, MoreVertical, ExternalLink,
-  Zap, Clock, Globe, ShieldAlert, Cpu, Settings
+  Loader2, Users, Activity, Search, Filter, Shield, RefreshCw, 
+  ArrowUpRight, ArrowDownRight, Globe, ShieldAlert, Cpu, Settings
 } from "lucide-react"
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, BarChart, Bar,
-  PieChart, Pie, Cell, LineChart, Line
+  Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line
 } from 'recharts'
-import { formatDistanceToNow, subDays, format, subMinutes } from "date-fns"
-import { motion, AnimatePresence } from "framer-motion"
+import { formatDistanceToNow, format, subMinutes } from "date-fns"
+import { motion } from "framer-motion"
 import Link from "next/link"
 
 // Mock real-time data generators
@@ -35,14 +30,26 @@ const generateChartData = () => {
 }
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f43f5e', '#f59e0b']
+type AnalyticsData = Awaited<ReturnType<typeof getAnalytics>>
+type MetricProps = { label: string; value: string | number; icon: ReactNode; color: string }
+type StatCardLargeProps = {
+  label: string
+  value: string | number
+  trend: string
+  up: boolean
+  description: string
+  chartData: Array<{ time: string; analyses: number; latency: number; load: number }>
+  dataKey: "analyses" | "latency" | "load"
+  color: string
+}
 
 export default function AdminPage() {
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
+  const { loading: authLoading } = useAuth()
   
   // Data state
   const [usersResponse, setUsersResponse] = useState<CursorPaginationResponse<UserListItem> | null>(null)
-  const [analytics, setAnalytics] = useState<any | null>(null)
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [auditLogs, setAuditLogs] = useState<AuditLogListItem[]>([])
   const [chartData, setChartData] = useState(generateChartData())
   const [loading, setLoading] = useState(true)
@@ -79,9 +86,12 @@ export default function AdminPage() {
         setChartData(analyticsData.chart_data)
       }
       setAuditLogs(logsData.data)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Admin Load Error:", error)
-      if (error.response?.status === 403) {
+      const status = error instanceof Error && "response" in error
+        ? (error as { response?: { status?: number } }).response?.status
+        : undefined
+      if (status === 403) {
         toast.error("Admin access denied")
         router.push("/dashboard")
       }
@@ -293,7 +303,7 @@ export default function AdminPage() {
                         paddingAngle={8}
                         dataKey="value"
                       >
-                        {analytics?.plan_distribution?.map((entry: any, index: number) => (
+                        {analytics?.plan_distribution?.map((entry, index: number) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -302,7 +312,7 @@ export default function AdminPage() {
                   </ResponsiveContainer>
                </div>
                <div className="grid grid-cols-2 gap-2">
-                  {analytics?.plan_distribution?.map((entry: any, index: number) => (
+                  {analytics?.plan_distribution?.map((entry, index: number) => (
                     <div key={entry.name} className="flex items-center gap-2 p-2 rounded-xl bg-muted/30 border border-border/50">
                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                        <span className="text-[10px] font-black uppercase tracking-tighter truncate">{entry.name}</span>
@@ -389,10 +399,10 @@ export default function AdminPage() {
                     <td className="px-8 py-6">
                        <div className="flex items-center gap-4">
                           <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center font-black text-xs text-primary border border-primary/10 shadow-sm group-hover:scale-110 transition-transform">
-                             {u.email[0].toUpperCase()}
+                             {(u.email?.[0] || "?").toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-black text-foreground text-sm">{u.email}</p>
+                            <p className="font-black text-foreground text-sm">{u.email || "No email"}</p>
                             <p className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase opacity-60">ID: #{u.id}</p>
                           </div>
                        </div>
@@ -446,7 +456,7 @@ export default function AdminPage() {
   )
 }
 
-function LiveMetric({ label, value, icon, color }: any) {
+function LiveMetric({ label, value, icon, color }: MetricProps) {
   return (
     <div className="flex flex-col gap-0.5">
        <div className="flex items-center gap-1.5 opacity-60">
@@ -458,7 +468,7 @@ function LiveMetric({ label, value, icon, color }: any) {
   )
 }
 
-function StatCardLarge({ label, value, trend, up, description, chartData, dataKey, color }: any) {
+function StatCardLarge({ label, value, trend, up, description, chartData, dataKey, color }: StatCardLargeProps) {
   return (
     <div className="card p-8 space-y-6 group hover:border-primary/50 transition-all shadow-xl shadow-black/5 bg-gradient-to-br from-card to-card/50 overflow-hidden relative">
        <div className="relative z-10 space-y-4">

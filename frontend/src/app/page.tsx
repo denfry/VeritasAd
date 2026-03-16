@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowRight, CheckCircle2, Shield, Zap, BarChart3, Lock } from "lucide-react"
+import { ArrowRight, Shield, Zap, BarChart3, Lock, type LucideIcon } from "lucide-react"
 import { SiteShell } from "@/components/SiteShell"
 
 export default function HomePage() {
@@ -125,7 +125,7 @@ export default function HomePage() {
   )
 }
 
-function Feature({ icon: Icon, title, desc }: { icon: any, title: string, desc: string }) {
+function Feature({ icon: Icon, title, desc }: { icon: LucideIcon, title: string, desc: string }) {
   return (
     <div className="group space-y-3">
       <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg border bg-background shadow-sm transition-colors group-hover:border-primary/50">

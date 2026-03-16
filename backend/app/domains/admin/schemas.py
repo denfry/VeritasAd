@@ -79,7 +79,7 @@ class UserUpdate(BaseModel):
     """User update payload for admin."""
 
     role: Optional[str] = Field(None, description="User role (user, admin)")
-    plan: Optional[str] = Field(None, description="Subscription plan (free, pro, enterprise)")
+    plan: Optional[str] = Field(None, description="Subscription plan (free, starter, pro, business, enterprise)")
     daily_limit: Optional[int] = Field(None, ge=1, description="Daily API limit")
     is_active: Optional[bool] = Field(None, description="Account active status")
     is_banned: Optional[bool] = Field(None, description="Account banned status")

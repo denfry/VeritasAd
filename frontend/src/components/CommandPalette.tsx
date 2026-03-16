@@ -1,9 +1,3 @@
-/**
- * Command Palette - BigTech Standard
- * Аналог Command Menu в Vercel, Linear, Raycast
- * 
- * Usage: Press Cmd+K (or Ctrl+K) to open
- */
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from "react"
@@ -32,20 +26,17 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
-  // Filter commands based on search
-  const filteredCommands = commands.filter(cmd =>
+  const filteredCommands = commands.filter((cmd) =>
     cmd.label.toLowerCase().includes(search.toLowerCase()) ||
     cmd.id.toLowerCase().includes(search.toLowerCase())
   )
 
-  // Focus input on open
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus()
     }
   }, [isOpen])
 
-  // Reset state on open
   useEffect(() => {
     if (isOpen) {
       setSearch("")
@@ -53,18 +44,13 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
     }
   }, [isOpen])
 
-  // Handle keyboard navigation
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault()
-      setSelectedIndex(prev => 
-        prev < filteredCommands.length - 1 ? prev + 1 : 0
-      )
+      setSelectedIndex((prev) => (prev < filteredCommands.length - 1 ? prev + 1 : 0))
     } else if (e.key === "ArrowUp") {
       e.preventDefault()
-      setSelectedIndex(prev => 
-        prev > 0 ? prev - 1 : filteredCommands.length - 1
-      )
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : filteredCommands.length - 1))
     } else if (e.key === "Enter") {
       e.preventDefault()
       if (filteredCommands[selectedIndex]) {
@@ -76,7 +62,6 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
     }
   }, [filteredCommands, selectedIndex, onClose])
 
-  // Execute command
   const executeCommand = (cmd: CommandItem) => {
     cmd.action()
     onClose()
@@ -86,17 +71,11 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
-      {/* Command Palette */}
-      <div className="relative w-full max-w-xl bg-background border rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        {/* Search Input */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+
+      <div className="relative w-full max-w-xl overflow-hidden rounded-xl border bg-background shadow-2xl animate-in fade-in zoom-in duration-200">
         <div className="flex items-center border-b px-4 py-3">
-          <Command className="h-5 w-5 text-muted-foreground mr-3" />
+          <Command className="mr-3 h-5 w-5 text-muted-foreground" />
           <input
             ref={inputRef}
             type="text"
@@ -104,21 +83,17 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a command or search..."
-            className="flex-1 bg-transparent outline-none text-sm placeholder:text-muted-foreground"
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
-          <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+          <kbd className="hidden h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
             <span className="text-xs">ESC</span>
           </kbd>
         </div>
-        
-        {/* Results */}
-        <div 
-          ref={listRef}
-          className="max-h-[400px] overflow-y-auto py-2"
-        >
+
+        <div ref={listRef} className="max-h-[400px] overflow-y-auto py-2">
           {filteredCommands.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-              No results found for "{search}"
+              No results found for &quot;{search}&quot;
             </div>
           ) : (
             <div className="space-y-1">
@@ -126,29 +101,21 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
                 <button
                   key={cmd.id}
                   onClick={() => executeCommand(cmd)}
-                  className={`w-full px-4 py-2.5 text-left flex items-center justify-between gap-2 transition-colors ${
-                    index === selectedIndex
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
+                  className={`flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left transition-colors ${
+                    index === selectedIndex ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    {cmd.icon && (
-                      <span className="text-muted-foreground">
-                        {cmd.icon}
-                      </span>
-                    )}
+                    {cmd.icon && <span className="text-muted-foreground">{cmd.icon}</span>}
                     <div>
                       <div className="text-sm font-medium">{cmd.label}</div>
                       {cmd.category && (
-                        <div className="text-xs text-muted-foreground opacity-70">
-                          {cmd.category}
-                        </div>
+                        <div className="text-xs text-muted-foreground opacity-70">{cmd.category}</div>
                       )}
                     </div>
                   </div>
                   {cmd.shortcut && (
-                    <kbd className="hidden sm:inline-flex h-6 items-center gap-1 rounded border bg-muted/50 px-2 font-mono text-[10px] font-medium text-muted-foreground">
+                    <kbd className="hidden h-6 items-center gap-1 rounded border bg-muted/50 px-2 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
                       {cmd.shortcut}
                     </kbd>
                   )}
@@ -157,16 +124,15 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
             </div>
           )}
         </div>
-        
-        {/* Footer */}
-        <div className="border-t px-4 py-2 text-xs text-muted-foreground flex items-center justify-between">
+
+        <div className="flex items-center justify-between border-t px-4 py-2 text-xs text-muted-foreground">
           <span>{filteredCommands.length} commands</span>
           <div className="flex items-center gap-2">
             <span>Navigate</span>
-            <kbd className="h-4 w-4 rounded border bg-muted/50 flex items-center justify-center text-[9px]">↑</kbd>
-            <kbd className="h-4 w-4 rounded border bg-muted/50 flex items-center justify-center text-[9px]">↓</kbd>
+            <kbd className="flex h-4 w-4 items-center justify-center rounded border bg-muted/50 text-[9px]">&uarr;</kbd>
+            <kbd className="flex h-4 w-4 items-center justify-center rounded border bg-muted/50 text-[9px]">&darr;</kbd>
             <span>Select</span>
-            <kbd className="h-4 w-4 rounded border bg-muted/50 flex items-center justify-center text-[9px]">↵</kbd>
+            <kbd className="flex h-4 w-4 items-center justify-center rounded border bg-muted/50 text-[9px]">&crarr;</kbd>
           </div>
         </div>
       </div>
@@ -175,18 +141,14 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
   )
 }
 
-
-// Command Palette Trigger Hook
 export function useCommandPalette(commands: CommandItem[]) {
   const [isOpen, setIsOpen] = useState(false)
 
-  // Keyboard shortcut to open
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd+K or Ctrl+K
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault()
-        setIsOpen(prev => !prev)
+        setIsOpen((prev) => !prev)
       }
     }
 
@@ -198,7 +160,7 @@ export function useCommandPalette(commands: CommandItem[]) {
     isOpen,
     open: () => setIsOpen(true),
     close: () => setIsOpen(false),
-    toggle: () => setIsOpen(prev => !prev),
+    toggle: () => setIsOpen((prev) => !prev),
     Component: (
       <CommandPalette
         isOpen={isOpen}
@@ -209,13 +171,10 @@ export function useCommandPalette(commands: CommandItem[]) {
   }
 }
 
-
-// Default admin commands
 export function useAdminCommands() {
   const router = useRouter()
-  
+
   const commands: CommandItem[] = [
-    // Navigation
     {
       id: "dashboard",
       label: "Go to Dashboard",
@@ -250,8 +209,6 @@ export function useAdminCommands() {
       category: "Navigation",
       action: () => router.push("/account"),
     },
-    
-    // Actions
     {
       id: "new-user",
       label: "Create New User",
@@ -270,8 +227,6 @@ export function useAdminCommands() {
       category: "Actions",
       action: () => router.push("/admin?export=analyses"),
     },
-    
-    // Settings
     {
       id: "security",
       label: "Security Settings",
@@ -291,6 +246,6 @@ export function useAdminCommands() {
       action: () => router.push("/security#sessions"),
     },
   ]
-  
+
   return commands
 }

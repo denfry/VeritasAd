@@ -1,8 +1,8 @@
 'use client'
 
-import React, { createContext, useContext, useCallback, useMemo } from 'react'
+import React, { createContext, useContext, useMemo } from 'react'
 import { useCurrencyRates, ExchangeRates } from '@/hooks/useCurrencyRates'
-import { ALL_CURRENCIES, getCurrencyByCode, Currency } from '@/lib/currency'
+import { Currency } from '@/lib/currency'
 
 interface CurrencyContextValue {
   // State

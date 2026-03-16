@@ -18,7 +18,7 @@ export function BackgroundWeb() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const particlesRef = useRef<Particle[]>([])
   const mouseRef = useRef<MousePosition>({ x: -1000, y: -1000 })
-  const animationFrameRef = useRef<number>()
+  const animationFrameRef = useRef<number | null>(null)
 
   // Configuration
   const PARTICLE_COUNT = 80
@@ -184,7 +184,7 @@ export function BackgroundWeb() {
       window.removeEventListener('mouseleave', handleMouseLeave)
       document.removeEventListener('theme-change', handleThemeChange)
       observer.disconnect()
-      if (animationFrameRef.current) {
+      if (animationFrameRef.current !== null) {
         cancelAnimationFrame(animationFrameRef.current)
       }
     }

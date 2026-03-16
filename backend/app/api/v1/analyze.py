@@ -1,6 +1,7 @@
 from fastapi import APIRouter, File, UploadFile, Form, Depends, HTTPException
 from typing import Any, Dict, Optional
 from pathlib import Path
+import asyncio
 import uuid
 import shutil
 import socket
@@ -71,42 +72,50 @@ def is_safe_url(url: str) -> bool:
             return False
         
         # Resolve hostname and check all resolved IPs
+        has_any_resolution = False
         try:
-            # Get all IP addresses for the hostname
             addr_infos = socket.getaddrinfo(hostname, None, socket.AF_INET)
-            for family, _, _, _, sockaddr in addr_infos:
+            has_any_resolution = has_any_resolution or bool(addr_infos)
+            for _, _, _, _, sockaddr in addr_infos:
                 ip = sockaddr[0]
                 try:
                     ip_obj = ipaddress.ip_address(ip)
-                    # Block private, reserved, loopback, and link-local IPs
-                    if (ip_obj.is_private or 
-                        ip_obj.is_reserved or 
-                        ip_obj.is_loopback or 
-                        ip_obj.is_link_local or
-                        ip_obj.is_multicast):
+                    # Block private, loopback, and link-local IPs
+                    if (
+                        ip_obj.is_private
+                        or ip_obj.is_loopback
+                        or ip_obj.is_link_local
+                        or ip_obj.is_multicast
+                    ):
                         return False
                 except ValueError:
                     continue
-            
-            # Also check IPv6 if available
-            addr_infos_v6 = socket.getaddrinfo(hostname, None, socket.AF_INET6)
-            for family, _, _, _, sockaddr in addr_infos_v6:
-                ip = sockaddr[0]
-                try:
-                    ip_obj = ipaddress.ip_address(ip)
-                    if (ip_obj.is_private or 
-                        ip_obj.is_reserved or 
-                        ip_obj.is_loopback or 
-                        ip_obj.is_link_local or
-                        ip_obj.is_multicast):
-                        return False
-                except ValueError:
-                    continue
-                    
         except socket.gaierror:
-            # DNS resolution failed
+            pass
+
+        # IPv6 may be unavailable in some environments, so don't fail hard.
+        try:
+            addr_infos_v6 = socket.getaddrinfo(hostname, None, socket.AF_INET6)
+            has_any_resolution = has_any_resolution or bool(addr_infos_v6)
+            for _, _, _, _, sockaddr in addr_infos_v6:
+                ip = sockaddr[0]
+                try:
+                    ip_obj = ipaddress.ip_address(ip)
+                    if (
+                        ip_obj.is_private
+                        or ip_obj.is_loopback
+                        or ip_obj.is_link_local
+                        or ip_obj.is_multicast
+                    ):
+                        return False
+                except ValueError:
+                    continue
+        except socket.gaierror:
+            pass
+
+        if not has_any_resolution:
             return False
-        
+
         return True
     except Exception:
         return False
@@ -126,14 +135,14 @@ def _has_video_payload(info: Dict[str, Any]) -> bool:
     return False
 
 
-def _build_post_response(url: str, info: Dict[str, Any], source_type: SourceType) -> Dict[str, Any]:
+async def _build_post_response(url: str, info: Dict[str, Any], source_type: SourceType) -> Dict[str, Any]:
     description = info.get("description", "") or ""
     title = info.get("title")
     uploader = info.get("uploader")
     view_count = info.get("view_count")
-    
-    # Run disclosure detection
-    disclosure = post_disclosure_detector.analyze(text=description, description=title or "")
+
+    # Run disclosure detection (async)
+    disclosure = await post_disclosure_detector.analyze(text=description, description=title or "")
     disclosure_markers = disclosure.get("markers", [])
     cta_matches = disclosure.get("cta_matches", [])
     has_disclosure = disclosure.get("has_disclosure", False) or bool(disclosure_markers)
@@ -223,34 +232,46 @@ async def check_video(
 
         info: Optional[Dict[str, Any]] = None
         info_error: Optional[str] = None
-        try:
-            logger.info(f"Extracting video info from URL: {url}")
+        extract_timeout = getattr(
+            settings, "EXTRACT_INFO_TIMEOUT", settings.DOWNLOAD_SOCKET_TIMEOUT
+        )
+
+        def _extract_info() -> Optional[Dict[str, Any]]:
             with YoutubeDL(
                 {
                     "skip_download": True,
                     "quiet": True,
-                    "no_warnings": False,  # Enable warnings for debugging
+                    "no_warnings": False,
                     "socket_timeout": settings.DOWNLOAD_SOCKET_TIMEOUT,
                     "retries": settings.DOWNLOAD_RETRIES,
                     "fragment_retries": settings.DOWNLOAD_FRAGMENT_RETRIES,
                     "noplaylist": True,
                     "js_runtimes": {"node": {}, "deno": {}},
                     "extract_flat": False,
-                    "ignoreerrors": False,  # Don't ignore errors - we want to catch them
+                    "ignoreerrors": False,
                 }
             ) as ydl:
-                info = ydl.extract_info(url, download=False)
-                logger.info(f"Successfully extracted info: {info.get('title', 'Unknown') if info else 'No info'}")
+                return ydl.extract_info(url, download=False)
+
+        try:
+            logger.info(f"Extracting video info from URL: {url}")
+            info = await asyncio.wait_for(
+                asyncio.to_thread(_extract_info),
+                timeout=float(extract_timeout),
+            )
+            logger.info(f"Successfully extracted info: {info.get('title', 'Unknown') if info else 'No info'}")
+        except asyncio.TimeoutError:
+            info_error = f"Extraction timed out after {extract_timeout}s"
+            logger.error(f"Timeout extracting video info from {url}")
         except Exception as exc:
             info_error = str(exc)
             logger.error(f"Failed to extract video info from {url}: {type(exc).__name__} - {info_error}")
-            # Log full traceback for debugging
-            logger.debug(f"Full exception details:", exc_info=True)
+            logger.debug("Full exception details:", exc_info=True)
 
         if info and not _has_video_payload(info):
             logger.info(f"No video payload detected, treating as post analysis")
             await increment_usage(user, db)
-            return _build_post_response(url, info, source_type)
+            return await _build_post_response(url, info, source_type)
         
         # If info extraction failed, return error early
         if info_error:
@@ -395,4 +416,4 @@ async def analyze_post(
             "error": str(exc),
         }
     await increment_usage(user, db)
-    return _build_post_response(url, info, _infer_source_type(url))
+    return await _build_post_response(url, info, _infer_source_type(url))

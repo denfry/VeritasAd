@@ -1,0 +1,41 @@
+# syntax=docker/dockerfile:1
+# Development Dockerfile для VeritasAd Frontend — hot reload и кэширование
+
+FROM node:20-alpine
+
+# Устанавливаем системные зависимости
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# NEXT_PUBLIC_* переменные передаются через build args
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ARG NEXT_PUBLIC_DISABLE_AUTH=false
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_DISABLE_AUTH=$NEXT_PUBLIC_DISABLE_AUTH
+
+# Копируем только файлы зависимостей для кэширования
+COPY package.json package-lock.json ./
+
+# Устанавливаем зависимости (кэшируется в Docker layer)
+RUN npm ci && \
+    npm cache clean --force
+
+# Копируем исходный код
+COPY . .
+
+# Создаём public directory (если отсутствует)
+RUN mkdir -p public
+
+# Отключаем телеметрию Next.js
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Переменные для development режима
+ENV NODE_ENV=development
+ENV WATCHPACK_POLLING=true
+
+# Expose port
+EXPOSE 3000
+
+# Запускаем development сервер с hot reload
+CMD ["npm", "run", "dev"]

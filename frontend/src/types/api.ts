@@ -84,6 +84,7 @@ export type UserProfile = {
   total_analyses: number
   is_active: boolean
   api_key?: string | null
+  created_at?: string | null
 }
 
 export type UserListItem = {

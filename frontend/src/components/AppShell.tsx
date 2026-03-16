@@ -9,14 +9,11 @@ import {
   Search, 
   History, 
   User, 
-  Settings, 
   ShieldCheck, 
   Menu, 
   X, 
   LogOut,
   Zap,
-  CreditCard,
-  Sparkles,
   ChevronLeft,
   ChevronRight
 } from "lucide-react"
@@ -39,17 +36,15 @@ const navItems = [
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname()
-  const { user, signOut } = useAuth()
+  const { signOut } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
     const saved = localStorage.getItem("app-sidebar-collapsed")
     if (saved) {
       setIsCollapsed(saved === "true")
     }
-    setIsMounted(true)
   }, [])
 
   const toggleSidebar = () => {
@@ -59,7 +54,12 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="relative flex min-h-screen overflow-hidden bg-background/80 text-foreground">
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <div className="absolute -left-24 top-[-180px] h-[460px] w-[460px] rounded-full bg-sky-500/10 blur-3xl" />
+        <div className="absolute -right-24 bottom-[-180px] h-[520px] w-[520px] rounded-full bg-cyan-500/10 blur-3xl" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.12)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.12)_1px,transparent_1px)] bg-[size:40px_40px]" />
+      </div>
       {/* Sidebar - Desktop */}
       <motion.aside 
         initial={false}
@@ -156,7 +156,7 @@ export function AppShell({ children }: AppShellProps) {
       </motion.aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-screen relative">
+      <div className="relative z-10 flex min-h-screen flex-1 flex-col">
         {/* Mobile Header */}
         <header className="md:hidden sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">

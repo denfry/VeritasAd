@@ -89,6 +89,13 @@ async def verify_supabase_token(token: str) -> dict:
     decodes JWT without signature verification (dev only).
     """
     if not settings.SUPABASE_JWT_SECRET and not settings.SUPABASE_URL:
+        if settings.ENVIRONMENT != "development":
+            logger.error("Supabase is not configured in non-development environment!")
+            raise AuthException(
+                message="Authentication configuration error",
+                error_code="AUTH_CONFIG_ERROR",
+            )
+            
         # Local development mode - decode without signature verification
         logger.info("Using local JWT verification mode (Supabase not configured)")
         try:
@@ -200,6 +207,7 @@ async def verify_supabase_token(token: str) -> dict:
 async def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     api_key: Optional[str] = Header(None, alias=settings.API_KEY_HEADER),
+    bot_secret: Optional[str] = Header(None, alias="X-Bot-Secret"),
     token: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
 ) -> User:
@@ -284,6 +292,14 @@ async def get_current_user(
 
     # Fallback to API key (backward compatibility)
     elif api_key:
+        if api_key.startswith("tg_"):
+            if not bot_secret or bot_secret != settings.BOT_SECRET_KEY:
+                logger.warning("unauthorized_bot_key_access", api_key=api_key[:8])
+                raise AuthException(
+                    message="Invalid bot secret for Telegram key", 
+                    error_code="INVALID_BOT_SECRET"
+                )
+
         # Hash the API key for secure lookup
         api_key_hash = hash_api_key(api_key)
         
@@ -293,19 +309,10 @@ async def get_current_user(
         user = result.scalar_one_or_none()
 
         if not user:
-            # Auto-create new user with this API key
-            # Store only the hash, not the plain text key
-            user = User(
-                api_key_hash=api_key_hash,
-                plan=UserPlan.FREE,
-                role=UserRole.USER,
-                daily_limit=settings.FREE_TIER_DAILY_LIMIT,
+            raise AuthException(
+                message="Invalid API key",
+                error_code="INVALID_API_KEY",
             )
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
-            # Log only first 4 chars for debugging (not the actual key)
-            logger.info("user_created_from_api_key", api_key_prefix=api_key[:4])
 
     if not user:
         raise AuthException(
@@ -351,6 +358,18 @@ async def get_current_user(
     return user
 
 
+def verify_bot_secret(
+    x_bot_secret: Optional[str] = Header(None, alias="X-Bot-Secret"),
+) -> bool:
+    """
+    Dependency that returns True if the request has a valid X-Bot-Secret header
+    (matches BOT_SECRET_KEY). Used by Telegram link endpoint to allow bot-originated requests.
+    """
+    if not x_bot_secret or not getattr(settings, "BOT_SECRET_KEY", None):
+        return False
+    return secrets.compare_digest(x_bot_secret, settings.BOT_SECRET_KEY)
+
+
 async def get_current_admin_user(
     user: User = Depends(get_current_user),
 ) -> User:
@@ -373,13 +392,14 @@ async def increment_usage(
     Increment user's daily usage counter.
     Uses subscription limit first, then falls back to credits.
     """
+    from sqlalchemy import update
     from app.models.database import UserCredit, CreditTransaction
     
     # Check if user has reached daily limit
     if user.daily_used >= user.daily_limit:
         # Try to use credits instead
         result = await db.execute(
-            select(UserCredit).where(UserCredit.user_id == user.id)
+            select(UserCredit).where(UserCredit.user_id == user.id).with_for_update()
         )
         user_credit = result.scalar_one_or_none()
         
@@ -414,6 +434,15 @@ async def increment_usage(
                 description="Analysis using credit",
             )
             db.add(transaction)
+            
+            # Also atomically update user's total analyses
+            await db.execute(
+                update(User)
+                .where(User.id == user.id)
+                .values(total_analyses=User.total_analyses + 1)
+            )
+            await db.commit()
+            return
         else:
             # No credits available - raise limit error
             raise RateLimitException(
@@ -429,9 +458,15 @@ async def increment_usage(
                 },
             )
 
-    # Increment daily usage
-    user.daily_used = (user.daily_used or 0) + 1
-    user.total_analyses = (user.total_analyses or 0) + 1
+    # Increment daily usage atomically
+    await db.execute(
+        update(User)
+        .where(User.id == user.id)
+        .values(
+            daily_used=User.daily_used + 1,
+            total_analyses=User.total_analyses + 1
+        )
+    )
     await db.commit()
 
 

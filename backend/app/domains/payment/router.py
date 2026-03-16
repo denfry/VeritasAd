@@ -37,6 +37,7 @@ class SubscriptionPlanResponse(BaseModel):
     checkout_url: str
     plan: str
     daily_limit: int
+    llm_tier: str
 
 
 # Plan pricing and limits mapping
@@ -45,21 +46,25 @@ PLAN_CONFIGS = {
         "price": 2900.0,
         "daily_limit": settings.STARTER_TIER_DAILY_LIMIT,
         "description": "For freelancers and light usage",
+        "llm_tier": "Starter LLM",
     },
     "pro": {
         "price": 7900.0,
         "daily_limit": settings.PRO_TIER_DAILY_LIMIT,
         "description": "For small business and marketing teams",
+        "llm_tier": "Pro LLM",
     },
     "business": {
         "price": 19900.0,
         "daily_limit": settings.BUSINESS_TIER_DAILY_LIMIT,
         "description": "For agencies and growing companies",
+        "llm_tier": "Business LLM",
     },
     "enterprise": {
         "price": 49900.0,
         "daily_limit": settings.ENTERPRISE_TIER_DAILY_LIMIT,
         "description": "For corporations and custom deployments",
+        "llm_tier": "Enterprise LLM",
     },
 }
 
@@ -199,6 +204,7 @@ async def create_subscription(
         checkout_url=checkout_url,
         plan=payload.plan,
         daily_limit=config["daily_limit"],
+        llm_tier=config["llm_tier"],
     )
 
 

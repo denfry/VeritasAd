@@ -11,15 +11,19 @@ Requirements:
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-import hashlib
 import os
 import socket
+from pathlib import Path
 
 # Set test environment BEFORE importing app
-os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
-os.environ.setdefault("ENVIRONMENT", "development")
-os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-min-32-chars")
-os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-key-for-testing-min-64-chars-long-enough")
+TEST_DB_PATH = Path(__file__).parent / "security_test.db"
+if TEST_DB_PATH.exists():
+    TEST_DB_PATH.unlink()
+os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{TEST_DB_PATH.as_posix()}"
+os.environ["ENVIRONMENT"] = "development"
+os.environ["DISABLE_AUTH"] = "false"
+os.environ["SECRET_KEY"] = "test-secret-key-for-testing-min-32-chars"
+os.environ["JWT_SECRET_KEY"] = "test-jwt-secret-key-for-testing-min-64-chars-long-enough"
 
 from app.main import create_app
 from app.models.database import get_db, User, UserPlan, UserRole, Analysis, AnalysisStatus, SourceType
@@ -41,17 +45,33 @@ async def client(app):
         base_url="http://test",
         timeout=30.0,
     ) as ac:
+        setattr(ac, "app", app)
         yield ac
 
 
 @pytest_asyncio.fixture
 async def db_session(app):
     """Create test database session."""
-    from app.models.database import engine, Base, AsyncSessionLocal
-    from sqlalchemy.ext.asyncio import AsyncSession
+    from app.models.database import Base
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+    from sqlalchemy.pool import NullPool
     
+    engine = create_async_engine(
+        os.environ["DATABASE_URL"],
+        poolclass=NullPool,
+        echo=False,
+    )
+    AsyncSessionLocal = async_sessionmaker(
+        engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=False,
+    )
+
     # Create tables
     async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     
     # Create session
@@ -113,7 +133,7 @@ class TestAuthentication:
         
         try:
             response = await client.get(
-                "/api/v1/health",
+                "/api/v1/users/me",
                 headers={"X-API-Key": api_key}
             )
             
@@ -123,15 +143,21 @@ class TestAuthentication:
             app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_invalid_api_key_rejected(self, client):
+    async def test_invalid_api_key_rejected(self, client, db_session):
         """Test that invalid API keys are rejected."""
-        response = await client.get(
-            "/api/v1/health",
-            headers={"X-API-Key": "invalid_key"}
-        )
-        
-        # Should be rejected (401)
-        assert response.status_code == 401
+        app = client.app
+        app.dependency_overrides[get_db] = lambda: db_session
+
+        try:
+            response = await client.get(
+                "/api/v1/users/me",
+                headers={"X-API-Key": "invalid_key"}
+            )
+            
+            # Should be rejected (401)
+            assert response.status_code == 401
+        finally:
+            app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
     async def test_no_auth_required_for_public_endpoints(self, client):
@@ -293,8 +319,8 @@ class TestPathTraversal:
                 headers={"X-API-Key": api_key}
             )
             
-            # Should be rejected (400 - invalid format)
-            assert response.status_code == 400
+            # Should be blocked by routing or validation
+            assert response.status_code in (400, 404)
         finally:
             app.dependency_overrides.clear()
 

@@ -1,9 +1,11 @@
 """Telegram authentication and account linking API."""
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 import structlog
 
-from app.core.dependencies import get_current_user, generate_jwt_tokens
+from app.core.dependencies import get_current_user, generate_jwt_tokens, verify_bot_secret
 from app.domains.telegram.service import TelegramAuthService
 from app.domains.telegram.repository import TelegramRepository
 from app.domains.telegram.schemas import (
@@ -86,26 +88,24 @@ async def telegram_auth(
 async def link_telegram_account(
     link_request: TelegramLinkRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_current_user),
+    is_bot: bool = Depends(verify_bot_secret),
 ):
     """
     Link Telegram account to existing user account.
-
-    **Flow:**
-    1. User requests link token from `/telegram/link-token`
-    2. User opens Telegram bot with `/start {token}`
-    3. Bot sends telegram_id and token to this endpoint
-    4. Accounts are linked
-
-    **Requirements:**
-    - Must be authenticated with JWT or API key
-    - Valid link token (generated within 24 hours)
-    - Telegram ID not already linked to another account
+    
+    If called by Bot (with X-Bot-Secret), current_user is not required.
     """
+    if not current_user and not is_bot:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
+
     service = get_telegram_service(db)
 
     try:
-        response = await service.link_account(current_user, link_request)
+        response = await service.link_account(current_user, link_request, is_bot=is_bot)
         return response
     except ValueError as e:
         logger.warning("telegram_link_failed", reason=str(e))

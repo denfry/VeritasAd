@@ -13,15 +13,10 @@ class AudioAnalyzer:
 
     def __init__(self, model_size: str = "tiny"):
         """
-        Initialize Whisper model for audio transcription
-
-        Args:
-            model_size: Whisper model size (tiny, base, small, medium, large)
+        Initialize Whisper model for audio transcription using ModelManager
         """
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        compute_type = "float16" if self.device == "cuda" else "int8"
-        logger.info(f"Loading Whisper model: {model_size} ({self.device}, {compute_type})")
-        self.model = WhisperModel(model_size, device=self.device, compute_type=compute_type)
+        from app.services.model_manager import model_manager
+        self.model = model_manager.get_whisper()
 
         # Advertising keywords (Russian)
         self.ad_keywords = [

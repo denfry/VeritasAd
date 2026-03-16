@@ -19,7 +19,6 @@ class UserProfile(BaseModel):
     daily_used: int
     total_analyses: int
     is_active: bool
-    api_key: Optional[str]
     
     class Config:
         from_attributes = True

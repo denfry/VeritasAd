@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Development Dockerfile с hot reload и кэшированием
 
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Устанавливаем зависимости для разработки
 RUN apt-get update && apt-get install -y \
@@ -19,14 +19,17 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Копируем только файлы зависимостей для кэширования
-COPY requirements.txt pyproject.toml ./
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Кэшируем установку pip зависимостей
-RUN pip install --no-cache-dir \
-    --default-timeout=1000 \
-    --retries=10 \
-    -r requirements.txt
+# Копируем только файлы зависимостей для кэширования
+COPY pyproject.toml uv.lock README.md ./
+
+# Кэшируем установку зависимостей через uv
+RUN uv sync --frozen --no-dev
+
+# Place the venv on the PATH
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Копируем остальной код (исключая .dockerignore)
 COPY . .
@@ -42,9 +45,19 @@ COPY <<EOF /app/entrypoint.sh
 #!/bin/bash
 set -e
 
-# Выполняем миграции Alembic перед запуском
-echo "Running Alembic migrations..."
-alembic upgrade head
+# Выполняем миграции Alembic перед запуском, если не задана переменная SKIP_MIGRATIONS
+if [ "\$SKIP_MIGRATIONS" != "true" ]; then
+    echo "Running Alembic migrations..."
+    # Пытаемся запустить миграции с небольшой задержкой/повторами в случае конфликтов таблиц версий
+    for i in {1..5}; do
+        alembic upgrade head && break || {
+            echo "Migration attempt \$i failed, retrying in 2s..."
+            sleep 2
+        }
+    done
+else
+    echo "Skipping migrations as requested..."
+fi
 
 # Запускаем основную команду
 exec "\$@"

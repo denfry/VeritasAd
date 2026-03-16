@@ -13,6 +13,7 @@ import shutil
 import asyncio
 import re
 import sys
+import json
 
 from app.services.audio_analyzer import AudioAnalyzer
 from app.services.disclosure_detector import DisclosureDetector
@@ -29,18 +30,13 @@ class VideoProcessor:
 
     def __init__(self, use_llm: bool = False, custom_brands: List[str] = None):
         """
-        Initialize video processor with all required models
-
-        Args:
-            use_llm: Whether to use LLM for disclosure detection
-            custom_brands: Optional list of custom brand names to detect
+        Initialize video processor using ModelManager
         """
-        logger.info("Initializing Video Processor")
+        from app.services.model_manager import model_manager
+        logger.info("Initializing Video Processor via ModelManager")
 
         # CLIP for logo/brand detection
-        logger.info(f"Loading CLIP model: {settings.CLIP_MODEL}")
-        self.clip_model = CLIPModel.from_pretrained(settings.CLIP_MODEL)
-        self.clip_processor = CLIPProcessor.from_pretrained(settings.CLIP_MODEL)
+        self.clip_model, self.clip_processor = model_manager.get_clip()
 
         # Load brand aliases from config
         self.brand_aliases = settings.get_brand_aliases()
@@ -196,6 +192,169 @@ class VideoProcessor:
 
         logger.info(f"Video Processor initialized with {len(self.brands)} brands")
 
+    @staticmethod
+    def _is_youtube_url(url: str) -> bool:
+        return "youtube.com" in url or "youtu.be" in url
+
+    def _build_auth_args(self, url: str) -> List[str]:
+        """Build yt-dlp authentication arguments from settings/platform defaults."""
+        auth_args: List[str] = []
+
+        if settings.YTDLP_COOKIES_FILE:
+            cookies_path = Path(settings.YTDLP_COOKIES_FILE).expanduser()
+            if cookies_path.exists():
+                auth_args.extend(["--cookies", str(cookies_path)])
+            else:
+                logger.warning(f"YTDLP_COOKIES_FILE does not exist: {cookies_path}")
+
+        if not auth_args and settings.YTDLP_COOKIES_FROM_BROWSER:
+            auth_args.extend(["--cookies-from-browser", settings.YTDLP_COOKIES_FROM_BROWSER])
+
+        # Backward-compatible defaults for known platforms
+        if not auth_args and ("t.me" in url or "instagram.com" in url):
+            auth_args.extend(["--cookies-from-browser", "chrome"])
+
+        return auth_args
+
+    def _build_yt_dlp_download_cmd(self, url: str, video_path: Path, auth_args: Optional[List[str]] = None) -> List[str]:
+        cmd = [
+            sys.executable,
+            "-m",
+            "yt_dlp",
+            "-o", str(video_path),
+            "--retries", str(settings.DOWNLOAD_RETRIES),
+            "--retry-sleep", "2",
+            "--extractor-retries", "3",
+            "--format", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+            "--concurrent-fragments", str(settings.DOWNLOAD_CONCURRENT_FRAGMENTS),
+            "--fragment-retries", str(settings.DOWNLOAD_FRAGMENT_RETRIES),
+            "--socket-timeout", str(settings.DOWNLOAD_SOCKET_TIMEOUT),
+            "--no-playlist",
+            "--geo-bypass",
+            "--no-warnings",
+            "--newline",  # Print progress on new lines for easier parsing
+        ]
+
+        # Use aria2c as external downloader if enabled
+        if settings.USE_ARIA2C:
+            cmd += [
+                "--external-downloader", "aria2c",
+                "--external-downloader-args",
+                f"aria2c: -x {settings.DOWNLOAD_CONCURRENT_FRAGMENTS} -s {settings.DOWNLOAD_CONCURRENT_FRAGMENTS} -k 1M",
+            ]
+
+        if auth_args:
+            cmd.extend(auth_args)
+
+        if self._is_youtube_url(url):
+            cmd += [
+                "--extractor-args",
+                "youtube:player_client=android,web",
+                "--user-agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            ]
+
+        cmd.append(url)
+        return cmd
+
+    @staticmethod
+    def _is_youtube_bot_check(output: str) -> bool:
+        output_lower = output.lower()
+        return (
+            "sign in to confirm" in output_lower
+            and "not a bot" in output_lower
+            and "youtube" in output_lower
+        )
+
+    def _run_yt_dlp_with_progress(
+        self,
+        cmd: List[str],
+        emit_progress: Callable[[int, str], None],
+    ) -> tuple[subprocess.CompletedProcess[str], List[str]]:
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+            universal_newlines=True,
+        )
+
+        download_progress = 0
+        output_lines: List[str] = []
+
+        while True:
+            line = process.stdout.readline()
+            if not line and process.poll() is not None:
+                break
+            if line:
+                output_lines.append(line)
+                # Matches patterns like "[download]  45.3% of  10.50MiB"
+                match = re.search(r'\[download\]\s+(\d+\.?\d*)%', line)
+                if match:
+                    current_progress = float(match.group(1))
+                    # Map download progress (0-100%) to task progress (5-15%)
+                    mapped_progress = 5 + int((current_progress / 100) * 10)
+                    if mapped_progress > download_progress:
+                        download_progress = mapped_progress
+                        emit_progress(download_progress, "Downloading video")
+
+        return (
+            subprocess.CompletedProcess(cmd, process.returncode, ''.join(output_lines), ''),
+            output_lines,
+        )
+
+    async def get_url_metadata(self, url: str) -> Dict[str, Any]:
+        """Extract metadata from URL using yt-dlp and social parsers."""
+        from app.services.social_parsers import extract_social_post
+        
+        metadata = {
+            "title": "",
+            "description": "",
+            "uploader": "",
+            "view_count": None,
+            "duration": None
+        }
+        
+        # 1. Try social parsers first (more targeted for some platforms)
+        social_meta = await extract_social_post(url)
+        if social_meta:
+            metadata.update(social_meta)
+            
+        # 2. Use yt-dlp for more comprehensive metadata if needed
+        try:
+            cmd = [
+                sys.executable,
+                "-m", "yt_dlp",
+                "--dump-json",
+                "--no-playlist",
+                "--no-warnings",
+            ]
+            cmd += self._build_auth_args(url)
+            cmd.append(url)
+
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            
+            if process.returncode == 0:
+                info = json.loads(stdout.decode())
+                metadata.update({
+                    "title": info.get("title", metadata["title"]),
+                    "description": info.get("description", metadata["description"]),
+                    "uploader": info.get("uploader", metadata["uploader"]),
+                    "view_count": info.get("view_count", metadata["view_count"]),
+                    "duration": info.get("duration", metadata["duration"])
+                })
+        except Exception as e:
+            logger.warning(f"yt-dlp metadata extraction failed for {url}: {e}")
+            
+        return metadata
+
     def download_video(
         self,
         url: str,
@@ -229,88 +388,34 @@ class VideoProcessor:
 
             # Report initial progress (downloading started)
             emit_progress(5, "Downloading video")
+            auth_args = self._build_auth_args(url)
+            cmd = self._build_yt_dlp_download_cmd(url, video_path, auth_args)
+            result, output_lines = self._run_yt_dlp_with_progress(cmd, emit_progress)
 
-            cmd = [
-                sys.executable,
-                "-m",
-                "yt_dlp",
-                "-o", str(video_path),
-                "--retries", str(settings.DOWNLOAD_RETRIES),
-                "--retry-sleep", "2",
-                "--extractor-retries", "3",
-                "--format", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
-                "--concurrent-fragments", str(settings.DOWNLOAD_CONCURRENT_FRAGMENTS),
-                "--fragment-retries", str(settings.DOWNLOAD_FRAGMENT_RETRIES),
-                "--socket-timeout", str(settings.DOWNLOAD_SOCKET_TIMEOUT),
-                "--no-playlist",
-                "--geo-bypass",
-                "--no-check-certificates",
-                "--no-warnings",
-                "--newline",  # Print progress on new lines for easier parsing
-            ]
-
-            # Use aria2c as external downloader if enabled
-            if settings.USE_ARIA2C:
-                cmd += [
-                    "--external-downloader", "aria2c",
-                    "--external-downloader-args",
-                    f"aria2c: -x {settings.DOWNLOAD_CONCURRENT_FRAGMENTS} -s {settings.DOWNLOAD_CONCURRENT_FRAGMENTS} -k 1M",
-                ]
-
-            # Add cookies for Telegram
-            if "t.me" in url:
-                cmd += ["--cookies-from-browser", "chrome"]
-
-            if "youtu.be" in url or "youtube.com" in url:
-                cmd += [
-                    "--extractor-args",
-                    "youtube:player_client=android,web",
-                    "--user-agent",
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-                ]
-            cmd.append(url)
-
-            # Run subprocess and capture output for progress parsing
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-                universal_newlines=True,
-            )
-
-            # Parse progress from yt-dlp output
-            download_progress = 0
-            output_lines = []
-
-            while True:
-                line = process.stdout.readline()
-                if not line and process.poll() is not None:
-                    break
-                if line:
-                    output_lines.append(line)
-                    # Parse download percentage from yt-dlp output
-                    # Matches patterns like "[download]  45.3% of  10.50MiB"
-                    match = re.search(r'\[download\]\s+(\d+\.?\d*)%', line)
-                    if match:
-                        current_progress = float(match.group(1))
-                        # Map download progress (0-100%) to task progress (5-15%)
-                        mapped_progress = 5 + int((current_progress / 100) * 10)
-                        if mapped_progress > download_progress:
-                            download_progress = mapped_progress
-                            emit_progress(download_progress, "Downloading video")
-
-            result = subprocess.CompletedProcess(
-                cmd,
-                process.returncode,
-                ''.join(output_lines),
-                ''
-            )
+            # Retry once for YouTube bot-check errors with Chrome cookies if not already used
+            output_text = "".join(output_lines)
+            used_cookies_from_browser = "--cookies-from-browser" in cmd
+            if (
+                result.returncode != 0
+                and self._is_youtube_url(url)
+                and self._is_youtube_bot_check(output_text)
+                and settings.YTDLP_YOUTUBE_TRY_CHROME_COOKIES
+                and not used_cookies_from_browser
+            ):
+                retry_auth_args = auth_args + ["--cookies-from-browser", "chrome"]
+                logger.info("yt-dlp YouTube bot-check detected, retrying with Chrome cookies")
+                emit_progress(6, "Retrying download with YouTube authentication")
+                retry_cmd = self._build_yt_dlp_download_cmd(url, video_path, retry_auth_args)
+                result, output_lines = self._run_yt_dlp_with_progress(retry_cmd, emit_progress)
+                output_text = "".join(output_lines)
 
             if result.returncode != 0:
                 output_tail = "\n".join("".join(output_lines).strip().splitlines()[-8:])
+                if self._is_youtube_url(url) and self._is_youtube_bot_check(output_text):
+                    output_tail += (
+                        "\nHint: configure YTDLP_COOKIES_FROM_BROWSER (e.g. chrome) "
+                        "or YTDLP_COOKIES_FILE in backend/.env for authenticated YouTube access."
+                    )
                 raise RuntimeError(f"yt-dlp failed with code {result.returncode}: {output_tail}")
 
             if not video_path.exists():
@@ -808,13 +913,17 @@ class VideoProcessor:
                 source_url = None
 
             elif url:
+                # Fetch metadata first
+                url_meta = await self.get_url_metadata(url)
+                description = url_meta.get("description", "")
+                
                 video_path = self.download_video(url, progress_callback=progress_callback)
                 if not video_path:
                     raise Exception(f"Video download returned no file for URL: {url}")
                 source = "url"
                 source_url = url
-
             else:
+                description = ""
                 raise Exception("No video file or URL provided")
 
             logger.info(f"Processing video: {video_path}")
@@ -836,9 +945,10 @@ class VideoProcessor:
 
             logger.info("Running disclosure detection")
             transcript = audio_result.get("transcript", "")
-            disclosure_result = await loop.run_in_executor(
-                None, 
-                lambda: self.disclosure_detector.analyze(text=transcript, description="")
+            disclosure_result = await self.disclosure_detector.analyze(
+                text=transcript, 
+                description=description, 
+                plan="free"
             )
 
             # Calculate final scores

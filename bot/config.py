@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     """Telegram bot settings with validation."""
     
     TELEGRAM_BOT_TOKEN: str = ""
+    BOT_SECRET_KEY: str = ""  # Secret for backend communication
     API_URL: str = "http://backend:8000"
     REDIS_URL: str = "redis://localhost:6379/2"
 

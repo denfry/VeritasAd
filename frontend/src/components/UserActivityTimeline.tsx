@@ -6,20 +6,17 @@
  */
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback, type ReactNode } from "react"
 import { formatDistanceToNow } from "date-fns"
 import { ru } from "date-fns/locale"
 import type { AuditLogListItem } from "@/types/api"
-import { listAuditLogs } from "@/lib/api-client"
+import { listAuditLogs, type AuditLogListParams } from "@/lib/api-client"
 import {
   User,
   Shield,
   LogOut,
-  Settings,
   FileText,
   AlertCircle,
-  CheckCircle,
-  XCircle,
   Ban,
   UserCheck,
   Key,
@@ -40,7 +37,7 @@ type ActivityTimelineProps = {
 }
 
 // Icon mapping for event types
-const EVENT_ICONS: Record<string, React.ReactNode> = {
+const EVENT_ICONS: Record<string, ReactNode> = {
   // Auth
   login: <User className="h-4 w-4" />,
   logout: <LogOut className="h-4 w-4" />,
@@ -92,19 +89,15 @@ export function UserActivityTimeline({
   const [cursor, setCursor] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
 
-  useEffect(() => {
-    loadLogs()
-  }, [filter])
-
-  const loadLogs = async () => {
+  const loadLogs = useCallback(async () => {
     try {
-      const params: Record<string, string | number | boolean> = { limit }
+      const params: AuditLogListParams = { limit }
       
       if (userId) params.actor_user_id = userId
       if (userEmail) params.actor_email = userEmail
       if (filter !== "all") params.event_category = filter
       
-      const response = await listAuditLogs(params as any)
+      const response = await listAuditLogs(params)
       setLogs(response.data)
       setCursor(response.next_cursor)
       setHasMore(response.has_more)
@@ -113,18 +106,22 @@ export function UserActivityTimeline({
     } finally {
       setLoading(false)
     }
-  }
+  }, [filter, limit, userEmail, userId])
+
+  useEffect(() => {
+    loadLogs()
+  }, [loadLogs])
 
   const loadMore = async () => {
     if (!cursor) return
     
     try {
-      const params: Record<string, string | number> = { limit, cursor }
+      const params: AuditLogListParams = { limit, cursor }
       if (userId) params.actor_user_id = userId
       if (userEmail) params.actor_email = userEmail
       if (filter !== "all") params.event_category = filter
       
-      const response = await listAuditLogs(params as any)
+      const response = await listAuditLogs(params)
       setLogs(prev => [...prev, ...response.data])
       setCursor(response.next_cursor)
       setHasMore(response.has_more)

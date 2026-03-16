@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
@@ -24,9 +24,9 @@ import { ProgressBar } from "@/components/ProgressBar"
 import { VideoTimeline } from "@/components/VideoTimeline"
 import { Skeleton } from "@/components/ui/Skeleton"
 import { useAuth } from "@/contexts/auth-context"
-import { analyzeVideo, fetchAnalysisResult, streamAnalysisProgress } from "@/lib/api-client"
+import { analyzeVideo, fetchAnalysisResult, streamAnalysisProgress, ApiError } from "@/lib/api-client"
 import type { AnalysisResult } from "@/types/api"
-import { getPlatformIcon, type PlatformType } from "@/lib/platforms"
+import { getPlatformIcon } from "@/lib/platforms"
 
 export default function AnalyzePage() {
   const router = useRouter()
@@ -42,13 +42,7 @@ export default function AnalyzePage() {
   const [progressStatus, setProgressStatus] = useState("")
   const [progressStage, setProgressStage] = useState("idle")
   const [result, setResult] = useState<AnalysisResult | null>(null)
-  const [isLoadingResult, setIsLoadingResult] = useState(false)
   const analysisAbortRef = useRef<AbortController | null>(null)
-
-  const platformType: PlatformType = useMemo(() => {
-    if (file) return 'file'
-    return getPlatformIcon(url).name === 'URL' ? 'url' : getPlatformIcon(url).name.toLowerCase() as PlatformType
-  }, [url, file])
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -57,15 +51,7 @@ export default function AnalyzePage() {
     }
   }, [user, authLoading, router])
 
-  // Load task from URL if provided
-  useEffect(() => {
-    if (user && taskIdParam && !result && !isSubmitting) {
-      loadTaskResult(taskIdParam)
-    }
-  }, [user, taskIdParam])
-
-  async function loadTaskResult(taskId: string) {
-    setIsLoadingResult(true)
+  const loadTaskResult = useCallback(async (taskId: string) => {
     setProgressStatus("Loading results...")
     try {
       const data = await fetchAnalysisResult({ taskId })
@@ -73,13 +59,18 @@ export default function AnalyzePage() {
       setProgress(100)
       setProgressStatus(data.status ?? "Completed")
       setProgressStage("complete")
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load task result:", error)
       toast.error("Failed to load analysis results.")
-    } finally {
-      setIsLoadingResult(false)
     }
-  }
+  }, [])
+
+  // Load task from URL if provided
+  useEffect(() => {
+    if (user && taskIdParam && !result && !isSubmitting) {
+      loadTaskResult(taskIdParam)
+    }
+  }, [user, taskIdParam, result, isSubmitting, loadTaskResult])
 
   const handleAuthExpired = async () => {
     toast.error("Session expired. Please sign in again.")
@@ -186,8 +177,8 @@ export default function AnalyzePage() {
           setProgressStatus(finalResult.status ?? "Completed")
           setProgressStage("complete")
           setUrl("")
-        } catch (error: any) {
-          if (error.response?.status === 401) {
+        } catch (error: unknown) {
+          if (error instanceof ApiError && error.response.status === 401) {
             await handleAuthExpired()
             return
           }
@@ -200,11 +191,11 @@ export default function AnalyzePage() {
         setProgressStage("complete")
         setUrl("")
       }
-    } catch (error: any) {
-      if (error.name === "AbortError") {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === "AbortError") {
         setProgressStatus("Analysis cancelled")
         setProgressStage("idle")
-      } else if (error.response?.status === 401) {
+      } else if (error instanceof ApiError && error.response.status === 401) {
         await handleAuthExpired()
       } else {
         toast.error("Analysis failed. Check logs for details.")

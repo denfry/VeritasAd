@@ -120,10 +120,6 @@ def get_user_permissions(user: User) -> Set[Permission]:
     if not user:
         return set()
     
-    # Check for superadmin (hardcoded email or special flag)
-    if user.email and user.email.endswith("@veritasad.super"):
-        return SUPERADMIN_PERMISSIONS
-    
     # Get permissions from role
     role_permissions = ROLE_PERMISSIONS.get(UserRole(user.role), set())
     return role_permissions.copy()

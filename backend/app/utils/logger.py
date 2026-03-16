@@ -10,10 +10,21 @@ from app.core.config import settings
 _file_handler: Optional[logging.Handler] = None
 
 
+def _resolve_log_dir() -> Path:
+    """Resolve writable log directory with local fallback for dev/tests."""
+    preferred = Path(settings.DATA_DIR) / "logs"
+    try:
+        preferred.mkdir(parents=True, exist_ok=True)
+        return preferred
+    except PermissionError:
+        fallback = Path.cwd() / "logs"
+        fallback.mkdir(parents=True, exist_ok=True)
+        return fallback
+
+
 def _get_log_file_path() -> Path:
     """Get the log file path based on settings."""
-    log_dir = Path(settings.DATA_DIR) / "logs"
-    log_dir.mkdir(parents=True, exist_ok=True)
+    log_dir = _resolve_log_dir()
     return log_dir / "app.log"
 
 
@@ -21,13 +32,23 @@ def _create_file_handler() -> logging.Handler:
     """Create and configure a rotating file handler."""
     from logging.handlers import RotatingFileHandler
     
-    log_file = _get_log_file_path()
-    handler = RotatingFileHandler(
-        log_file,
-        maxBytes=10 * 1024 * 1024,  # 10MB
-        backupCount=5,
-        encoding="utf-8",
-    )
+    try:
+        log_file = _get_log_file_path()
+        handler = RotatingFileHandler(
+            log_file,
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=5,
+            encoding="utf-8",
+        )
+    except PermissionError:
+        fallback_file = Path.cwd() / "logs" / "app.log"
+        fallback_file.parent.mkdir(parents=True, exist_ok=True)
+        handler = RotatingFileHandler(
+            fallback_file,
+            maxBytes=10 * 1024 * 1024,
+            backupCount=5,
+            encoding="utf-8",
+        )
     handler.setLevel(getattr(logging, settings.LOG_LEVEL))
     
     # File formatter with more details
@@ -115,8 +136,7 @@ def setup_celery_logging() -> None:
     from logging.handlers import RotatingFileHandler
     
     # Create separate log file for Celery
-    log_dir = Path(settings.DATA_DIR) / "logs"
-    log_dir.mkdir(parents=True, exist_ok=True)
+    log_dir = _resolve_log_dir()
     celery_log_file = log_dir / "celery.log"
     
     # Configure root logger
@@ -136,12 +156,22 @@ def setup_celery_logging() -> None:
     console_handler.setFormatter(console_formatter)
     
     # File handler for Celery
-    file_handler = RotatingFileHandler(
-        celery_log_file,
-        maxBytes=10 * 1024 * 1024,  # 10MB
-        backupCount=5,
-        encoding="utf-8",
-    )
+    try:
+        file_handler = RotatingFileHandler(
+            celery_log_file,
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=5,
+            encoding="utf-8",
+        )
+    except PermissionError:
+        fallback_file = Path.cwd() / "logs" / "celery.log"
+        fallback_file.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = RotatingFileHandler(
+            fallback_file,
+            maxBytes=10 * 1024 * 1024,
+            backupCount=5,
+            encoding="utf-8",
+        )
     file_handler.setLevel(getattr(logging, settings.LOG_LEVEL))
     file_formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s",

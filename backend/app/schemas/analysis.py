@@ -35,6 +35,7 @@ class AnalysisResult(BaseModel):
     disclosure_text: Optional[str] = None
     ad_classification: Optional[str] = None
     ad_reason: Optional[str] = None
+    method: Optional[str] = Field(None, description="Detection method (e.g. rule-based, llm-pro)")
 
     # Metadata
     status: str
@@ -69,6 +70,7 @@ class AnalysisUpdate(BaseModel):
     disclosure_text: Optional[str] = None
     ad_classification: Optional[str] = None
     ad_reason: Optional[str] = None
+    method: Optional[str] = None
     processing_time: Optional[float] = None
     error_message: Optional[str] = None
     report_path: Optional[str] = None

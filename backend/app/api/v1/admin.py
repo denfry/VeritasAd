@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
 from app.core.dependencies import get_current_admin_user
 from app.models.database import get_db, User, Analysis, AnalysisStatus, UserPlan, UserRole
+from app.services.analytics_service import AnalyticsService
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, timezone, timedelta
@@ -265,3 +266,34 @@ async def get_analytics(
         plan_distribution=plan_distribution,
         chart_data=chart_data,
     )
+
+@router.get("/analytics/advanced")
+async def get_advanced_analytics(
+    days: int = 30,
+    admin: User = Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get advanced analytics data (admin only).
+    """
+    analytics_service = AnalyticsService(db)
+    now = datetime.now(timezone.utc)
+    start_date = now - timedelta(days=days)
+    
+    time_series = await analytics_service.get_time_series(
+        metric="analyses",
+        start_date=start_date,
+        end_date=now,
+        interval="day"
+    )
+    
+    funnel_data = await analytics_service.get_funnel_data()
+    top_brands = await analytics_service.get_top_items(item_type="brands", limit=10, start_date=start_date)
+    summary_stats = await analytics_service.get_summary_stats(start_date=start_date, end_date=now)
+    
+    return {
+        "time_series": time_series,
+        "funnel": funnel_data,
+        "top_brands": top_brands,
+        "summary": summary_stats,
+    }

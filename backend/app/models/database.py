@@ -194,6 +194,9 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
 
+    # Relationships
+    analyses: Mapped[List["Analysis"]] = relationship("Analysis", back_populates="user", cascade="all, delete-orphan")
+
 class Analysis(Base):
     __tablename__ = "analyses"
 
@@ -219,12 +222,16 @@ class Analysis(Base):
     promo_codes: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
     ad_classification: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     ad_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    method: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     status: Mapped[str] = mapped_column(SQLEnum(AnalysisStatus, name="analysis_status"), default=AnalysisStatus.PENDING, nullable=False, index=True)
     progress: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     report_path: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="analyses")
 
 
 class Payment(Base):

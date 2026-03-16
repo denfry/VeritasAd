@@ -51,6 +51,7 @@ dependencies = [
     "PyJWT==2.9.0",
     "pyqrcode==1.2.1",
     "pypng==0.20220715.0",
+    "beautifulsoup4>=4.12.0",
 ]
 
 [project.optional-dependencies]
@@ -115,7 +116,8 @@ python_files = "test_*.py"
 python_functions = "test_*"
 python_classes = "Test*"
 asyncio_mode = "auto"
-addopts = "-v --cov=app --cov-report=term-missing --cov-report=html"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-v"
 
 [tool.coverage.run]
 source = ["app"]

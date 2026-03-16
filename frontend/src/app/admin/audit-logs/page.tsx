@@ -8,8 +8,7 @@ import { listAuditLogs, getAuditStats } from "@/lib/api-client"
 import type { AuditLogListItem, CursorPaginationResponse } from "@/types/api"
 import { toast } from "sonner"
 import { 
-  Loader2, Shield, Search, Filter, ChevronDown, 
-  ChevronUp, Calendar, Download, Key, LogOut, 
+  Loader2, Shield, Search, Download, Key, LogOut, 
   AlertTriangle, UserPlus, Ban, CheckCircle2, 
   RefreshCw, CreditCard, Eye, List, Edit, BarChart3,
   Lock, Unlock, FileText, ArrowLeft
@@ -19,10 +18,11 @@ import { ru } from "date-fns/locale"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 
-type SortOrder = "asc" | "desc"
+type AuditStats = Awaited<ReturnType<typeof getAuditStats>>
+type EventTypeConfig = Record<string, { icon: React.ComponentType<{ className?: string }>; color: string }>
 
 // Event type icons and colors
-const EVENT_TYPE_CONFIG: Record<string, { icon: any; color: string }> = {
+const EVENT_TYPE_CONFIG: EventTypeConfig = {
   // Auth
   login: { icon: Key, color: "text-blue-500" },
   logout: { icon: LogOut, color: "text-gray-500" },
@@ -58,11 +58,11 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string }> = {
 
 export default function AuditLogsPage() {
   const router = useRouter()
-  const { user, loading: authLoading, signOut } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   
   // Data state
   const [logsResponse, setLogsResponse] = useState<CursorPaginationResponse<AuditLogListItem> | null>(null)
-  const [stats, setStats] = useState<any | null>(null)
+  const [stats, setStats] = useState<AuditStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   
@@ -103,9 +103,12 @@ export default function AuditLogsPage() {
       ])
       setLogsResponse(logsData)
       setStats(statsData)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Audit Logs Error:", error)
-      if (error.response?.status === 403) {
+      const status = error instanceof Error && "response" in error
+        ? (error as { response?: { status?: number } }).response?.status
+        : undefined
+      if (status === 403) {
         toast.error("Admin access required")
         router.push("/dashboard")
       }
@@ -120,7 +123,20 @@ export default function AuditLogsPage() {
             { category: "user", count: 320 },
             { category: "admin", count: 150 },
             { category: "security", count: 220 },
-          ]
+          ],
+          events_by_status: [
+            { status: "success", count: 1320 },
+            { status: "failure", count: 140 },
+            { status: "denied", count: 80 },
+          ],
+          top_actors: [
+            { email: "admin@veritasad.ai", count: 120 },
+            { email: "ops@veritasad.ai", count: 84 },
+          ],
+          top_event_types: [
+            { event_type: "login", count: 400 },
+            { event_type: "admin.user.view", count: 210 },
+          ],
         })
       }
     } finally {
@@ -223,7 +239,7 @@ export default function AuditLogsPage() {
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Vector Events</p>
             <p className="text-2xl font-black mt-1">{stats?.total_events}</p>
           </div>
-          {stats?.events_by_category.slice(0, 4).map((cat: any) => (
+          {stats?.events_by_category.slice(0, 4).map((cat) => (
             <div key={cat.category} className="card p-5">
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{cat.category}</p>
               <p className="text-2xl font-black mt-1">{cat.count}</p>

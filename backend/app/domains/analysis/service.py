@@ -13,7 +13,7 @@ from app.core.redis import RedisClient
 from app.models.database import Analysis, SourceType, User
 from app.services.video_processor import VideoProcessor
 from app.services.disclosure_detector import DisclosureDetector
-from app.tasks.video_analysis import analyze_video_task
+from app.services.video_download_errors import classify_processing_error
 from app.utils.ad_classification import classify_advertising
 
 from app.domains.analysis.repository import AnalysisRepository
@@ -173,7 +173,8 @@ class AnalysisService:
             # If info extraction failed, return error early
             if info_error:
                 logger.warning(f"Video info extraction failed, returning error to user")
-                raise ValidationException(f"Failed to fetch video info: {info_error}")
+                friendly = classify_processing_error(info_error)
+                raise ValidationException(friendly["user_message"])
 
             source_url = url
             # Queue URL source and download inside background task.
@@ -232,6 +233,7 @@ class AnalysisService:
         )
 
         logger.info(f"Queuing Celery task: task_id={task_id}")
+        from app.tasks.video_analysis import analyze_video_task
         analyze_video_task.delay(
             task_id=task_id,
             video_path_param=str(video_path) if video_path else "",

@@ -1,0 +1,240 @@
+# Docker Compose для полноценной разработки VeritasAd
+# Запуск: docker-compose -f docker-compose.dev.yml up --build
+# Все сервисы с hot reload и PostgreSQL
+
+services:
+  # ==================== BACKEND ====================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: veritasad-backend-dev
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.dev
+      - ./backend/.env.dev
+    environment:
+      # Database - PostgreSQL для консистентности с production
+      - DATABASE_URL=postgresql+asyncpg://veritasad:veritasad123@postgres:5432/veritasad
+
+      # Redis
+      - REDIS_URL=redis://redis:6379/0
+
+      # Celery
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+
+      # Environment
+      - ENVIRONMENT=development
+      - DEBUG=True
+
+      # Development - отключение авторизации для тестирования
+      - DISABLE_AUTH=true
+
+      # CORS
+      - CORS_ORIGINS=["http://localhost:3000","http://localhost:8000","http://127.0.0.1:3000"]
+
+      # Trusted hosts
+      - TRUSTED_HOSTS=["localhost","*.localhost","127.0.0.1"]
+    volumes:
+      # Backend code (для hot reload)
+      - ./backend/app:/app/app
+      - ./backend/scripts:/app/scripts
+      # Data persistence
+      - backend_data:/app/data
+      # Logs
+      - ./logs/backend:/app/data/logs
+      - ./models:/app/models:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # ==================== CELERY WORKER ====================
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: veritasad-celery-dev
+    env_file:
+      - .env.dev
+      - ./backend/.env.dev
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://veritasad:veritasad123@postgres:5432/veritasad
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - DISABLE_AUTH=true
+      - LOG_LEVEL=DEBUG
+      - LOG_FORMAT=text
+      - SKIP_MIGRATIONS=true
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/scripts:/app/scripts
+      - backend_data:/app/data
+      - ./logs/celery:/app/data/logs
+      - ./models:/app/models:ro
+    depends_on:
+      - redis
+      - postgres
+      - backend
+    command: celery -A app.core.celery:celery_app worker --loglevel=debug --concurrency=2 --pool=solo
+    entrypoint: /app/entrypoint.sh
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+  # ==================== YT COOKIES REFRESHER ====================
+  yt-cookies-refresh:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: veritasad-yt-cookies-refresh-dev
+    env_file:
+      - .env.dev
+      - ./backend/.env.dev
+    environment:
+      - SKIP_MIGRATIONS=true
+      - LOG_LEVEL=INFO
+      # Default cookie target inside shared backend volume
+      - YTDLP_COOKIES_FILE=/app/data/cookies/youtube_cookies.txt
+      # Refresh once per 12 hours by default
+      - YTDLP_COOKIES_REFRESH_INTERVAL_SECONDS=43200
+    volumes:
+      - backend_data:/app/data
+      - ./backend/scripts:/app/scripts
+      # Optional: place externally managed cookies in ./backend/cookies
+      - ./backend/cookies:/cookies:ro
+    depends_on:
+      - backend
+    command: sh /app/scripts/run_cookie_refresh_loop.sh
+    entrypoint: /app/entrypoint.sh
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+  # ==================== FRONTEND ====================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+        NEXT_PUBLIC_DISABLE_AUTH: "true"
+    container_name: veritasad-frontend-dev
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env.dev
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+    volumes:
+      # Frontend code (для hot reload)
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/.next:/app/.next
+      # Исключаем node_modules для производительности и кэширования
+      - node_modules_frontend:/app/node_modules
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+  # ==================== TELEGRAM BOT ====================
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile.dev
+    container_name: veritasad-bot-dev
+    env_file:
+      - .env.dev
+      - ./bot/.env.dev
+    environment:
+      # Required
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-your_bot_token_here}
+
+      # API
+      - API_URL=http://backend:8000
+
+      # Redis (для FSM)
+      - REDIS_URL=redis://redis:6379/2
+
+      # Environment
+      - ENVIRONMENT=development
+    volumes:
+      # Bot code (для hot reload)
+      - ./bot:/app
+    depends_on:
+      - backend
+      - redis
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+  # ==================== POSTGRESQL ====================
+  postgres:
+    image: postgres:15-alpine
+    container_name: veritasad-postgres-dev
+    environment:
+      POSTGRES_DB: veritasad
+      POSTGRES_USER: veritasad
+      POSTGRES_PASSWORD: veritasad123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U veritasad -d veritasad"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+  # ==================== REDIS ====================
+  redis:
+    image: redis:7-alpine
+    container_name: veritasad-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - veritasad-network
+
+# ==================== VOLUMES ====================
+volumes:
+  backend_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  node_modules_frontend:
+    driver: local
+
+# ==================== NETWORKS ====================
+networks:
+  veritasad-network:
+    driver: bridge

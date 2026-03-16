@@ -11,31 +11,13 @@ class DisclosureDetector:
 
     def __init__(self, use_llm: bool = False):
         """
-        Initialize disclosure detector
+        Initialize disclosure detector using LLMService
         """
         from app.core.config import settings
+        from app.services.llm_service import llm_service
         
         self.use_llm = use_llm or settings.USE_LLM
-        self.llm_model = None
-        
-        if self.use_llm:
-            try:
-                import sys
-                from pathlib import Path
-                # Add models root if necessary
-                models_path = str(Path(__file__).parent.parent.parent.parent / 'models')
-                if models_path not in sys.path:
-                    sys.path.append(models_path)
-                    
-                from llm.inference import DisclosureLLM
-                # The adapter path in models/llm/inference.py defaults to ./llama-winline-lora
-                # We should build an absolute path
-                adapter_path = str(Path(__file__).parent.parent.parent.parent / 'models' / 'llm' / 'llama-winline-lora')
-                self.llm_model = DisclosureLLM(adapter_path=adapter_path)
-                logger.info("Successfully loaded DisclosureLLM")
-            except Exception as e:
-                logger.error(f"Failed to load DisclosureLLM: {e}")
-                self.use_llm = False
+        self.llm_service = llm_service
 
         # Disclosure patterns (RU/EN)
         self.disclosure_patterns = [
@@ -196,10 +178,13 @@ class DisclosureDetector:
             "method": "rule-based"
         }
 
-    def analyze(self, text: str, description: str = "") -> Dict[str, Any]:
+    async def analyze(self, text: str, description: str = "", plan: str = "free") -> Dict[str, Any]:
         """
-        Complete disclosure analysis
+        Complete disclosure analysis using rule-based and LLM-based methods.
         """
+        from app.models.database import UserPlan
+        import asyncio
+        
         combined_text = f"{text}\n{description}"
         rule_result = self.detect_rule_based(combined_text)
 
@@ -215,20 +200,42 @@ class DisclosureDetector:
         
         result["discovered_brands"] = list(unique_discovered.values())
         
-        # LLM Analysis (if enabled and confidence isn't already 1.0)
+        # LLM Analysis (if enabled)
         llm_disclosure = False
-        if self.use_llm and self.llm_model and result["confidence"] < 1.0 and combined_text.strip():
+        
+        if self.use_llm and combined_text.strip():
             try:
-                # We only take the first 1000 chars for LLM to avoid context limits
-                llm_response = self.llm_model.predict(combined_text[:1000])
-                llm_disclosure = llm_response.get("disclosure", False)
+                # Map string plan to enum
+                try:
+                    user_plan = UserPlan(plan)
+                except (ValueError, TypeError):
+                    user_plan = UserPlan.FREE
+                
+                # Perform advanced analysis with potential web search
+                llm_result = await self.llm_service.analyze_with_search(
+                    plan=user_plan,
+                    text=text[:2000],  # Increase limit for more powerful LLMs
+                    context=description[:2000]
+                )
+                
+                llm_disclosure = llm_result.get("has_disclosure", False)
                 if llm_disclosure:
-                    # Boost confidence and set has_disclosure to True
+                    # Boost confidence and merge results
                     result["has_disclosure"] = True
-                    result["confidence"] = min(1.0, result["confidence"] + 0.5)
-                    result["method"] = "rule-based + llm"
+                    result["confidence"] = max(result["confidence"], llm_result.get("confidence", 0.5))
+                    result["method"] = f"rule-based + llm ({user_plan})"
+                    result["ad_reason"] = llm_result.get("reason", "")
+                    
+                    # Add LLM discovered brands
+                    for brand_name in llm_result.get("brands", []):
+                        if not any(b["name"].lower() == brand_name.lower() for b in result["discovered_brands"]):
+                            result["discovered_brands"].append({
+                                "name": brand_name,
+                                "confidence": 0.8,
+                                "source": "llm_discovery"
+                            })
             except Exception as e:
-                logger.error(f"LLM prediction failed: {e}")
+                logger.error(f"LLM analysis failed: {e}")
 
         return {
             "has_disclosure": result["has_disclosure"],
@@ -240,8 +247,9 @@ class DisclosureDetector:
             "erids": result["erids"],
             "promo_codes": result["promo_codes"],
             "discovered_brands": result["discovered_brands"],
-            "method": result["method"],
-            "llm_disclosure": llm_disclosure
+            "method": result.get("method", "rule-based"),
+            "llm_disclosure": llm_disclosure,
+            "ad_reason": result.get("ad_reason", "")
         }
 
     def extract_disclosure_text(self, text: str) -> Optional[str]:

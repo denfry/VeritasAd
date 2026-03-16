@@ -9,6 +9,7 @@ Similar to AWS CloudTrail, Google Cloud Audit Logs, Azure Activity Log.
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
 
 
 # revision identifiers, used by Alembic.
@@ -21,31 +22,51 @@ depends_on = None
 def upgrade() -> None:
     bind = op.get_bind()
     dialect = bind.dialect.name
-    
+
     # Create audit event type enum for PostgreSQL
     if dialect == 'postgresql':
+        # PostgreSQL doesn't support IF NOT EXISTS for CREATE TYPE,
+        # use exception handling to make it idempotent
         op.execute("""
-            CREATE TYPE audit_event_type AS ENUM (
-                -- Authentication
-                'login', 'logout', 'login_failed', 'password_reset',
-                'two_fa_enabled', 'two_fa_disabled',
-                -- User management
-                'user.created', 'user.updated', 'user.deleted',
-                'user.banned', 'user.unbanned', 'user.activated', 'user.deactivated',
-                'role.changed', 'plan.changed',
-                -- Admin actions
-                'admin.login', 'admin.logout', 'admin.user.view', 'admin.user.list',
-                'admin.user.update', 'admin.analytics.view', 'admin.export', 'admin.impersonate',
-                -- Data operations
-                'data.export', 'data.import', 'data.delete',
-                -- Security
-                'session.revoked', 'api_key.created', 'api_key.revoked',
-                'ip.whitelist.added', 'ip.whitelist.removed',
-                -- System
-                'settings.changed', 'permission.granted', 'permission.revoked'
-            )
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'audit_event_type') THEN
+                    CREATE TYPE audit_event_type AS ENUM (
+                        -- Authentication
+                        'login', 'logout', 'login_failed', 'password_reset',
+                        'two_fa_enabled', 'two_fa_disabled',
+                        -- User management
+                        'user.created', 'user.updated', 'user.deleted',
+                        'user.banned', 'user.unbanned', 'user.activated', 'user.deactivated',
+                        'role.changed', 'plan.changed',
+                        -- Admin actions
+                        'admin.login', 'admin.logout', 'admin.user.view', 'admin.user.list',
+                        'admin.user.update', 'admin.analytics.view', 'admin.export', 'admin.impersonate',
+                        -- Data operations
+                        'data.export', 'data.import', 'data.delete',
+                        -- Security
+                        'session.revoked', 'api_key.created', 'api_key.revoked',
+                        'ip.whitelist.added', 'ip.whitelist.removed',
+                        -- System
+                        'settings.changed', 'permission.granted', 'permission.revoked'
+                    );
+                END IF;
+            END $$;
         """)
-        event_type = sa.Enum(name='audit_event_type')
+        event_type = PG_ENUM(
+            'login', 'logout', 'login_failed', 'password_reset',
+            'two_fa_enabled', 'two_fa_disabled',
+            'user.created', 'user.updated', 'user.deleted',
+            'user.banned', 'user.unbanned', 'user.activated', 'user.deactivated',
+            'role.changed', 'plan.changed',
+            'admin.login', 'admin.logout', 'admin.user.view', 'admin.user.list',
+            'admin.user.update', 'admin.analytics.view', 'admin.export', 'admin.impersonate',
+            'data.export', 'data.import', 'data.delete',
+            'session.revoked', 'api_key.created', 'api_key.revoked',
+            'ip.whitelist.added', 'ip.whitelist.removed',
+            'settings.changed', 'permission.granted', 'permission.revoked',
+            name='audit_event_type', 
+            create_type=False
+        )
     else:
         # SQLite - use String
         event_type = sa.String(length=50)

@@ -19,8 +19,8 @@ export default function LoginPage() {
         <div className="z-10 max-w-lg">
           <blockquote className="space-y-2">
             <p className="text-lg font-medium text-foreground">
-              "VeritasAd has transformed how we monitor brand safety across thousands of user-generated videos. 
-              The accuracy of their multi-modal detection is unmatched."
+              &ldquo;VeritasAd has transformed how we monitor brand safety across thousands of user-generated videos.
+              The accuracy of their multi-modal detection is unmatched.&rdquo;
             </p>
             <footer className="text-sm text-muted-foreground">
               Sofia Davis, Compliance Lead at Acme Corp
@@ -115,7 +115,7 @@ export default function LoginPage() {
 
           <p className="px-8 text-center text-sm text-muted-foreground">
             <Link href="/auth/register" className="hover:text-foreground underline underline-offset-4">
-              Don't have an account? Sign Up
+              Don&apos;t have an account? Sign Up
             </Link>
           </p>
         </div>

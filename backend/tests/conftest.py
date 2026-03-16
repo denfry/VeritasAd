@@ -1,8 +1,6 @@
 """Pytest fixtures for VeritasAd tests."""
-import asyncio
 import os
-from typing import AsyncGenerator, Generator
-import pytest
+from typing import AsyncGenerator
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -11,20 +9,12 @@ from sqlalchemy.pool import NullPool
 # Set test env before importing app (config loads at import)
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("ENVIRONMENT", "development")
+os.environ.setdefault("DISABLE_AUTH", "false")
 
 from app.main import create_app
-from app.models.database import Base, get_db
-from app.core.config import settings
+from app.models.database import Base
 
 TEST_DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
-
-
-@pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
-    """Create event loop for async tests."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest_asyncio.fixture

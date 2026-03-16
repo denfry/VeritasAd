@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/Button"
 
 export default function TelegramAccountPage() {
-  const { user } = useAuth()
+  useAuth()
   const [loading, setLoading] = useState(true)
   const [linkStatus, setLinkStatus] = useState<TelegramLinkStatus | null>(null)
   const [generating, setGenerating] = useState(false)
@@ -30,7 +30,7 @@ export default function TelegramAccountPage() {
       try {
         const status = await getTelegramLinkStatus()
         setLinkStatus(status)
-      } catch (error) {
+      } catch {
         toast.error("Failed to load link status")
       } finally {
         setLoading(false)
@@ -47,7 +47,7 @@ export default function TelegramAccountPage() {
       const result = await generateTelegramLinkToken()
       setLinkToken(result.token)
       toast.success("Token generated! Open the bot and send /start {token}")
-    } catch (error) {
+    } catch {
       toast.error("Failed to generate token")
     } finally {
       setGenerating(false)
@@ -76,7 +76,7 @@ export default function TelegramAccountPage() {
       setLinkStatus({ is_linked: false })
       setLinkToken(null)
       toast.success("Telegram account unlinked")
-    } catch (error) {
+    } catch {
       toast.error("Failed to unlink account")
     } finally {
       setUnlinking(false)
@@ -253,7 +253,7 @@ export default function TelegramAccountPage() {
 
             <div className="mt-4 p-3 bg-blue-500/15 border border-blue-500/40 rounded-lg text-sm">
               <p className="text-blue-800 dark:text-blue-200">
-                <strong>Token is valid for 24 hours.</strong> After linking, you'll be able
+                <strong>Token is valid for 24 hours.</strong> After linking, you&apos;ll be able
                 to use the bot for video analysis and viewing statistics.
               </p>
             </div>

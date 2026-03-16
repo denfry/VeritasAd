@@ -6,7 +6,7 @@ from datetime import datetime
 class UserBase(BaseModel):
     """Base user model"""
     email: Optional[EmailStr] = None
-    plan: str = Field(default="free", description="User plan: free, pro, enterprise")
+    plan: str = Field(default="free", description="User plan: free, starter, pro, business, enterprise")
 
 
 class UserCreate(UserBase):

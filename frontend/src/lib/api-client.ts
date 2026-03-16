@@ -34,11 +34,21 @@ type RequestOptions = Omit<RequestInit, "headers"> & {
 }
 
 async function getAccessToken(): Promise<string | null> {
-  if (!supabase) {
-    return null
+  // Try Supabase first (preferred)
+  if (supabase) {
+    const { data } = await supabase.auth.getSession()
+    if (data.session?.access_token) {
+      return data.session.access_token
+    }
   }
-  const { data } = await supabase.auth.getSession()
-  return data.session?.access_token ?? null
+  
+  // Fallback to localStorage for Telegram authentication
+  // Note: Storage in localStorage is vulnerable to XSS. Mitigated by strict CSP.
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("access_token")
+  }
+  
+  return null
 }
 
 async function parseResponseBody(response: Response): Promise<ApiErrorResponse | null> {
@@ -340,7 +350,7 @@ export async function getAnalytics(): Promise<AnalyticsResponse> {
   })
 }
 
-export async function getAdvancedAnalytics(params: { days?: number } = {}): Promise<any> {
+export async function getAdvancedAnalytics(params: { days?: number } = {}): Promise<Record<string, unknown>> {
   const search = new URLSearchParams()
   if (params.days) {
     search.set("days", String(params.days))
@@ -370,8 +380,8 @@ export async function createPayment(params: {
 export async function createSubscription(params: {
   plan: "starter" | "pro" | "business" | "enterprise"
   returnUrl?: string
-}): Promise<PaymentCreateResponse & { plan: string; daily_limit: number }> {
-  return request<PaymentCreateResponse & { plan: string; daily_limit: number }>("/api/v1/payment/subscription/create", {
+}): Promise<PaymentCreateResponse & { plan: string; daily_limit: number; llm_tier: string }> {
+  return request<PaymentCreateResponse & { plan: string; daily_limit: number; llm_tier: string }>("/api/v1/payment/subscription/create", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -472,6 +482,7 @@ export type AuditLogListParams = {
   cursor?: string
   event_type?: string
   event_category?: string
+  actor_user_id?: number
   actor_email?: string
   target_email?: string
   status?: string
@@ -493,6 +504,9 @@ export async function listAuditLogs(params: AuditLogListParams = {}): Promise<Cu
   }
   if (params.event_category) {
     search.set("event_category", params.event_category)
+  }
+  if (typeof params.actor_user_id === "number") {
+    search.set("actor_user_id", String(params.actor_user_id))
   }
   if (params.actor_email) {
     search.set("actor_email", params.actor_email)

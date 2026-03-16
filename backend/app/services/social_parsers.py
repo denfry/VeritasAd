@@ -129,15 +129,21 @@ async def fetch_instagram_post(url: str) -> Optional[Dict[str, Any]]:
         logger.error(f"Error fetching Instagram post: {e}")
         return None
 
+from urllib.parse import urlparse
+
 async def extract_social_post(url: str) -> Optional[Dict[str, Any]]:
     """Extract metadata for a given URL using custom scrapers."""
-    url_lower = url.lower()
+    try:
+        parsed_url = urlparse(url)
+        hostname = parsed_url.netloc.lower()
+    except Exception:
+        return None
     
-    if "t.me" in url_lower:
+    if hostname.endswith("t.me") or hostname == "t.me":
         return await fetch_telegram_post(url)
-    elif "vk.com" in url_lower or "vk.ru" in url_lower:
+    elif hostname.endswith("vk.com") or hostname == "vk.com" or hostname.endswith("vk.ru") or hostname == "vk.ru":
         return await fetch_vk_post(url)
-    elif "instagram.com" in url_lower or "instagr.am" in url_lower:
+    elif hostname.endswith("instagram.com") or hostname == "instagram.com" or hostname.endswith("instagr.am") or hostname == "instagr.am":
         return await fetch_instagram_post(url)
         
     return None

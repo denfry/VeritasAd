@@ -13,18 +13,9 @@
  */
 "use client"
 
-import { useEffect, useCallback } from "react"
+import { useEffect, useCallback, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-
-type ShortcutHandler = () => void
-
-type Shortcut = {
-  keys: string[]
-  handler: ShortcutHandler
-  description: string
-  category: string
-}
 
 type UseKeyboardShortcutsOptions = {
   enabled?: boolean
@@ -270,5 +261,3 @@ export function useShortcutsHelp() {
     close: () => setIsOpen(false),
   }
 }
-
-import { useState } from "react"

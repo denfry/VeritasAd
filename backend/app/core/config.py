@@ -128,12 +128,39 @@ class Settings(BaseSettings):
     DOWNLOAD_SOCKET_TIMEOUT: int = 90  # seconds (increased for slow connections/VPN)
     DOWNLOAD_FRAGMENT_RETRIES: int = 8  # Increased fragment retries
     USE_ARIA2C: bool = False  # Use aria2c as external downloader (faster)
+    YTDLP_COOKIES_FILE: Optional[str] = None  # Path to Netscape cookies.txt for authenticated downloads
+    YTDLP_COOKIES_FROM_BROWSER: Optional[str] = None  # Browser name/profile, e.g. "chrome" or "firefox"
+    YTDLP_YOUTUBE_TRY_CHROME_COOKIES: bool = True  # Retry YouTube bot-check failures with Chrome cookies
 
     # ==================== ML MODELS ====================
     USE_LLM: bool = False
     WHISPER_MODEL: Literal["tiny", "base", "small", "medium", "large"] = "tiny"
     CLIP_MODEL: str = "openai/clip-vit-base-patch32"
     TORCH_DEVICE: Literal["cpu", "cuda", "mps"] = "cpu"
+
+    # LLM Providers & Models
+    LLM_PROVIDER: Literal["local", "openai", "anthropic", "google"] = "local"
+    LOCAL_LLM_BASE_MODEL: str = "meta-llama/Meta-Llama-3-8B-Instruct"
+    LOCAL_LLM_ADAPTER_PATH: str = "models/llm/llama-winline-lora"
+    LOCAL_LLM_MAX_NEW_TOKENS: int = 256
+    LOCAL_LLM_TEMPERATURE: float = 0.1
+    
+    # Tiered Models (Power levels)
+    # FREE: basic local model or cheap API
+    FREE_LLM_MODEL: str = "gpt-4o-mini" 
+    # STARTER: improved lightweight model
+    STARTER_LLM_MODEL: str = "gpt-4o-mini"
+    # PRO: powerful model
+    PRO_LLM_MODEL: str = "gpt-4o"
+    # BUSINESS: strong model for heavier workloads
+    BUSINESS_LLM_MODEL: str = "gpt-4.1"
+    # ENTERPRISE: most powerful
+    ENTERPRISE_LLM_MODEL: str = "claude-3-5-sonnet-20240620"
+    
+    # API Keys
+    OPENAI_API_KEY: Optional[str] = None
+    ANTHROPIC_API_KEY: Optional[str] = None
+    GOOGLE_API_KEY: Optional[str] = None
 
     HF_HOME: str = "/app/models/cache"
     # TRANSFORMERS_CACHE is deprecated, use HF_HOME instead (kept for backward compatibility)
@@ -201,6 +228,10 @@ class Settings(BaseSettings):
 
     # ==================== TELEGRAM BOT ====================
     TELEGRAM_BOT_TOKEN: Optional[str] = None
+    BOT_SECRET_KEY: str = Field(
+        default="",
+        description="Secret key for bot-to-backend authentication. Required in production.",
+    )
     TELEGRAM_API_ID_RAW: Optional[str] = None  # Raw string from env
     TELEGRAM_API_ID: Optional[int] = None  # Parsed integer
     TELEGRAM_API_HASH: Optional[str] = None
@@ -229,7 +260,6 @@ class Settings(BaseSettings):
     SMTP_FROM: str = "VeritasAD <noreply@veritasad.ai>"
 
     # ==================== EXTERNAL SERVICES ====================
-    OPENAI_API_KEY: Optional[str] = None
     S3_BUCKET: Optional[str] = None
     S3_REGION: Optional[str] = None
     S3_ACCESS_KEY: Optional[str] = None

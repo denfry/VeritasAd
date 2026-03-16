@@ -6,7 +6,6 @@
 const STORAGE_KEY = "mock_supabase_auth"
 
 // JWT secret должен совпадать с JWT_SECRET_KEY в backend/.env
-const JWT_SECRET = "dev-jwt-secret-key-for-local-development-only-this-is-long-enough-for-security-purposes-min-64-chars"
 
 export interface MockUser {
   id: string
@@ -14,6 +13,10 @@ export interface MockUser {
   created_at: string
   role?: string
   plan?: string
+  api_key?: string
+  daily_used?: number
+  daily_limit?: number
+  total_analyses?: number
 }
 
 export interface MockSession {
@@ -102,7 +105,6 @@ export class MockSupabaseClient {
 
     signUp: async ({
       email,
-      password,
     }: {
       email: string
       password: string
@@ -152,7 +154,6 @@ export class MockSupabaseClient {
 
     signInWithPassword: async ({
       email,
-      password,
     }: {
       email: string
       password: string
@@ -201,8 +202,9 @@ export class MockSupabaseClient {
     },
 
     onAuthStateChange: (
-      callback: (event: string, session: MockSession | null) => void
+      _callback: (event: string, session: MockSession | null) => void
     ): { subscription: { unsubscribe: () => void } } => {
+      void _callback
       // Для mock-режима просто возвращаем no-op subscription
       // В реальном использовании можно слушать storage events для синхронизации между табами
       return {

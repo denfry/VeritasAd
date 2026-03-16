@@ -146,43 +146,48 @@ class TelegramAuthService:
 
     async def link_account(
         self,
-        current_user: User,
+        current_user: Optional[User],
         link_request: TelegramLinkRequest,
+        is_bot: bool = False,
     ) -> TelegramLinkResponse:
         """
         Link Telegram account to existing user account.
 
         Args:
-            current_user: Currently authenticated user
+            current_user: Currently authenticated user (optional if is_bot=True)
             link_request: Link request with token and Telegram ID
+            is_bot: Whether request is from a trusted bot
 
         Returns:
             Link response
-
-        Raises:
-            ValueError: If linking fails
         """
-        # Check if Telegram ID is already linked to another user
-        existing_user = await self.repository.get_user_by_telegram_id(
-            link_request.telegram_id
-        )
-
-        if existing_user and existing_user.id != current_user.id:
-            raise ValueError(
-                "This Telegram account is already linked to another user"
-            )
-
-        # Verify link token
+        # 1. Verify link token and get associated user
         token_user = await self.repository.get_user_by_link_token(
             link_request.link_token
         )
 
-        if not token_user or token_user.id != current_user.id:
+        if not token_user:
             raise ValueError("Invalid or expired link token")
 
-        # Link accounts
+        # 2. Authorization check
+        # If not a trusted bot, current_user must match token owner
+        if not is_bot:
+            if not current_user or token_user.id != current_user.id:
+                raise ValueError("Unauthorized: token does not belong to you")
+        
+        # 3. Check if Telegram ID is already linked to another user
+        existing_user = await self.repository.get_user_by_telegram_id(
+            link_request.telegram_id
+        )
+
+        if existing_user and existing_user.id != token_user.id:
+            raise ValueError(
+                "This Telegram account is already linked to another user"
+            )
+
+        # 4. Link accounts
         user = await self.repository.link_telegram_account(
-            user=current_user,
+            user=token_user,
             telegram_id=link_request.telegram_id,
             username=link_request.username,
         )

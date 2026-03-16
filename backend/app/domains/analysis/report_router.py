@@ -1,5 +1,6 @@
 """Analysis domain - report generation and download."""
 from pathlib import Path
+import re
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 import structlog
@@ -8,6 +9,7 @@ from app.core.dependencies import get_api_key
 
 router = APIRouter()
 logger = structlog.get_logger(__name__)
+VIDEO_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 
 
 @router.get("/{video_id}")
@@ -17,6 +19,12 @@ async def get_report(
 ):
     """Download PDF report for a specific video analysis."""
     try:
+        if not VIDEO_ID_PATTERN.fullmatch(video_id):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid video_id format",
+            )
+
         report_dir = Path("../data/reports")
         matching_reports = list(report_dir.glob(f"report_{video_id}_*.pdf"))
 

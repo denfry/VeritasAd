@@ -1,8 +1,8 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
-import { Copy, RefreshCw, AlertTriangle, Key, Loader2, Check } from "lucide-react"
-import { motion } from "framer-motion"
+import { Copy, AlertTriangle, Key, Loader2, Check, Activity } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "sonner"
 
@@ -87,7 +87,7 @@ export default function ApiSettingsPage() {
             <div>
               <p className="font-semibold">Security Warning</p>
               <p className="opacity-90">
-                Your API key grants full access to your account's analysis credits. 
+                Your API key grants full access to your account&apos;s analysis credits. 
                 Never share it in client-side code, public repositories, or with unauthorized persons.
               </p>
             </div>
@@ -142,5 +142,3 @@ export default function ApiSettingsPage() {
     </div>
   )
 }
-
-import Link from "next/link"

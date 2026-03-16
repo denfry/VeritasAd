@@ -1,6 +1,7 @@
 import httpx
 from typing import Optional
 import logging
+from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class VeritasAdApiClient:
             response = await client.post(
                 f"{self.base_url}/api/v1/analyze/check",
                 data={"url": url},
-                headers={"X-API-Key": api_key},
+                headers={"X-API-Key": api_key, "X-Bot-Secret": settings.BOT_SECRET_KEY},
             )
             logger.debug(f"Response status: {response.status_code}")
             response.raise_for_status()
@@ -67,7 +68,7 @@ class VeritasAdApiClient:
             response = await client.post(
                 f"{self.base_url}/api/v1/analyze/check",
                 files=files,
-                headers={"X-API-Key": api_key},
+                headers={"X-API-Key": api_key, "X-Bot-Secret": settings.BOT_SECRET_KEY},
             )
             logger.debug(f"Response status: {response.status_code}")
             response.raise_for_status()
@@ -91,7 +92,7 @@ class VeritasAdApiClient:
             logger.debug(f"Checking backend health at {self.base_url}/health")
             response = await client.get(
                 f"{self.base_url}/health",
-                headers={"X-API-Key": api_key},
+                headers={"X-API-Key": api_key, "X-Bot-Secret": settings.BOT_SECRET_KEY},
                 timeout=15.0,
             )
             if response.status_code != 200:
@@ -110,7 +111,7 @@ class VeritasAdApiClient:
         try:
             response = await client.get(
                 f"{self.base_url}/api/v1/progress/analysis/{task_id}/status",
-                headers={"X-API-Key": api_key},
+                headers={"X-API-Key": api_key, "X-Bot-Secret": settings.BOT_SECRET_KEY},
             )
             response.raise_for_status()
             result = response.json()
@@ -133,7 +134,7 @@ class VeritasAdApiClient:
         try:
             response = await client.get(
                 f"{self.base_url}/api/v1/progress/analysis/{task_id}/result",
-                headers={"X-API-Key": api_key},
+                headers={"X-API-Key": api_key, "X-Bot-Secret": settings.BOT_SECRET_KEY},
             )
             response.raise_for_status()
             result = response.json()

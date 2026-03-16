@@ -17,7 +17,7 @@ import {
   ChevronRight
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },

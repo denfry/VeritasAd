@@ -71,6 +71,7 @@ models_cache/
 
 # Documentation
 *.md
+!README.md
 docs/
 
 # OS

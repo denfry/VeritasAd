@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import type { ReactNode } from "react"
 import { Code2, FileText, Terminal, BookOpen, Layers, ShieldCheck, Cpu } from "lucide-react"
 import { SiteShell } from "@/components/SiteShell"
 import { motion } from "framer-motion"
@@ -140,7 +141,7 @@ export default function DocsPage() {
               <ul className="list-disc pl-6 space-y-2 mt-4 text-muted-foreground">
                 <li><strong>Confidence Score:</strong> 0.0 to 1.0 indicating the likelihood of advertising.</li>
                 <li><strong>Brand Exposure:</strong> Total seconds a brand logo or name was visible.</li>
-                <li><strong>Disclosure Markers:</strong> Presence of labels like "Ad", "Sponsorship", or "Partnership".</li>
+                <li><strong>Disclosure Markers:</strong> Presence of labels like &quot;Ad&quot;, &quot;Sponsorship&quot;, or &quot;Partnership&quot;.</li>
                 <li><strong>AI Reasoning:</strong> Natural language explanation of why the content was flagged.</li>
               </ul>
             </DocSection>
@@ -151,7 +152,7 @@ export default function DocsPage() {
   )
 }
 
-function DocSection({ id, title, icon, children }: { id: string, title: string, icon: any, children: any }) {
+function DocSection({ id, title, icon, children }: { id: string, title: string, icon: ReactNode, children: ReactNode }) {
   return (
     <section id={id} className="scroll-mt-24 space-y-6">
       <div className="flex items-center gap-3">
@@ -167,7 +168,7 @@ function DocSection({ id, title, icon, children }: { id: string, title: string, 
   )
 }
 
-function FeatureCard({ icon, title, description }: { icon: any, title: string, description: string }) {
+function FeatureCard({ icon, title, description }: { icon: ReactNode, title: string, description: string }) {
   return (
     <div className="p-4 rounded-2xl bg-muted/50 border border-border/50">
        <div className="flex items-center gap-2 mb-2">

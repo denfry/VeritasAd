@@ -55,8 +55,6 @@ export function TelegramLogin({
   botUsername,
   onAuthSuccess,
   onAuthError,
-  size = "large",
-  cornerRadius = 20,
   requestAccess = true,
 }: TelegramLoginProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -173,8 +171,6 @@ export function TelegramLogin({
  */
 export function TelegramLoginButton({
   botUsername,
-  onAuthSuccess,
-  onAuthError,
   size = "large",
 }: TelegramLoginProps) {
   const { supabaseConfigured } = useAuth()

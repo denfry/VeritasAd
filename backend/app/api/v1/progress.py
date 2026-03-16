@@ -7,6 +7,7 @@ from app.core.redis import get_redis, RedisClient
 from app.core.dependencies import get_current_user
 from app.core.errors import NotFoundException
 from app.models.database import Analysis, get_db
+from app.services.video_download_errors import classify_processing_error
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import structlog
@@ -16,6 +17,11 @@ logger = structlog.get_logger(__name__)
 
 
 def _serialize_analysis(analysis: Analysis) -> Dict[str, Any]:
+    error_message = analysis.error_message or ""
+    error_code = None
+    if error_message:
+        error_code = classify_processing_error(error_message)["error_code"]
+
     return {
         "analysis_type": "video",
         "task_id": analysis.task_id,
@@ -35,7 +41,8 @@ def _serialize_analysis(analysis: Analysis) -> Dict[str, Any]:
         "ad_reason": analysis.ad_reason,
         "duration": analysis.duration,
         "progress": analysis.progress,
-        "error": analysis.error_message,
+        "error": error_message or None,
+        "error_code": error_code,
     }
 
 
@@ -65,6 +72,7 @@ async def progress_stream(
             current_progress = progress_data.get("progress", 0)
             status = progress_data.get("status", "processing")
             message = progress_data.get("message", "")
+            error_code = progress_data.get("error_code")
 
             # Send update if progress changed
             if current_progress != last_progress:
@@ -73,6 +81,7 @@ async def progress_stream(
                     "progress": current_progress,
                     "status": status,
                     "message": message,
+                    "error_code": error_code,
                 }
                 yield f"data: {json.dumps(data)}\n\n"
                 last_progress = current_progress

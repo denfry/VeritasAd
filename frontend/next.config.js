@@ -7,6 +7,13 @@ const nextConfig = {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   },
   async headers() {
+    const isDev = process.env.NODE_ENV === "development"
+    const scriptSrc = [
+      "'self'",
+      "'unsafe-inline'",
+      "https://telegram.org",
+      ...(isDev ? ["'unsafe-eval'"] : []),
+    ].join(" ")
     return [
       {
         source: "/(.*)",
@@ -15,15 +22,32 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://telegram.org",
+              "script-src " + scriptSrc,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self'",
-              "connect-src 'self' http://localhost:8000 https: ws://localhost:8000 ws: wss:",
+              "connect-src 'self' http://localhost:8000 https: ws://localhost:8000 ws: wss: *.supabase.co",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
+              "upgrade-insecure-requests",
             ].join("; "),
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains; preload",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
           },
         ],
       },

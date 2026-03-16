@@ -19,7 +19,7 @@ Features:
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
 
 
 # revision identifiers, used by Alembic.
@@ -35,21 +35,30 @@ def upgrade() -> None:
 
     # Step 1: Create BrandCategory enum type (PostgreSQL only)
     if dialect == 'postgresql':
-        # Check if enum type exists
-        result = bind.execute(
-            sa.text("SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'brand_category')")
-        ).scalar()
-        
-        if not result:
-            # Create enum type
-            brand_category = sa.Enum(
-                'bank', 'telecom', 'auto', 'food', 'beverage',
-                'clothing', 'technology', 'marketplace', 'bookmaker',
-                'energy', 'airline', 'retail', 'pharma', 'cosmetics',
-                'gaming', 'education', 'other',
-                name='brand_category'
-            )
-            brand_category.create(bind)
+        # PostgreSQL doesn't support IF NOT EXISTS for CREATE TYPE,
+        # use exception handling to make it idempotent
+        op.execute("""
+            DO $$ BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'brand_category') THEN
+                    CREATE TYPE brand_category AS ENUM (
+                        'bank', 'telecom', 'auto', 'food', 'beverage',
+                        'clothing', 'technology', 'marketplace', 'bookmaker',
+                        'energy', 'airline', 'retail', 'pharma', 'cosmetics',
+                        'gaming', 'education', 'other'
+                    );
+                END IF;
+            END $$;
+        """)
+        brand_category = PG_ENUM(
+            'bank', 'telecom', 'auto', 'food', 'beverage',
+            'clothing', 'technology', 'marketplace', 'bookmaker',
+            'energy', 'airline', 'retail', 'pharma', 'cosmetics',
+            'gaming', 'education', 'other',
+            name='brand_category',
+            create_type=False  # Type already created above
+        )
+    else:
+        brand_category = sa.String(length=50)
 
     # Step 2: Create custom_brands table
     op.create_table(
@@ -59,14 +68,7 @@ def upgrade() -> None:
         sa.Column('name', sa.String(length=255), nullable=False),
         sa.Column(
             'category',
-            sa.Enum(
-                'bank', 'telecom', 'auto', 'food', 'beverage',
-                'clothing', 'technology', 'marketplace', 'bookmaker',
-                'energy', 'airline', 'retail', 'pharma', 'cosmetics',
-                'gaming', 'education', 'other',
-                name='brand_category',
-                create_type=dialect == 'postgresql'
-            ),
+            brand_category,
             nullable=False,
             server_default='other'
         ),

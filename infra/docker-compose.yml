@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: veritasad
       POSTGRES_USER: veritasad
-      POSTGRES_PASSWORD: veritasad123
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-veritasad123}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -48,7 +48,7 @@ services:
       dockerfile: Dockerfile
     container_name: veritasad-backend
     environment:
-      - DATABASE_URL=postgresql+asyncpg://veritasad:veritasad123@postgres:5432/veritasad
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://veritasad:${POSTGRES_PASSWORD:-veritasad123}@postgres:5432/veritasad}
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
@@ -83,7 +83,7 @@ services:
       dockerfile: Dockerfile
     container_name: veritasad-celery-worker
     environment:
-      - DATABASE_URL=postgresql+asyncpg://veritasad:veritasad123@postgres:5432/veritasad
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://veritasad:${POSTGRES_PASSWORD:-veritasad123}@postgres:5432/veritasad}
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1

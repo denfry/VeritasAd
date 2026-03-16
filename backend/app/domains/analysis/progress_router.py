@@ -11,6 +11,7 @@ from app.core.redis import get_redis, RedisClient
 from app.core.dependencies import get_current_user
 from app.core.errors import NotFoundException
 from app.models.database import Analysis, get_db, User
+from app.services.video_download_errors import classify_processing_error
 from app.domains.analysis.repository import AnalysisRepository
 from app.domains.analysis.dependencies import get_analysis_repository
 
@@ -20,6 +21,11 @@ logger = structlog.get_logger(__name__)
 
 def _serialize_analysis(analysis: Analysis) -> Dict[str, Any]:
     """Serialize Analysis model to API response."""
+    error_message = analysis.error_message or ""
+    error_code = None
+    if error_message:
+        error_code = classify_processing_error(error_message)["error_code"]
+
     return {
         "analysis_type": "video",
         "task_id": analysis.task_id,
@@ -41,7 +47,8 @@ def _serialize_analysis(analysis: Analysis) -> Dict[str, Any]:
         "ad_reason": analysis.ad_reason,
         "duration": analysis.duration,
         "progress": analysis.progress,
-        "error": analysis.error_message,
+        "error": error_message or None,
+        "error_code": error_code,
     }
 
 
@@ -69,6 +76,7 @@ async def progress_stream(
             status = progress_data.get("status", "processing")
             message = progress_data.get("message", "")
             stage = progress_data.get("stage")
+            error_code = progress_data.get("error_code")
 
             if current_progress != last_progress or status != last_status or message != last_message:
                 data = {
@@ -77,6 +85,7 @@ async def progress_stream(
                     "status": status,
                     "message": message,
                     "stage": stage,
+                    "error_code": error_code,
                 }
                 yield f"data: {json.dumps(data)}\n\n"
                 last_progress = current_progress
@@ -143,6 +152,7 @@ async def stream_analysis_progress_ws(websocket: WebSocket, task_id: str):
             status = progress_data.get("status", "processing")
             message = progress_data.get("message", "")
             stage = progress_data.get("stage")
+            error_code = progress_data.get("error_code")
 
             if current_progress != last_progress or status != last_status or message != last_message:
                 await websocket.send_json(
@@ -152,6 +162,7 @@ async def stream_analysis_progress_ws(websocket: WebSocket, task_id: str):
                         "status": status,
                         "message": message,
                         "stage": stage,
+                        "error_code": error_code,
                     }
                 )
                 last_progress = current_progress

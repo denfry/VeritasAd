@@ -367,7 +367,4 @@ def render_result(result: dict, api_key: str) -> str:
             snippet += "..."
         parts.extend(["", f"<b>Transcript (excerpt):</b>\n<i>{snippet}</i>"])
 
-    # Add API key as hidden
-    parts.extend(["", f"<tg-spoiler>API Key: <code>{api_key}</code></tg-spoiler>"])
-
     return "\n".join(parts)

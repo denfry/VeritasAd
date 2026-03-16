@@ -19,6 +19,7 @@ const SUBSCRIPTION_PLANS_RUB = {
     description: "For testing and experimentation.",
     features: [
       "30 analyses / month",
+      "LLM tier: Free",
       "Basic reporting",
       "Community support",
       "Standard processing speed",
@@ -33,6 +34,7 @@ const SUBSCRIPTION_PLANS_RUB = {
     description: "For freelancers and light usage.",
     features: [
       "300 analyses / month",
+      "LLM tier: Starter",
       "PDF reports",
       "Email support",
       "Priority processing",
@@ -49,6 +51,7 @@ const SUBSCRIPTION_PLANS_RUB = {
     description: "For small business and marketing teams.",
     features: [
       "1 500 analyses / month",
+      "LLM tier: Pro",
       "Advanced PDF reports",
       "Priority support",
       "Fast processing",
@@ -65,6 +68,7 @@ const SUBSCRIPTION_PLANS_RUB = {
     description: "For agencies and growing companies.",
     features: [
       "5 000 analyses / month",
+      "LLM tier: Business",
       "White-label reports",
       "Dedicated support",
       "Fastest processing",
@@ -82,6 +86,7 @@ const SUBSCRIPTION_PLANS_RUB = {
     description: "For corporations and custom deployments.",
     features: [
       "20 000 analyses / month",
+      "LLM tier: Enterprise",
       "Custom reporting",
       "24/7 dedicated support",
       "SLA guarantee",
@@ -159,7 +164,7 @@ export default function PricingPage() {
         returnUrl: `${window.location.origin}/payment/success`,
       })
       window.location.href = payment.checkout_url
-    } catch (error) {
+    } catch {
       toast.error("Unable to create payment. Please try again.")
     }
   }
@@ -177,7 +182,7 @@ export default function PricingPage() {
         returnUrl: `${window.location.origin}/payment/success`,
       })
       window.location.href = payment.checkout_url
-    } catch (error) {
+    } catch {
       toast.error("Unable to create payment. Please try again.")
       setSelectedPackage(null)
     }
@@ -215,7 +220,8 @@ export default function PricingPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {Object.values(SUBSCRIPTION_PLANS_RUB).map((plan) => {
+          {Object.entries(SUBSCRIPTION_PLANS_RUB).map(([planKey, plan]) => {
+            const isPaidPlan = planKey !== "free"
             return (
               <div
                 key={plan.name}
@@ -255,7 +261,13 @@ export default function PricingPage() {
                 </ul>
 
                 <button
-                  onClick={() => handleSubscriptionUpgrade(plan.name.toLowerCase())}
+                  onClick={() => {
+                    if (!isPaidPlan) {
+                      router.push(user ? "/dashboard" : "/auth/register")
+                      return
+                    }
+                    handleSubscriptionUpgrade(planKey)
+                  }}
                   className={`btn w-full py-4 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-lg ${
                     plan.popular ? "btn-primary shadow-primary/20" : "btn-outline hover:bg-muted"
                   }`}

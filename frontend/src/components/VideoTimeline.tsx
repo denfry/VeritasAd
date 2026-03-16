@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { motion } from "framer-motion"
-import { Clock, Filter, ZoomIn, ZoomOut } from "lucide-react"
+import { Filter, ZoomIn, ZoomOut } from "lucide-react"
 
 type TimelineMarker = {
   label: string

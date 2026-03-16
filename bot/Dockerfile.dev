@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1
+# Development Dockerfile для Telegram бота с hot reload
+
+FROM python:3.12-slim
+
+# Устанавливаем зависимости
+RUN apt-get update && apt-get install -y \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Copy requirements
+COPY requirements.txt ./
+
+# Install dependencies using uv
+RUN uv pip install --system -r requirements.txt
+
+# Copy application code (для hot reload)
+COPY . .
+
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
+
+# Run bot with auto-reload
+CMD ["python", "main.py"]
