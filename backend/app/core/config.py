@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     """
     Application settings with validation.
     All settings can be overridden via environment variables.
-    
+
     Security notes:
     - SECRET_KEY and DATABASE_URL are required in production
     - Default values are for development only
@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     DEBUG: bool = False
     ENVIRONMENT: Literal["development", "staging", "production"] = "development"
-    
+
     # SECRET_KEY - required in production
     SECRET_KEY: str = Field(
         default="",
@@ -86,30 +86,30 @@ class Settings(BaseSettings):
 
     # ==================== RATE LIMITING ====================
     # Updated tariffs based on financial report (2026)
-    FREE_TIER_DAILY_LIMIT: int = 1              # 30/month - for testing only
-    STARTER_TIER_DAILY_LIMIT: int = 10          # 300/month - freelancers
-    PRO_TIER_DAILY_LIMIT: int = 50              # 1,500/month - small business
-    BUSINESS_TIER_DAILY_LIMIT: int = 167        # 5,000/month - agencies
-    ENTERPRISE_TIER_DAILY_LIMIT: int = 667      # 20,000/month - corporations
+    FREE_TIER_DAILY_LIMIT: int = 1  # 30/month - for testing only
+    STARTER_TIER_DAILY_LIMIT: int = 10  # 300/month - freelancers
+    PRO_TIER_DAILY_LIMIT: int = 50  # 1,500/month - small business
+    BUSINESS_TIER_DAILY_LIMIT: int = 167  # 5,000/month - agencies
+    ENTERPRISE_TIER_DAILY_LIMIT: int = 667  # 20,000/month - corporations
     RATE_LIMIT_PER_MINUTE: int = 60
     RATE_LIMIT_BURST: int = 10
 
     # ==================== PAY-AS-YOU-GO CREDIT PACKAGES ====================
     # Credit packages for one-time purchases (validity period in days)
     PAYG_MICRO_CREDITS: int = 100
-    PAYG_MICRO_PRICE: float = 1500.0            # 15 ₽ per analysis
+    PAYG_MICRO_PRICE: float = 1500.0  # 15 ₽ per analysis
     PAYG_MICRO_VALIDITY_DAYS: int = 30
 
     PAYG_STANDARD_CREDITS: int = 500
-    PAYG_STANDARD_PRICE: float = 5000.0         # 10 ₽ per analysis
+    PAYG_STANDARD_PRICE: float = 5000.0  # 10 ₽ per analysis
     PAYG_STANDARD_VALIDITY_DAYS: int = 60
 
     PAYG_PRO_CREDITS: int = 1500
-    PAYG_PRO_PRICE: float = 12000.0             # 8 ₽ per analysis
+    PAYG_PRO_PRICE: float = 12000.0  # 8 ₽ per analysis
     PAYG_PRO_VALIDITY_DAYS: int = 90
 
     PAYG_BUSINESS_CREDITS: int = 8000
-    PAYG_BUSINESS_PRICE: float = 40000.0        # 5 ₽ per analysis
+    PAYG_BUSINESS_PRICE: float = 40000.0  # 5 ₽ per analysis
     PAYG_BUSINESS_VALIDITY_DAYS: int = 180
 
     # ==================== FILE PROCESSING ====================
@@ -128,12 +128,19 @@ class Settings(BaseSettings):
     DOWNLOAD_SOCKET_TIMEOUT: int = 90  # seconds (increased for slow connections/VPN)
     DOWNLOAD_FRAGMENT_RETRIES: int = 8  # Increased fragment retries
     USE_ARIA2C: bool = False  # Use aria2c as external downloader (faster)
-    YTDLP_COOKIES_FILE: Optional[str] = None  # Path to Netscape cookies.txt for authenticated downloads
-    YTDLP_COOKIES_FROM_BROWSER: Optional[str] = None  # Browser name/profile, e.g. "chrome" or "firefox"
-    YTDLP_YOUTUBE_TRY_CHROME_COOKIES: bool = True  # Retry YouTube bot-check failures with Chrome cookies
+    YTDLP_COOKIES_FILE: Optional[str] = (
+        None  # Path to Netscape cookies.txt for authenticated downloads
+    )
+    YTDLP_COOKIES_FROM_BROWSER: Optional[str] = (
+        None  # Browser name/profile, e.g. "chrome" or "firefox"
+    )
+    YTDLP_YOUTUBE_TRY_CHROME_COOKIES: bool = (
+        True  # Retry YouTube bot-check failures with Chrome cookies
+    )
 
     # ==================== ML MODELS ====================
     USE_LLM: bool = False
+    MOCK_LLM_RESPONSES: bool = False  # Use mock responses for development (no API keys needed)
     WHISPER_MODEL: Literal["tiny", "base", "small", "medium", "large"] = "tiny"
     CLIP_MODEL: str = "openai/clip-vit-base-patch32"
     TORCH_DEVICE: Literal["cpu", "cuda", "mps"] = "cpu"
@@ -144,10 +151,10 @@ class Settings(BaseSettings):
     LOCAL_LLM_ADAPTER_PATH: str = "models/llm/llama-winline-lora"
     LOCAL_LLM_MAX_NEW_TOKENS: int = 256
     LOCAL_LLM_TEMPERATURE: float = 0.1
-    
+
     # Tiered Models (Power levels)
     # FREE: basic local model or cheap API
-    FREE_LLM_MODEL: str = "gpt-4o-mini" 
+    FREE_LLM_MODEL: str = "gpt-4o-mini"
     # STARTER: improved lightweight model
     STARTER_LLM_MODEL: str = "gpt-4o-mini"
     # PRO: powerful model
@@ -156,7 +163,7 @@ class Settings(BaseSettings):
     BUSINESS_LLM_MODEL: str = "gpt-4.1"
     # ENTERPRISE: most powerful
     ENTERPRISE_LLM_MODEL: str = "claude-3-5-sonnet-20240620"
-    
+
     # API Keys
     OPENAI_API_KEY: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None
@@ -242,6 +249,12 @@ class Settings(BaseSettings):
     YOOKASSA_SHOP_ID: Optional[str] = None
     YOOKASSA_SECRET_KEY: Optional[str] = None
     YOOKASSA_RETURN_URL: str = "https://veritasad.ai/payment/success"
+    YOOKASSA_WEBHOOK_IPS: list[str] = [
+        "185.71.76.0/27",
+        "185.71.77.0/27",
+        "77.75.153.0/25",
+        "77.75.154.128/25",
+    ]
 
     # ==================== MONITORING ====================
     SENTRY_DSN: Optional[str] = None
@@ -287,7 +300,7 @@ class Settings(BaseSettings):
                 UserWarning,
             )
             return secrets.token_urlsafe(32)
-        
+
         if len(v) < 32:
             raise ValueError("SECRET_KEY must be at least 32 characters long")
         return v
@@ -364,7 +377,7 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def post_validate_telegram(self):
         """Post-validation to handle TELEGRAM_API_ID parsing."""
-        raw = getattr(self, 'TELEGRAM_API_ID_RAW', None)
+        raw = getattr(self, "TELEGRAM_API_ID_RAW", None)
         if raw:
             raw = str(raw).strip()
             if raw and raw.isdigit():
@@ -406,13 +419,14 @@ class Settings(BaseSettings):
                 # Try to find relative to project root
                 project_root = Path(__file__).parent.parent.parent.parent
                 brands_path = project_root / self.BRANDS_FILE
-            
+
             if brands_path.exists():
                 try:
                     import json
+
                     with open(brands_path, "r", encoding="utf-8") as f:
                         data = json.load(f)
-                        
+
                         # Handle different JSON structures
                         if isinstance(data, list):
                             brands.extend(data)
@@ -432,12 +446,14 @@ class Settings(BaseSettings):
                                         brands.extend(category_brands)
                 except Exception as e:
                     import warnings
+
                     warnings.warn(f"Failed to load brands from {self.BRANDS_FILE}: {e}")
 
         # Try to load from ENV (additional custom brands)
         if self.DEFAULT_BRANDS:
             try:
                 import json
+
                 # Try JSON first
                 parsed = json.loads(self.DEFAULT_BRANDS)
                 if isinstance(parsed, list):
@@ -451,11 +467,11 @@ class Settings(BaseSettings):
 
         # Remove duplicates while preserving order
         return list(dict.fromkeys(brands))
-    
+
     def get_brand_aliases(self) -> Dict[str, List[str]]:
         """
         Get brand aliases mapping from brands file.
-        
+
         Returns:
             Dictionary mapping brand names to their aliases
         """
@@ -464,18 +480,20 @@ class Settings(BaseSettings):
             if not brands_path.is_absolute():
                 project_root = Path(__file__).parent.parent.parent.parent
                 brands_path = project_root / self.BRANDS_FILE
-            
+
             if brands_path.exists():
                 try:
                     import json
+
                     with open(brands_path, "r", encoding="utf-8") as f:
                         data = json.load(f)
                         if isinstance(data, dict) and "aliases" in data:
                             return data["aliases"]
                 except Exception as e:
                     import warnings
+
                     warnings.warn(f"Failed to load brand aliases: {e}")
-        
+
         return {}
 
 

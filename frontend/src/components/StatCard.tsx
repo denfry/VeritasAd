@@ -10,12 +10,14 @@ export function StatCard({
   icon,
   helper,
   animateValue = true,
+  progress,
 }: {
   label: string
   value: string | number
   icon?: ReactNode
   helper?: string
   animateValue?: boolean
+  progress?: number
 }) {
   // Пытаемся извлечь числовое значение для анимации
   const numericValue = typeof value === "number" ? value : parseFloat(value.replace(/[^0-9.]/g, ""))
@@ -80,6 +82,17 @@ export function StatCard({
             {helper}
           </motion.p>
         ) : null}
+
+        {progress !== undefined && (
+          <div className="mt-3 h-1.5 rounded-full bg-muted overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60"
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(progress, 100)}%` }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            />
+          </div>
+        )}
       </div>
     </motion.div>
   )

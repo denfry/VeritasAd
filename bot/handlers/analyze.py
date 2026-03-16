@@ -57,7 +57,9 @@ async def analyze_url(message: Message):
         try:
             error_detail = e.response.json().get("detail", str(e.response.text[:100]))
         except Exception:
-            error_detail = str(e.response.text[:100]) if e.response.text else "Unknown error"
+            error_detail = (
+                str(e.response.text[:100]) if e.response.text else "Unknown error"
+            )
         await status_msg.edit_text(
             f"❌ <b>Server Error</b>\n\n"
             f"Status: {e.response.status_code}\n"
@@ -112,6 +114,7 @@ async def analyze_file(message: Message):
             return
 
         from io import BytesIO
+
         buffer = BytesIO()
         await message.bot.download_file(tg_file.file_path, buffer)
         buffer.seek(0)
@@ -122,9 +125,7 @@ async def analyze_file(message: Message):
 
         api_client = VeritasAdApiClient(settings.API_URL)
         result = await api_client.analyze_file(
-            api_key=api_key,
-            filename=filename,
-            content=buffer.read()
+            api_key=api_key, filename=filename, content=buffer.read()
         )
         await api_client.close()
 
@@ -150,7 +151,9 @@ async def analyze_file(message: Message):
         try:
             error_detail = e.response.json().get("detail", str(e.response.text[:100]))
         except Exception:
-            error_detail = str(e.response.text[:100]) if e.response.text else "Unknown error"
+            error_detail = (
+                str(e.response.text[:100]) if e.response.text else "Unknown error"
+            )
         await status_msg.edit_text(
             f"❌ <b>Server Error</b>\n\n"
             f"Status: {e.response.status_code}\n"
@@ -198,29 +201,63 @@ async def wait_for_result(
 
             try:
                 progress_data = await api_client.get_task_status(
-                    api_key=api_key,
-                    task_id=task_id
+                    api_key=api_key, task_id=task_id
                 )
                 consecutive_failures = 0  # Reset on success
             except Exception as e:
                 consecutive_failures += 1
-                logger.warning(f"Failed to get progress (attempt {attempt + 1}, consecutive failures: {consecutive_failures}): {e}")
-                
+                logger.warning(
+                    f"Failed to get progress (attempt {attempt + 1}, consecutive failures: {consecutive_failures}): {e}"
+                )
+
                 # If too many consecutive failures, abort
                 if consecutive_failures >= max_consecutive_failures:
-                    logger.error(f"Too many consecutive failures ({consecutive_failures}), aborting")
-                    return {"status": "failed", "error": "Failed to get progress updates from server"}
+                    logger.error(
+                        f"Too many consecutive failures ({consecutive_failures}), aborting"
+                    )
+                    return {
+                        "status": "failed",
+                        "error": "Failed to get progress updates from server",
+                    }
                 continue
 
             progress = progress_data.get("progress", 0)
             status = progress_data.get("status", "processing")
             message_text = progress_data.get("message", "")
 
+            # Map technical messages to user-friendly ones
+            stage_emoji = "🔄"
+            stage_text = "Analyzing"
+
+            if message_text:
+                msg_lower = message_text.lower()
+                if "download" in msg_lower or "fetching" in msg_lower:
+                    stage_emoji = "📥"
+                    stage_text = "Downloading video"
+                elif "extract" in msg_lower or "audio" in msg_lower:
+                    stage_emoji = "🎬"
+                    stage_text = "Extracting audio"
+                elif "frame" in msg_lower or "video" in msg_lower:
+                    stage_emoji = "🖼️"
+                    stage_text = "Analyzing frames"
+                elif "transcribe" in msg_lower or "speech" in msg_lower:
+                    stage_emoji = "🎤"
+                    stage_text = "Transcribing audio"
+                elif "llm" in msg_lower or "detection" in msg_lower:
+                    stage_emoji = "🧠"
+                    stage_text = "AI detection"
+                elif "brand" in msg_lower:
+                    stage_emoji = "🏷️"
+                    stage_text = "Brand detection"
+                elif "report" in msg_lower:
+                    stage_emoji = "📄"
+                    stage_text = "Generating report"
+
             # Update status message if progress changed
             if progress != last_progress:
-                status_text = f"Processing... {progress}%"
+                status_text = f"{stage_emoji} {stage_text}... {progress}%"
                 if message_text:
-                    status_text += f"\n{message_text}"
+                    status_text += f"\n<code>{message_text}</code>"
 
                 try:
                     await status_msg.edit_text(status_text)
@@ -236,12 +273,14 @@ async def wait_for_result(
                 logger.info(f"Task {task_id} finished with status: {status}")
                 try:
                     return await api_client.get_task_result(
-                        api_key=api_key,
-                        task_id=task_id
+                        api_key=api_key, task_id=task_id
                     )
                 except Exception as exc:
                     logger.error(f"Failed to fetch final result: {exc}")
-                    return {"status": "failed", "error": "Не удалось получить результат"}
+                    return {
+                        "status": "failed",
+                        "error": "Не удалось получить результат",
+                    }
 
         # Timeout
         logger.warning(f"Task {task_id} timed out after {max_attempts} attempts")
@@ -269,13 +308,13 @@ def format_brand_list(brands: list) -> str:
     """Format detected brands as a readable list."""
     if not brands:
         return "None detected"
-    
+
     brand_lines = []
     for brand in brands[:5]:  # Limit to 5 brands
         name = brand.get("name", "Unknown")
         conf = brand.get("confidence", 0)
         timestamps = brand.get("timestamps", [])
-        
+
         # Format timestamps
         if timestamps:
             ts_str = ", ".join(format_timestamp(ts) for ts in timestamps[:3])
@@ -284,10 +323,10 @@ def format_brand_list(brands: list) -> str:
             brand_lines.append(f"  {name} ({conf:.0%}) — {ts_str}")
         else:
             brand_lines.append(f"  {name} ({conf:.0%})")
-    
+
     if len(brands) > 5:
         brand_lines.append(f"  and {len(brands) - 5} more brands")
-    
+
     return "\n".join(brand_lines)
 
 

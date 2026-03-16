@@ -23,6 +23,7 @@ venv/
 ENV/
 env/
 .venv
+.ruff_cache/
 # Except frontend lib (TypeScript)
 !frontend/src/lib/
 
@@ -36,6 +37,7 @@ env/
 *.sqlite3
 *.db-journal
 veritasad.db
+veritasad_dev.db
 
 # Logs
 *.log

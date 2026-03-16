@@ -1,4 +1,5 @@
 """Payment domain router."""
+
 from datetime import datetime, timezone, timedelta
 from typing import Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -14,8 +15,15 @@ import structlog
 from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.models.database import (
-    get_db, Payment, PaymentStatus, PaymentProvider, User, UserPlan,
-    UserCredit, CreditTransaction, CreditPackageType
+    get_db,
+    Payment,
+    PaymentStatus,
+    PaymentProvider,
+    User,
+    UserPlan,
+    UserCredit,
+    CreditTransaction,
+    CreditPackageType,
 )
 
 logger = structlog.get_logger(__name__)
@@ -24,8 +32,11 @@ router = APIRouter()
 
 # ==================== SUBSCRIPTION PLANS ====================
 
+
 class SubscriptionPlanRequest(BaseModel):
-    plan: Literal["starter", "pro", "business", "enterprise"] = Field(..., description="Target subscription plan")
+    plan: Literal["starter", "pro", "business", "enterprise"] = Field(
+        ..., description="Target subscription plan"
+    )
     return_url: Optional[str] = None
 
 
@@ -71,8 +82,11 @@ PLAN_CONFIGS = {
 
 # ==================== PAY-AS-YOU-GO PACKAGES ====================
 
+
 class CreditPackageRequest(BaseModel):
-    package: Literal["micro", "standard", "pro", "business"] = Field(..., description="Credit package type")
+    package: Literal["micro", "standard", "pro", "business"] = Field(
+        ..., description="Credit package type"
+    )
     return_url: Optional[str] = None
 
 
@@ -115,6 +129,7 @@ CREDIT_PACKAGE_CONFIGS = {
 
 # ==================== USER CREDITS ====================
 
+
 class UserCreditsResponse(BaseModel):
     credits: int
     expires_at: Optional[datetime] = None
@@ -151,17 +166,46 @@ def verify_yookassa_signature(request: Request, body: bytes) -> bool:
 
     try:
         signature_value = signature.replace("sha256=", "")
-        expected = hmac.new(
-            settings.YOOKASSA_SECRET_KEY.encode(),
-            body,
-            hashlib.sha256
-        ).hexdigest()
+        expected = hmac.new(settings.YOOKASSA_SECRET_KEY.encode(), body, hashlib.sha256).hexdigest()
         return hmac.compare_digest(signature_value, expected)
     except Exception:
         return False
 
 
+def verify_yookassa_ip(request: Request) -> bool:
+    """
+    Verify that request comes from YooKassa IP addresses.
+    """
+    import ipaddress
+
+    client_ip_str = request.client.host if request.client else None
+    if not client_ip_str:
+        return False
+
+    try:
+        client_ip = ipaddress.ip_address(client_ip_str)
+    except ValueError:
+        logger.warning("yookassa_invalid_client_ip", ip=client_ip_str)
+        return False
+
+    for allowed_network in settings.YOOKASSA_WEBHOOK_IPS:
+        try:
+            if client_ip in ipaddress.ip_network(allowed_network):
+                return True
+        except ValueError:
+            logger.warning("yookassa_invalid_network", network=allowed_network)
+            continue
+
+    logger.warning(
+        "yookassa_ip_not_allowed",
+        client_ip=client_ip_str,
+        allowed_networks=settings.YOOKASSA_WEBHOOK_IPS,
+    )
+    return False
+
+
 # ==================== SUBSCRIPTION ENDPOINTS ====================
+
 
 @router.post("/subscription/create", response_model=SubscriptionPlanResponse)
 async def create_subscription(
@@ -209,6 +253,7 @@ async def create_subscription(
 
 
 # ==================== PAY-AS-YOU-GO ENDPOINTS ====================
+
 
 @router.post("/credits/package", response_model=CreditPackageResponse)
 async def purchase_credit_package(
@@ -262,6 +307,7 @@ async def purchase_credit_package(
 
 # ==================== USER CREDITS ENDPOINTS ====================
 
+
 @router.get("/credits", response_model=UserCreditsResponse)
 async def get_user_credits(
     user: User = Depends(get_current_user),
@@ -269,9 +315,7 @@ async def get_user_credits(
 ):
     """Get current user's credit balance."""
 
-    result = await db.execute(
-        select(UserCredit).where(UserCredit.user_id == user.id)
-    )
+    result = await db.execute(select(UserCredit).where(UserCredit.user_id == user.id))
     user_credit = result.scalar_one_or_none()
 
     if not user_credit:
@@ -282,16 +326,23 @@ async def get_user_credits(
             total_purchased=0,
         )
 
-    # Calculate total purchased and used from transactions
-    transactions_result = await db.execute(
-        select(CreditTransaction).where(
-            CreditTransaction.user_id == user.id
-        ).order_by(CreditTransaction.created_at.desc())
-    )
-    transactions = transactions_result.scalars().all()
+    # Calculate total purchased and used using SQL aggregation
+    from sqlalchemy import func, case
 
-    total_purchased = sum(t.credits for t in transactions if t.credits > 0)
-    total_used = abs(sum(t.credits for t in transactions if t.credits < 0))
+    # Use single query with aggregation
+    agg_result = await db.execute(
+        select(
+            func.sum(
+                case((CreditTransaction.credits > 0, CreditTransaction.credits), else_=0)
+            ).label("total_purchased"),
+            func.sum(
+                case((CreditTransaction.credits < 0, CreditTransaction.credits), else_=0)
+            ).label("total_used"),
+        ).where(CreditTransaction.user_id == user.id)
+    )
+    agg_row = agg_result.one()
+    total_purchased = agg_row.total_purchased or 0
+    total_used = abs(agg_row.total_used or 0)
 
     return UserCreditsResponse(
         credits=user_credit.credits,
@@ -319,12 +370,13 @@ async def get_credit_history(
     )
     transactions = result.scalars().all()
 
-    # Get total count
+    # Get total count using SQL COUNT
+    from sqlalchemy import func
+
     count_result = await db.execute(
-        select(CreditTransaction)
-        .where(CreditTransaction.user_id == user.id)
+        select(func.count(CreditTransaction.id)).where(CreditTransaction.user_id == user.id)
     )
-    total = len(count_result.scalars().all())
+    total = count_result.scalar() or 0
 
     return CreditHistoryResponse(
         transactions=[
@@ -345,6 +397,7 @@ async def get_credit_history(
 
 # ==================== WEBHOOK ENDPOINT ====================
 
+
 @router.post("/webhook")
 async def payment_webhook(
     request: Request,
@@ -354,6 +407,16 @@ async def payment_webhook(
     Handle YooKassa payment webhooks with signature verification.
     Processes both subscription and credit package payments.
     """
+    # First verify IP address before any other processing
+    if not verify_yookassa_ip(request):
+        client_ip = request.client.host if request.client else "unknown"
+        logger.warning(
+            "webhook_ip_not_allowed",
+            client_ip=client_ip,
+            allowed_ips=settings.YOOKASSA_WEBHOOK_IPS,
+        )
+        raise HTTPException(status_code=403, detail="Forbidden: Invalid source IP")
+
     body = await request.body()
 
     if not verify_yookassa_signature(request, body):
@@ -382,9 +445,7 @@ async def payment_webhook(
     except (json.JSONDecodeError, ValueError) as e:
         raise HTTPException(400, f"Invalid payload: {str(e)}")
 
-    result = await db.execute(
-        select(Payment).where(Payment.provider_payment_id == payment_id)
-    )
+    result = await db.execute(select(Payment).where(Payment.provider_payment_id == payment_id))
     payment = result.scalar_one_or_none()
 
     if not payment:
@@ -408,9 +469,7 @@ async def payment_webhook(
             if payment_type == "subscription":
                 # Process subscription upgrade
                 plan = metadata.get("plan", "pro")
-                result_user = await db.execute(
-                    select(User).where(User.id == payment.user_id)
-                )
+                result_user = await db.execute(select(User).where(User.id == payment.user_id))
                 user = result_user.scalar_one_or_none()
 
                 if user:
@@ -451,9 +510,7 @@ async def payment_webhook(
                     logger.error("invalid_credit_package", package_type=package_type)
                     return {"status": "ok"}
 
-                result_user = await db.execute(
-                    select(User).where(User.id == payment.user_id)
-                )
+                result_user = await db.execute(select(User).where(User.id == payment.user_id))
                 user = result_user.scalar_one_or_none()
 
                 if user:
@@ -472,7 +529,9 @@ async def payment_webhook(
 
                     # Add credits and set expiration
                     user_credit.credits += credits
-                    user_credit.expires_at = datetime.now(timezone.utc) + timedelta(days=validity_days)
+                    user_credit.expires_at = datetime.now(timezone.utc) + timedelta(
+                        days=validity_days
+                    )
 
                     # Create transaction record
                     transaction = CreditTransaction(

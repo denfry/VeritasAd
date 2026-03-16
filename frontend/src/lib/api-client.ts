@@ -121,6 +121,19 @@ export async function fetchAnalysisHistory(params: { limit?: number; offset?: nu
 
 export type { ProgressPayload }
 
+export async function downloadPdfReport(videoId: string): Promise<Blob> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/report/${videoId}`, {
+    method: "GET",
+    headers: await getAuthHeaders(),
+  })
+  
+  if (!response.ok) {
+    throw new Error(`Failed to download report: ${response.statusText}`)
+  }
+  
+  return response.blob()
+}
+
 export async function streamAnalysisProgress(params: {
   taskId: string
   onMessage: (payload: ProgressPayload) => void

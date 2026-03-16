@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { 
   LayoutDashboard, 
   BarChart3, 
@@ -14,25 +14,41 @@ import {
   Activity,
   Key,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  User,
+  Crown,
+  Zap
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
+import { useAuth } from "@/contexts/auth-context"
+import { toast } from "sonner"
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { name: "Monitor", href: "/dashboard/monitor", icon: Activity },
   { name: "Analyze", href: "/analyze", icon: BarChart3 },
   { name: "History", href: "/history", icon: History },
-  { name: "Billing", href: "/payment", icon: CreditCard },
+  { name: "Billing", href: "/account?tab=billing", icon: CreditCard },
   { name: "API Access", href: "/dashboard/settings/api", icon: Key },
   { name: "Settings", href: "/account", icon: Settings },
 ]
 
+const planConfig = {
+  free: { label: "Free", icon: User, color: "text-muted-foreground" },
+  starter: { label: "Starter", icon: Zap, color: "text-green-500" },
+  pro: { label: "Pro", icon: Zap, color: "text-blue-500" },
+  business: { label: "Business", icon: Crown, color: "text-amber-500" },
+  enterprise: { label: "Enterprise", icon: Crown, color: "text-purple-500" },
+}
+
 export function DashboardSidebar({ className, showBorder = true }: { className?: string, showBorder?: boolean }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const { user, signOut } = useAuth()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
   useEffect(() => {
     const saved = localStorage.getItem("dashboard-sidebar-collapsed")
@@ -47,6 +63,23 @@ export function DashboardSidebar({ className, showBorder = true }: { className?:
     setIsCollapsed(newState)
     localStorage.setItem("dashboard-sidebar-collapsed", String(newState))
   }
+
+  const handleSignOut = async () => {
+    try {
+      setIsSigningOut(true)
+      await signOut()
+      toast.success("Signed out successfully")
+      router.push("/auth/login")
+    } catch (error) {
+      toast.error("Failed to sign out")
+      console.error("Sign out error:", error)
+    } finally {
+      setIsSigningOut(false)
+    }
+  }
+
+  const userPlan = user?.plan || "free"
+  const planInfo = planConfig[userPlan as keyof typeof planConfig] || planConfig.free
 
   if (!isMounted) {
     return <div className={cn("h-full w-64 border-r bg-card/50", className)} />
@@ -114,16 +147,39 @@ export function DashboardSidebar({ className, showBorder = true }: { className?:
         </nav>
       </div>
 
+      {!isCollapsed && user && (
+        <div className="border-t px-3 py-3">
+          <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-2">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <User className="h-4 w-4 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">
+                {user.email?.split('@')[0] || "User"}
+              </p>
+              <div className="flex items-center gap-1">
+                <planInfo.icon className={cn("h-3 w-3", planInfo.color)} />
+                <span className={cn("text-xs", planInfo.color)}>
+                  {planInfo.label}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="border-t p-4">
         <button 
+          onClick={handleSignOut}
+          disabled={isSigningOut}
           className={cn(
-            "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+            "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50",
             isCollapsed && "justify-center px-2"
           )}
           title={isCollapsed ? "Sign out" : ""}
         >
-          <LogOut className="h-4 w-4 shrink-0" />
-          {!isCollapsed && <span>Sign out</span>}
+          <LogOut className={cn("h-4 w-4 shrink-0", isSigningOut && "animate-pulse")} />
+          {!isCollapsed && <span>{isSigningOut ? "Signing out..." : "Sign out"}</span>}
         </button>
       </div>
     </motion.div>

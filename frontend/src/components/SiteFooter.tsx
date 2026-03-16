@@ -10,6 +10,14 @@ const footerLinks = [
   { href: "/history", label: "History" },
 ]
 
+const legalLinks = [
+  { href: "/legal/terms", label: "Terms of Service" },
+  { href: "/legal/privacy", label: "Privacy Policy" },
+  { href: "/legal/cookies", label: "Cookie Policy" },
+  { href: "/legal/gdpr", label: "GDPR Rights" },
+  { href: "/legal/disclaimer", label: "Disclaimer" },
+]
+
 export function SiteFooter() {
   return (
     <motion.footer
@@ -35,41 +43,71 @@ export function SiteFooter() {
           </p>
         </motion.div>
         
-        <motion.div
-          className="grid gap-2"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground/70">Product</p>
-          {footerLinks.map((link, index) => (
-            <motion.div
-              key={link.href}
-              initial={{ opacity: 0, x: -10 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <Link
-                href={link.href}
-                className="text-muted-foreground hover:text-foreground transition-colors inline-block group"
-              >
-                {link.label}
-                <span className="ml-0 group-hover:ml-1 transition-all duration-300">→</span>
-              </Link>
-            </motion.div>
-          ))}
-          <motion.p
-            className="pt-4 text-xs"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
+        <div className="grid gap-6 md:grid-cols-2">
+          <motion.div
+            className="grid gap-2"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
           >
-            (c) 2026 VeritasAd
-          </motion.p>
-        </motion.div>
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground/70">Product</p>
+            {footerLinks.map((link, index) => (
+              <motion.div
+                key={link.href}
+                initial={{ opacity: 0, x: -10 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <Link
+                  href={link.href}
+                  className="text-muted-foreground hover:text-foreground transition-colors inline-block group"
+                >
+                  {link.label}
+                  <span className="ml-0 group-hover:ml-1 transition-all duration-300">→</span>
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <motion.div
+            className="grid gap-2"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground/70">Legal</p>
+            {legalLinks.map((link, index) => (
+              <motion.div
+                key={link.href}
+                initial={{ opacity: 0, x: -10 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 + index * 0.05 }}
+              >
+                <Link
+                  href={link.href}
+                  className="text-muted-foreground hover:text-foreground transition-colors inline-block group"
+                >
+                  {link.label}
+                  <span className="ml-0 group-hover:ml-1 transition-all duration-300">→</span>
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+
+        <motion.p
+          className="md:col-span-2 pt-4 text-xs text-center border-t border-border/30 mt-4"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+        >
+          © 2026 VeritasAd. All rights reserved.
+        </motion.p>
       </div>
     </motion.footer>
   )

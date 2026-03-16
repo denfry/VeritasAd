@@ -6,6 +6,7 @@ import { Toaster } from "sonner"
 import { useState } from "react"
 import { AuthProvider } from "@/contexts/auth-context"
 import { CurrencyProvider } from "@/contexts/currency-context"
+import { CookieConsent } from "@/components/CookieConsent"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -24,6 +25,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             {children}
             <Toaster position="top-right" richColors />
+            <CookieConsent />
           </ThemeProvider>
         </CurrencyProvider>
       </AuthProvider>

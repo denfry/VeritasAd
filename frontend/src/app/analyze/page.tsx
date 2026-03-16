@@ -24,7 +24,7 @@ import { ProgressBar } from "@/components/ProgressBar"
 import { VideoTimeline } from "@/components/VideoTimeline"
 import { Skeleton } from "@/components/ui/Skeleton"
 import { useAuth } from "@/contexts/auth-context"
-import { analyzeVideo, fetchAnalysisResult, streamAnalysisProgress, ApiError } from "@/lib/api-client"
+import { analyzeVideo, fetchAnalysisResult, streamAnalysisProgress, downloadPdfReport, ApiError } from "@/lib/api-client"
 import type { AnalysisResult } from "@/types/api"
 import { getPlatformIcon } from "@/lib/platforms"
 
@@ -563,7 +563,24 @@ export default function AnalyzePage() {
                     {normalizedStatus === "completed" && (
                       <div className="pt-2 flex gap-2">
                         <button 
-                          onClick={() => toast.success("PDF Report generation started")}
+                          onClick={async () => {
+                            try {
+                              toast.info("Generating PDF report...")
+                              const blob = await downloadPdfReport(videoId)
+                              const url = window.URL.createObjectURL(blob)
+                              const a = document.createElement('a')
+                              a.href = url
+                              a.download = `veritasad-report-${videoId}.pdf`
+                              document.body.appendChild(a)
+                              a.click()
+                              window.URL.revokeObjectURL(url)
+                              document.body.removeChild(a)
+                              toast.success("PDF report downloaded")
+                            } catch (error) {
+                              console.error("PDF download failed:", error)
+                              toast.error("Failed to download PDF report")
+                            }
+                          }}
                           className="btn btn-outline flex-1 text-xs py-2 h-9 font-bold"
                         >
                            Download PDF Report

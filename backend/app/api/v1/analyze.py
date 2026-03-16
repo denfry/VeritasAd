@@ -47,30 +47,30 @@ def is_safe_url(url: str) -> bool:
     - Loopback (127.x.x.x, ::1)
     - Link-local (169.254.x.x)
     - localhost
-    
+
     Args:
         url: URL to validate
-        
+
     Returns:
         True if URL is safe, False otherwise
     """
     try:
         parsed = urlparse(url)
-        
+
         # Check scheme - only allow http/https
         if parsed.scheme not in ["http", "https"]:
             return False
-        
+
         # Get hostname
         hostname = parsed.hostname
         if not hostname:
             return False
-        
+
         # Block localhost variations
         hostname_lower = hostname.lower()
         if hostname_lower in ["localhost", "127.0.0.1", "::1", "0.0.0.0"]:
             return False
-        
+
         # Resolve hostname and check all resolved IPs
         has_any_resolution = False
         try:
@@ -135,7 +135,9 @@ def _has_video_payload(info: Dict[str, Any]) -> bool:
     return False
 
 
-async def _build_post_response(url: str, info: Dict[str, Any], source_type: SourceType) -> Dict[str, Any]:
+async def _build_post_response(
+    url: str, info: Dict[str, Any], source_type: SourceType
+) -> Dict[str, Any]:
     description = info.get("description", "") or ""
     title = info.get("title")
     uploader = info.get("uploader")
@@ -147,18 +149,18 @@ async def _build_post_response(url: str, info: Dict[str, Any], source_type: Sour
     cta_matches = disclosure.get("cta_matches", [])
     has_disclosure = disclosure.get("has_disclosure", False) or bool(disclosure_markers)
     has_cta = disclosure.get("has_cta", False)
-    
+
     # Run link detection
     link_detector = LinkDetector()
     link_result = link_detector.analyze(text=description, description=title or "")
     has_commercial_links = link_result.get("has_ad_signals", False)
     commercial_urls = link_result.get("urls", [])
     link_score = link_result.get("score", 0.0)
-    
+
     # Determine if advertising
     has_advertising = has_disclosure or has_cta or has_commercial_links
     confidence_score = max(disclosure.get("score", 0.0), link_score)
-    
+
     # Classify
     classification = classify_advertising(
         has_advertising=has_advertising,
@@ -259,20 +261,24 @@ async def check_video(
                 asyncio.to_thread(_extract_info),
                 timeout=float(extract_timeout),
             )
-            logger.info(f"Successfully extracted info: {info.get('title', 'Unknown') if info else 'No info'}")
+            logger.info(
+                f"Successfully extracted info: {info.get('title', 'Unknown') if info else 'No info'}"
+            )
         except asyncio.TimeoutError:
             info_error = f"Extraction timed out after {extract_timeout}s"
             logger.error(f"Timeout extracting video info from {url}")
         except Exception as exc:
             info_error = str(exc)
-            logger.error(f"Failed to extract video info from {url}: {type(exc).__name__} - {info_error}")
+            logger.error(
+                f"Failed to extract video info from {url}: {type(exc).__name__} - {info_error}"
+            )
             logger.debug("Full exception details:", exc_info=True)
 
         if info and not _has_video_payload(info):
             logger.info(f"No video payload detected, treating as post analysis")
             await increment_usage(user, db)
             return await _build_post_response(url, info, source_type)
-        
+
         # If info extraction failed, return error early
         if info_error:
             logger.warning(f"Video info extraction failed, returning error to user")
@@ -290,7 +296,7 @@ async def check_video(
             )
 
         # Validate MIME type if available
-        if hasattr(file, 'content_type') and file.content_type:
+        if hasattr(file, "content_type") and file.content_type:
             if file.content_type not in ALLOWED_MIME_TYPES:
                 raise ValidationException(
                     f"Invalid content type: {file.content_type}. "
@@ -392,28 +398,36 @@ async def analyze_post(
 ):
     # SSRF protection: Validate URL before processing
     if not is_safe_url(url):
-        return {
-            "analysis_type": "post",
-            "status": "failed",
-            "video_id": "post",
-            "url": url,
-            "error": "Invalid or unsafe URL",
-        }
-    
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "analysis_type": "post",
+                "status": "failed",
+                "video_id": "post",
+                "url": url,
+                "error": "Invalid or unsafe URL",
+            },
+        )
+
     try:
-        with YoutubeDL({
-            "skip_download": True,
-            "quiet": True,
-            "js_runtimes": {"node": {}, "deno": {}},
-        }) as ydl:
+        with YoutubeDL(
+            {
+                "skip_download": True,
+                "quiet": True,
+                "js_runtimes": {"node": {}, "deno": {}},
+            }
+        ) as ydl:
             info = ydl.extract_info(url, download=False)
     except Exception as exc:
-        return {
-            "analysis_type": "post",
-            "status": "failed",
-            "video_id": "post",
-            "url": url,
-            "error": str(exc),
-        }
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "analysis_type": "post",
+                "status": "failed",
+                "video_id": "post",
+                "url": url,
+                "error": str(exc),
+            },
+        )
     await increment_usage(user, db)
     return await _build_post_response(url, info, _infer_source_type(url))

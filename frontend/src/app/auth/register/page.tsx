@@ -15,17 +15,67 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  
+  // Inline validation errors
+  const [errors, setErrors] = useState<{
+    email?: string
+    password?: string
+    confirmPassword?: string
+  }>({})
+  
+  // Real-time validation
+  const validateField = (field: string, value: string) => {
+    const newErrors = { ...errors }
+    
+    if (field === 'email' || field === 'all') {
+      if (!value) {
+        newErrors.email = "Email is required"
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        newErrors.email = "Invalid email format"
+      } else {
+        delete newErrors.email
+      }
+    }
+    
+    if (field === 'password' || field === 'all') {
+      if (!value) {
+        newErrors.password = "Password is required"
+      } else if (value.length < 8) {
+        newErrors.password = "Password must be at least 8 characters"
+      } else {
+        delete newErrors.password
+      }
+    }
+    
+    if (field === 'confirmPassword' || field === 'all') {
+      if (!value) {
+        newErrors.confirmPassword = "Please confirm your password"
+      } else if (value !== password && password) {
+        newErrors.confirmPassword = "Passwords don't match"
+      } else {
+        delete newErrors.confirmPassword
+      }
+    }
+    
+    setErrors(newErrors)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
+    
+    // Validate all fields
+    validateField('all', '')
+    
     if (password !== confirmPassword) {
-      toast.error("Passwords don't match")
+      setErrors(prev => ({ ...prev, confirmPassword: "Passwords don't match" }))
       return
     }
 
     if (password.length < 8) {
-      toast.error("Password must be at least 8 characters")
+      return
+    }
+    
+    if (errors.email || errors.password || errors.confirmPassword) {
       return
     }
 
@@ -77,38 +127,66 @@ export default function RegisterPage() {
               <label className="text-sm font-medium">Email</label>
               <input
                 type="email"
-                className="input-field"
+                className={`input-field ${errors.email ? 'border-red-500 focus:border-red-500' : ''}`}
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  validateField('email', e.target.value)
+                }}
+                onBlur={(e) => validateField('email', e.target.value)}
                 required
               />
+              {errors.email && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  {errors.email}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Password</label>
               <input
                 type="password"
-                className="input-field"
+                className={`input-field ${errors.password ? 'border-red-500 focus:border-red-500' : ''}`}
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  validateField('password', e.target.value)
+                }}
+                onBlur={(e) => validateField('password', e.target.value)}
                 required
                 minLength={8}
               />
-              <p className="text-xs text-muted-foreground">At least 8 characters</p>
+              {errors.password ? (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  {errors.password}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">At least 8 characters</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Confirm password</label>
               <input
                 type="password"
-                className="input-field"
+                className={`input-field ${errors.confirmPassword ? 'border-red-500 focus:border-red-500' : ''}`}
                 placeholder="••••••••"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value)
+                  validateField('confirmPassword', e.target.value)
+                }}
+                onBlur={(e) => validateField('confirmPassword', e.target.value)}
                 required
               />
+              {errors.confirmPassword && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  {errors.confirmPassword}
+                </p>
+              )}
             </div>
 
             <button type="submit" disabled={loading} className="btn btn-primary w-full py-3">

@@ -28,10 +28,10 @@ _JWKS_TTL_SECONDS = 60 * 60  # 1 hour cache
 def hash_api_key(api_key: str) -> str:
     """
     Hash API key using SHA-256 for secure storage and lookup.
-    
+
     Args:
         api_key: Plain text API key
-        
+
     Returns:
         Hex-encoded SHA-256 hash
     """
@@ -95,7 +95,7 @@ async def verify_supabase_token(token: str) -> dict:
                 message="Authentication configuration error",
                 error_code="AUTH_CONFIG_ERROR",
             )
-            
+
         # Local development mode - decode without signature verification
         logger.info("Using local JWT verification mode (Supabase not configured)")
         try:
@@ -133,7 +133,7 @@ async def verify_supabase_token(token: str) -> dict:
     try:
         header = jwt.get_unverified_header(token)
         alg = header.get("alg", "HS256")
-        
+
         # Validate algorithm - only allow secure algorithms
         if alg not in ["HS256", "RS256", "ES256"]:
             raise AuthException(
@@ -225,20 +225,31 @@ async def get_current_user(
     # Development mode: disable authentication for testing
     if settings.DISABLE_AUTH:
         logger.warning("Authentication is DISABLED. Using mock admin user.")
-        # Create a mock admin user for testing
-        mock_user = User(
-            id=0,
-            email="test@veritasad.ai",
-            plan=UserPlan.ENTERPRISE,
-            role=UserRole.ADMIN,
-            daily_limit=999999,
-            daily_used=0,
-            is_active=True,
-            is_banned=False,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
-        )
-        return mock_user
+        # Try to get or create a dev admin user from database
+        from sqlalchemy import select
+        from app.models.database import User as DBUser
+
+        result = await db.execute(select(DBUser).where(DBUser.email == "dev@veritasad.ai"))
+        dev_user = result.scalar_one_or_none()
+
+        if dev_user is None:
+            # Create dev user
+            dev_user = DBUser(
+                email="dev@veritasad.ai",
+                plan=UserPlan.ENTERPRISE,
+                role=UserRole.ADMIN,
+                daily_limit=999999,
+                daily_used=0,
+                is_active=True,
+                is_banned=False,
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
+            )
+            db.add(dev_user)
+            await db.commit()
+            await db.refresh(dev_user)
+
+        return dev_user
 
     user = None
 
@@ -262,9 +273,7 @@ async def get_current_user(
                 )
 
             # Get or create user by supabase_user_id
-            result = await db.execute(
-                select(User).where(User.supabase_user_id == supabase_user_id)
-            )
+            result = await db.execute(select(User).where(User.supabase_user_id == supabase_user_id))
             user = result.scalar_one_or_none()
 
             if not user:
@@ -279,7 +288,9 @@ async def get_current_user(
                 db.add(user)
                 await db.commit()
                 await db.refresh(user)
-                logger.info("user_created_from_supabase", supabase_user_id=supabase_user_id, email=email)
+                logger.info(
+                    "user_created_from_supabase", supabase_user_id=supabase_user_id, email=email
+                )
 
         except AuthException:
             raise
@@ -296,16 +307,13 @@ async def get_current_user(
             if not bot_secret or bot_secret != settings.BOT_SECRET_KEY:
                 logger.warning("unauthorized_bot_key_access", api_key=api_key[:8])
                 raise AuthException(
-                    message="Invalid bot secret for Telegram key", 
-                    error_code="INVALID_BOT_SECRET"
+                    message="Invalid bot secret for Telegram key", error_code="INVALID_BOT_SECRET"
                 )
 
         # Hash the API key for secure lookup
         api_key_hash = hash_api_key(api_key)
-        
-        result = await db.execute(
-            select(User).where(User.api_key_hash == api_key_hash)
-        )
+
+        result = await db.execute(select(User).where(User.api_key_hash == api_key_hash))
         user = result.scalar_one_or_none()
 
         if not user:
@@ -349,9 +357,9 @@ async def get_current_user(
                 "limit": user.daily_limit,
                 "used": user.daily_used,
                 "plan": user.plan,
-                "reset_at": (now + timedelta(days=1)).replace(
-                    hour=0, minute=0, second=0, microsecond=0
-                ).isoformat(),
+                "reset_at": (now + timedelta(days=1))
+                .replace(hour=0, minute=0, second=0, microsecond=0)
+                .isoformat(),
             },
         )
 
@@ -392,17 +400,26 @@ async def increment_usage(
     Increment user's daily usage counter.
     Uses subscription limit first, then falls back to credits.
     """
-    from sqlalchemy import update
+    from sqlalchemy import update, select
     from app.models.database import UserCredit, CreditTransaction
-    
+
+    now = datetime.now(timezone.utc)
+
+    # Lock user row to prevent race condition
+    result = await db.execute(select(User).where(User.id == user.id).with_for_update())
+    locked_user = result.scalar_one_or_none()
+
+    if not locked_user:
+        raise RateLimitException(message="User not found")
+
     # Check if user has reached daily limit
-    if user.daily_used >= user.daily_limit:
+    if locked_user.daily_used >= locked_user.daily_limit:
         # Try to use credits instead
         result = await db.execute(
             select(UserCredit).where(UserCredit.user_id == user.id).with_for_update()
         )
         user_credit = result.scalar_one_or_none()
-        
+
         if user_credit and user_credit.credits > 0:
             # Check if credits are expired
             now = datetime.now(timezone.utc)
@@ -419,11 +436,11 @@ async def increment_usage(
                         "expired": True,
                     },
                 )
-            
+
             # Use one credit
             user_credit.credits -= 1
             user_credit.updated_at = now
-            
+
             # Record transaction
             transaction = CreditTransaction(
                 user_id=user.id,
@@ -434,7 +451,7 @@ async def increment_usage(
                 description="Analysis using credit",
             )
             db.add(transaction)
-            
+
             # Also atomically update user's total analyses
             await db.execute(
                 update(User)
@@ -452,9 +469,9 @@ async def increment_usage(
                     "used": user.daily_used,
                     "plan": user.plan,
                     "credits": 0,
-                    "reset_at": (now + timedelta(days=1)).replace(
-                        hour=0, minute=0, second=0, microsecond=0
-                    ).isoformat(),
+                    "reset_at": (now + timedelta(days=1))
+                    .replace(hour=0, minute=0, second=0, microsecond=0)
+                    .isoformat(),
                 },
             )
 
@@ -462,10 +479,7 @@ async def increment_usage(
     await db.execute(
         update(User)
         .where(User.id == user.id)
-        .values(
-            daily_used=User.daily_used + 1,
-            total_analyses=User.total_analyses + 1
-        )
+        .values(daily_used=User.daily_used + 1, total_analyses=User.total_analyses + 1)
     )
     await db.commit()
 

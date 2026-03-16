@@ -47,6 +47,11 @@ export default function HistoryPage() {
   const { user, loading: authLoading } = useAuth()
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [totalCount, setTotalCount] = useState(0)
+  
+  // Pagination state
+  const [page, setPage] = useState(0)
+  const PAGE_SIZE = 20
   
   // Filter state
   const [searchQuery, setSearchQuery] = useState("")
@@ -64,8 +69,10 @@ export default function HistoryPage() {
   const loadHistory = useCallback(async () => {
     setIsLoading(true)
     try {
-      const data = await fetchAnalysisHistory({ limit: 100 })
+      const data = await fetchAnalysisHistory({ limit: PAGE_SIZE, offset: page * PAGE_SIZE })
       setHistory(data)
+      // Estimate total based on returned data
+      setTotalCount(data.length === PAGE_SIZE ? (page + 1) * PAGE_SIZE + 1 : page * PAGE_SIZE + data.length)
     } catch (error: unknown) {
       console.error("Failed to load history:", error)
       if (error instanceof ApiError && error.response.status === 401) {
@@ -77,13 +84,13 @@ export default function HistoryPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [router])
+  }, [router, page])
 
   useEffect(() => {
     if (user) {
       loadHistory()
     }
-  }, [user, loadHistory])
+  }, [user, page, loadHistory])
 
   const filteredHistory = useMemo(() => {
     return history.filter(item => {
@@ -120,7 +127,42 @@ export default function HistoryPage() {
               <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
               Refresh
             </button>
-            <button className="btn btn-primary h-11 px-6 rounded-xl gap-2 font-bold shadow-lg shadow-primary/20" disabled={history.length === 0}>
+            <button 
+              onClick={() => {
+                if (filteredHistory.length === 0) {
+                  toast.error("No data to export")
+                  return
+                }
+                // Convert to CSV
+                const headers = ["Task ID", "Status", "Source Type", "Confidence", "Has Advertising", "Created At"]
+                const rows = filteredHistory.map(item => [
+                  item.task_id,
+                  item.status,
+                  item.source_type,
+                  item.confidence_score?.toString() || "",
+                  item.has_advertising ? "Yes" : "No",
+                  item.created_at
+                ])
+                
+                const csvContent = [
+                  headers.join(","),
+                  ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+                ].join("\n")
+                
+                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+                const url = window.URL.createObjectURL(blob)
+                const a = document.createElement("a")
+                a.href = url
+                a.download = `veritasad-history-${new Date().toISOString().split("T")[0]}.csv`
+                document.body.appendChild(a)
+                a.click()
+                window.URL.revokeObjectURL(url)
+                document.body.removeChild(a)
+                toast.success(`Exported ${filteredHistory.length} records`)
+              }}
+              disabled={history.length === 0}
+              className="btn btn-primary h-11 px-6 rounded-xl gap-2 font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
+            >
               <Download className="h-4 w-4" />
               Export CSV
             </button>
@@ -351,13 +393,28 @@ export default function HistoryPage() {
           </div>
           
           <div className="px-6 py-4 bg-muted/10 border-t border-border/50 flex items-center justify-between">
-             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-               Visible: {filteredHistory.length} / Total: {history.length}
-             </span>
-             <div className="flex gap-2">
-                <button disabled className="btn btn-outline btn-sm h-9 px-4 rounded-lg font-bold disabled:opacity-30">Prev</button>
-                <button disabled className="btn btn-outline btn-sm h-9 px-4 rounded-lg font-bold disabled:opacity-30">Next</button>
-             </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Showing {history.length} of {totalCount} results
+              </span>
+              <div className="flex gap-2">
+                <button 
+                  disabled={page === 0}
+                  onClick={() => setPage(p => Math.max(0, p - 1))}
+                  className="btn btn-outline btn-sm h-9 px-4 rounded-lg font-bold disabled:opacity-30"
+                >
+                  Prev
+                </button>
+                <span className="flex items-center px-3 text-xs font-bold text-muted-foreground">
+                  Page {page + 1}
+                </span>
+                <button 
+                  disabled={history.length < PAGE_SIZE}
+                  onClick={() => setPage(p => p + 1)}
+                  className="btn btn-outline btn-sm h-9 px-4 rounded-lg font-bold disabled:opacity-30"
+                >
+                  Next
+                </button>
+              </div>
           </div>
         </div>
       </section>
