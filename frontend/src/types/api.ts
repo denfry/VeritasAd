@@ -18,6 +18,7 @@ export type AnalysisCheckResponse = {
   task_id?: string
   video_id?: string
   error?: string
+  error_code?: string
   url?: string
   source_type?: string
   title?: string
@@ -27,15 +28,20 @@ export type AnalysisCheckResponse = {
   confidence_score?: number
   visual_score?: number
   audio_score?: number
+  text_score?: number
   disclosure_score?: number
+  link_score?: number
   disclosure_markers?: string[]
   disclosure_text?: string[]
+  cta_matches?: string[]
+  commercial_urls?: string[]
   ad_classification?: string
   ad_reason?: string
   detected_brands?: BrandDetection[]
   detected_keywords?: string[]
   transcript?: string
   duration?: number
+  progress?: number
 }
 
 export type AnalysisResult = AnalysisCheckResponse
@@ -52,13 +58,17 @@ export type AnalysisHistoryItem = {
   audio_score: number
   text_score: number
   disclosure_score: number
+  link_score?: number | null
   detected_brands: BrandDetection[]
   detected_keywords: string[]
+  cta_matches?: string[]
+  commercial_urls?: string[]
   ad_classification: string | null
   ad_reason: string | null
   duration: number | null
   progress: number
   error_message: string | null
+  error_code?: string | null
   created_at: string
   completed_at: string | null
 }
@@ -69,6 +79,7 @@ export type ProgressPayload = {
   status?: string
   message?: string
   stage?: string
+  error_code?: string
 }
 
 export type UserProfile = {

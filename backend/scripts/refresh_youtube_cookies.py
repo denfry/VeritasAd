@@ -73,6 +73,10 @@ def main() -> int:
     target.parent.mkdir(parents=True, exist_ok=True)
     previous_backup = target.with_suffix(".bak")
 
+    if not source_file and not browser and not target.exists():
+        LOGGER.info("cookies_refresh_skipped_no_source target=%s", target)
+        return 0
+
     if target.exists():
         shutil.copy2(target, previous_backup)
 
@@ -119,8 +123,8 @@ def main() -> int:
             shutil.copy2(previous_backup, target)
             LOGGER.warning("cookies_file_invalid_restored_backup target=%s", target)
         else:
-            LOGGER.error("cookies_file_invalid_and_no_backup target=%s", target)
-            return 1
+            LOGGER.warning("cookies_file_invalid_and_no_backup target=%s", target)
+            return 0
 
     if not _probe_cookie_access(target, probe_url):
         LOGGER.warning("cookies_probe_failed target=%s probe_url=%s", target, probe_url)
@@ -130,7 +134,7 @@ def main() -> int:
             if _probe_cookie_access(target, probe_url):
                 LOGGER.info("backup_cookies_probe_ok target=%s", target)
                 return 0
-        return 1
+        return 0
 
     LOGGER.info("cookies_ready target=%s", target)
     return 0

@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = "redis://redis:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://redis:6379/1"
     CELERY_TASK_TRACK_STARTED: bool = True
+    CELERY_TASK_SOFT_TIME_LIMIT: int = 540
     CELERY_TASK_TIME_LIMIT: int = 600
     CELERY_WORKER_PREFETCH_MULTIPLIER: int = 1
     CELERY_WORKER_MAX_TASKS_PER_CHILD: int = 50

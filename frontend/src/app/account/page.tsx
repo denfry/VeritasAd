@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, type ReactNode } from "react"
+import { useEffect, useState, useCallback, type ReactNode, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { AppShell } from "@/components/AppShell"
 import { useAuth } from "@/contexts/auth-context"
@@ -27,6 +27,7 @@ import {
 import Link from "next/link"
 import { format, formatDistanceToNow } from "date-fns"
 import { motion, AnimatePresence } from "framer-motion"
+import { Skeleton } from "@/components/ui/Skeleton"
 
 type AccountTab = "overview" | "profile" | "security" | "billing"
 
@@ -42,6 +43,7 @@ export default function AccountPage() {
   const [sessions, setSessions] = useState<UserSession[]>([])
   const [is2faEnabled, setIs2faEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   
   // Form state
   const [emailInput, setEmailInput] = useState("")
@@ -49,6 +51,7 @@ export default function AccountPage() {
 
   const loadAllData = useCallback(async () => {
     setLoading(true)
+    setLoadError(null)
     try {
       const [profileData, creditsData, historyData] = await Promise.all([
         getCurrentUserProfile(),
@@ -91,6 +94,8 @@ export default function AccountPage() {
            total_used: 250,
            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
          })
+      } else {
+        setLoadError(error instanceof Error ? error.message : "Failed to load account data")
       }
     } finally {
       setLoading(false)
@@ -116,7 +121,7 @@ export default function AccountPage() {
     }
   }, [activeTab, profile])
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
+  const handleUpdateProfile = async (e: FormEvent) => {
     e.preventDefault()
     setIsUpdating(true)
     try {
@@ -169,9 +174,9 @@ export default function AccountPage() {
   if (authLoading || loading) {
     return (
       <AppShell>
-        <section className="container mx-auto max-w-5xl px-4 py-12 space-y-10">
+        <section className="container mx-auto max-w-7xl px-4 py-12 space-y-10 lg:py-16">
           {/* Profile Header skeleton */}
-          <div className="card p-8">
+          <div className="surface p-8">
             <div className="flex flex-col md:flex-row md:items-center gap-8">
               <Skeleton className="h-24 w-24 rounded-2xl" />
               <div className="flex-1 space-y-3">
@@ -189,7 +194,7 @@ export default function AccountPage() {
           </div>
           
           {/* Content skeleton */}
-          <div className="card p-6 space-y-6">
+          <div className="surface p-6 space-y-6">
             <Skeleton className="h-6 w-32" />
             <div className="grid gap-4 md:grid-cols-2">
               <Skeleton className="h-32 w-full" />
@@ -201,14 +206,30 @@ export default function AccountPage() {
     )
   }
 
+  if (loadError && !profile) {
+    return (
+      <AppShell>
+        <section className="container mx-auto max-w-7xl px-4 py-12">
+          <div className="surface p-8 space-y-4">
+            <h1 className="text-2xl font-semibold">Account unavailable</h1>
+            <p className="text-sm text-muted-foreground">{loadError}</p>
+            <button className="btn btn-primary h-11 px-5 rounded-full" onClick={loadAllData}>
+              Retry
+            </button>
+          </div>
+        </section>
+      </AppShell>
+    )
+  }
+
   if (!profile) return null
 
   return (
     <AppShell>
-      <section className="container mx-auto max-w-5xl px-4 py-12 space-y-10">
+      <section className="container mx-auto max-w-7xl px-4 py-12 space-y-10 lg:py-16">
         {/* Profile Header Card */}
         <motion.div 
-          className="card p-8 relative overflow-hidden group shadow-xl shadow-black/5"
+          className="surface p-8 relative overflow-hidden group"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -218,18 +239,18 @@ export default function AccountPage() {
           <div className="absolute -bottom-24 -left-24 h-64 w-64 bg-primary/5 rounded-full blur-3xl" />
           
           <div className="flex flex-col md:flex-row md:items-center gap-8 relative z-10">
-            <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-primary to-primary-foreground flex items-center justify-center text-white shadow-xl shadow-primary/20">
+            <div className="h-24 w-24 rounded-[1.5rem] gradient-premium flex items-center justify-center text-primary-foreground shadow-xl shadow-primary/20">
               <UserIcon className="h-12 w-12" />
             </div>
             
             <div className="flex-1 space-y-2">
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-3xl font-extrabold tracking-tight">{profile.email?.split('@')[0]}</h1>
-                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border tracking-widest ${getPlanBadgeStyles(profile.plan)}`}>
+                <h1 className="text-3xl font-semibold tracking-tight">{profile.email?.split('@')[0]}</h1>
+                <span className={`px-3 py-1 rounded-full text-[10px] font-semibold uppercase border tracking-[0.22em] ${getPlanBadgeStyles(profile.plan)}`}>
                   {profile.plan} Plan
                 </span>
                 {profile.role === 'admin' && (
-                  <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded text-[10px] font-black flex items-center gap-1 shadow-sm">
+                  <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1 shadow-sm">
                     <BadgeCheck className="h-3 w-3" /> ADMIN
                   </span>
                 )}
@@ -241,7 +262,7 @@ export default function AccountPage() {
             </div>
             
             <div className="flex gap-2">
-              <button onClick={handleSignOut} className="btn btn-outline gap-2 h-11 px-6 rounded-xl border-red-500/20 text-red-500 hover:bg-red-500/10 font-bold transition-all">
+              <button onClick={handleSignOut} className="btn btn-outline gap-2 h-11 px-6 rounded-full border-red-500/20 text-red-500 hover:bg-red-500/10 font-semibold transition-all">
                 <LogOut className="h-4 w-4" />
                 Sign out
               </button>
@@ -250,7 +271,7 @@ export default function AccountPage() {
         </motion.div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-2xl w-fit">
+        <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-full w-fit">
            <TabButton active={activeTab === "overview"} onClick={() => setActiveTab("overview")} label="Overview" icon={<BarChart3 className="h-4 w-4" />} />
            <TabButton active={activeTab === "profile"} onClick={() => setActiveTab("profile")} label="Profile" icon={<UserIcon className="h-4 w-4" />} />
            <TabButton active={activeTab === "security"} onClick={() => setActiveTab("security")} label="Security" icon={<Lock className="h-4 w-4" />} />
@@ -269,7 +290,7 @@ export default function AccountPage() {
               <div className="lg:col-span-2 space-y-8">
                 {/* Usage Stats */}
                 <div className="grid gap-6 md:grid-cols-2">
-                  <div className="card p-6 space-y-4">
+                  <div className="surface p-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                         <BarChart3 className="h-5 w-5" />
@@ -292,7 +313,7 @@ export default function AccountPage() {
                     </div>
                   </div>
 
-                  <div className="card p-6 space-y-4">
+                  <div className="surface p-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="h-10 w-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600">
                         <Zap className="h-5 w-5" />
@@ -309,29 +330,29 @@ export default function AccountPage() {
                 </div>
 
                 {/* Credits Balance */}
-                <div className="card p-8 space-y-6 bg-gradient-to-br from-card to-primary/5 shadow-lg border-primary/10">
+                <div className="surface p-8 space-y-6 bg-gradient-to-br from-card to-primary/5">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <h2 className="text-xl font-bold">Credits Balance</h2>
                       <p className="text-sm text-muted-foreground font-medium">Pre-paid credits for premium analyses</p>
                     </div>
-                    <Link href="/pricing" className="btn btn-primary h-11 px-6 rounded-xl shadow-lg shadow-primary/20 gap-2 font-bold transition-all hover:scale-105">
+                    <Link href="/pricing" className="btn btn-primary h-11 px-6 rounded-full shadow-lg shadow-primary/20 gap-2 font-semibold transition-all hover:scale-105">
                       Top up <ArrowUpRight className="h-4 w-4" />
                     </Link>
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="p-4 bg-background/50 border rounded-2xl text-center space-y-1 backdrop-blur-sm">
-                       <p className="text-2xl font-black">{credits?.credits ?? 0}</p>
-                       <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Available</p>
+                       <p className="text-2xl font-semibold">{credits?.credits ?? 0}</p>
+                       <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-[0.22em]">Available</p>
                     </div>
                     <div className="p-4 bg-background/50 border rounded-2xl text-center space-y-1 text-muted-foreground backdrop-blur-sm">
-                       <p className="text-2xl font-bold">{credits?.total_purchased ?? 0}</p>
-                       <p className="text-[10px] uppercase font-bold tracking-widest">Purchased</p>
+                       <p className="text-2xl font-semibold">{credits?.total_purchased ?? 0}</p>
+                       <p className="text-[10px] uppercase font-semibold tracking-[0.22em]">Purchased</p>
                     </div>
                     <div className="p-4 bg-background/50 border rounded-2xl text-center space-y-1 text-muted-foreground backdrop-blur-sm">
-                       <p className="text-2xl font-bold">{credits?.total_used ?? 0}</p>
-                       <p className="text-[10px] uppercase font-bold tracking-widest">Lifetime Use</p>
+                       <p className="text-2xl font-semibold">{credits?.total_used ?? 0}</p>
+                       <p className="text-[10px] uppercase font-semibold tracking-[0.22em]">Lifetime Use</p>
                     </div>
                   </div>
                 </div>
@@ -339,8 +360,8 @@ export default function AccountPage() {
 
               <div className="space-y-8">
                 {/* Quick Actions */}
-                <div className="card p-6 space-y-4 shadow-lg border-border/50">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Quick Settings</h3>
+                <div className="surface p-6 space-y-4">
+                  <h3 className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-2">Quick Settings</h3>
                   <div className="space-y-1">
                      <SettingsLink icon={<UserIcon className="h-4 w-4" />} label="Update Profile" onClick={() => setActiveTab("profile")} />
                      <SettingsLink icon={<Lock className="h-4 w-4" />} label="Security & Access" onClick={() => setActiveTab("security")} />
@@ -368,22 +389,22 @@ export default function AccountPage() {
               exit={{ opacity: 0, x: 20 }}
               className="max-w-2xl mx-auto w-full"
             >
-              <div className="card p-8 space-y-8 shadow-xl shadow-black/5">
+              <div className="surface p-8 space-y-8">
                 <div className="border-b border-border/50 pb-6">
-                  <h2 className="text-2xl font-bold">Profile Settings</h2>
+                  <h2 className="text-2xl font-semibold">Profile Settings</h2>
                   <p className="text-sm text-muted-foreground font-medium">Update your account identity and email address.</p>
                 </div>
 
                 <form onSubmit={handleUpdateProfile} className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Email Address</label>
+                    <label className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Email Address</label>
                     <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <input 
                         type="email" 
                         value={emailInput}
                         onChange={(e) => setEmailInput(e.target.value)}
-                        className="input-field pl-12 h-12 font-bold"
+                        className="input-field pl-12 h-12 font-medium"
                         placeholder="your@email.com"
                         required
                       />
@@ -395,7 +416,7 @@ export default function AccountPage() {
                     <button 
                       type="submit" 
                       disabled={isUpdating || emailInput === profile.email}
-                      className="btn btn-primary w-full h-12 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:grayscale transition-all"
+                      className="btn btn-primary w-full h-12 rounded-full font-semibold gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:grayscale transition-all"
                     >
                       {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                       Save Profile Changes
@@ -415,22 +436,22 @@ export default function AccountPage() {
               className="space-y-8 max-w-4xl mx-auto w-full"
             >
               {/* 2FA Section */}
-              <div className="card p-8 space-y-6 shadow-xl shadow-black/5">
+              <div className="surface p-8 space-y-6">
                 <div className="flex items-center justify-between border-b border-border/50 pb-6">
                   <div className="space-y-1">
-                    <h2 className="text-xl font-bold flex items-center gap-2">
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
                       <ShieldCheck className="h-5 w-5 text-primary" />
                       Two-Factor Authentication
                     </h2>
                     <p className="text-sm text-muted-foreground font-medium">Add an extra layer of security to your account.</p>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${is2faEnabled ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-muted text-muted-foreground border-border/50'}`}>
+                  <div className={`px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.22em] border ${is2faEnabled ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-muted text-muted-foreground border-border/50'}`}>
                     {is2faEnabled ? "PROTECTED" : "NOT ENABLED"}
                   </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row items-center gap-6 p-6 rounded-2xl bg-muted/30 border border-dashed border-border/50">
-                   <div className="h-16 w-16 rounded-2xl bg-background border flex items-center justify-center text-primary shadow-sm">
+                <div className="flex flex-col md:flex-row items-center gap-6 p-6 rounded-[1.5rem] bg-muted/20 border border-dashed border-border/50">
+                   <div className="h-16 w-16 rounded-[1.5rem] bg-background border flex items-center justify-center text-primary shadow-sm">
                       <Smartphone className="h-8 w-8" />
                    </div>
                    <div className="flex-1 space-y-1 text-center md:text-left">
@@ -439,7 +460,7 @@ export default function AccountPage() {
                    </div>
                    <button 
                     onClick={() => toast.info("2FA setup will be available after admin approval")}
-                    className={`btn ${is2faEnabled ? 'btn-outline' : 'btn-primary'} rounded-xl font-bold px-6 h-11`}
+                    className={`btn ${is2faEnabled ? 'btn-outline' : 'btn-primary'} rounded-full font-semibold px-6 h-11`}
                    >
                       {is2faEnabled ? "Disable 2FA" : "Enable 2FA"}
                    </button>
@@ -447,9 +468,9 @@ export default function AccountPage() {
               </div>
 
               {/* Active Sessions */}
-              <div className="card p-8 space-y-6 shadow-xl shadow-black/5">
+              <div className="surface p-8 space-y-6">
                 <div className="border-b border-border/50 pb-6">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
                     <Monitor className="h-5 w-5 text-primary" />
                     Active Access Nodes
                   </h2>
@@ -470,7 +491,7 @@ export default function AccountPage() {
                                 {session.user_agent.split('(')[0] || "Unknown Browser"}
                               </p>
                               {session.is_current && (
-                                <span className="bg-emerald-500/10 text-emerald-500 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter shadow-sm border border-emerald-500/20">CURRENT</span>
+                                <span className="bg-emerald-500/10 text-emerald-500 text-[8px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-tighter shadow-sm border border-emerald-500/20">CURRENT</span>
                               )}
                             </div>
                             <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-bold uppercase tracking-tighter">
@@ -509,42 +530,42 @@ export default function AccountPage() {
               exit={{ opacity: 0, x: 20 }}
               className="space-y-8 max-w-4xl mx-auto w-full"
             >
-              <div className="card p-8 space-y-8 shadow-xl shadow-black/5">
+              <div className="surface p-8 space-y-8">
                 <div className="flex items-center justify-between border-b border-border/50 pb-6">
                   <div className="space-y-1">
-                    <h2 className="text-xl font-bold flex items-center gap-2">
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
                       <CreditCard className="h-5 w-5 text-primary" />
                       Plan & Billing
                     </h2>
                     <p className="text-sm text-muted-foreground font-medium">Manage your subscription tier and payment history.</p>
                   </div>
-                  <Link href="/pricing" className="btn btn-primary h-10 px-5 rounded-xl text-xs font-bold shadow-lg shadow-primary/20">
+                  <Link href="/pricing" className="btn btn-primary h-10 px-5 rounded-full text-xs font-semibold shadow-lg shadow-primary/20">
                     Switch Plan
                   </Link>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
-                   <div className="p-6 rounded-2xl bg-gradient-to-br from-primary to-primary-foreground text-white shadow-xl shadow-primary/20">
+                   <div className="p-6 rounded-[1.5rem] gradient-premium text-primary-foreground shadow-xl shadow-primary/20">
                       <div className="flex justify-between items-start mb-8">
                          <div className="space-y-1">
-                            <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Current Deployment</p>
-                            <h3 className="text-2xl font-black capitalize">{profile.plan} Node</h3>
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] opacity-70">Current Deployment</p>
+                            <h3 className="text-2xl font-semibold capitalize">{profile.plan} Node</h3>
                          </div>
                          <Shield className="h-8 w-8 opacity-20" />
                       </div>
                       <div className="flex justify-between items-end">
                          <div className="space-y-1">
-                            <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Daily Analysis Cap</p>
-                            <p className="text-lg font-bold">{profile.daily_limit} Ops/Day</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] opacity-70">Daily Analysis Cap</p>
+                            <p className="text-lg font-semibold">{profile.daily_limit} Ops/Day</p>
                          </div>
                          <div className="text-right">
-                            <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Next Cycle</p>
-                            <p className="text-xs font-bold">{format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), "MMM dd, yyyy")}</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] opacity-70">Next Cycle</p>
+                            <p className="text-xs font-semibold">{format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), "MMM dd, yyyy")}</p>
                          </div>
                       </div>
                    </div>
 
-                   <div className="p-6 rounded-2xl border-2 border-dashed border-border/50 flex flex-col justify-center items-center text-center space-y-4 group hover:border-primary/30 transition-all cursor-pointer">
+                   <div className="p-6 rounded-[1.5rem] border-2 border-dashed border-border/50 flex flex-col justify-center items-center text-center space-y-4 group hover:border-primary/30 transition-all cursor-pointer">
                       <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all">
                          <ArrowUpRight className="h-6 w-6" />
                       </div>
@@ -557,9 +578,9 @@ export default function AccountPage() {
               </div>
 
               {/* Transaction Archive */}
-              <div className="card p-8 space-y-6 shadow-xl shadow-black/5 overflow-hidden">
+              <div className="surface p-8 space-y-6 overflow-hidden">
                 <div className="border-b border-border/50 pb-6">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
                     <History className="h-5 w-5 text-primary" />
                     Transaction Archive
                   </h2>

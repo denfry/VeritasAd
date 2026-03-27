@@ -3,6 +3,7 @@ import torch
 from pathlib import Path
 from typing import Dict, Optional, Any
 import subprocess
+import shutil
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,23 @@ class AudioAnalyzer:
             "альфа", "альфабанк", "alfa bank", "alfabank",
         ]
 
+    def _resolve_ffmpeg_executable(self) -> Optional[str]:
+        """Find an ffmpeg executable, preferring the system binary and then an embedded fallback."""
+        system_ffmpeg = shutil.which("ffmpeg")
+        if system_ffmpeg:
+            return system_ffmpeg
+
+        try:
+            from imageio_ffmpeg import get_ffmpeg_exe
+
+            bundled_ffmpeg = get_ffmpeg_exe()
+            if bundled_ffmpeg and Path(bundled_ffmpeg).exists():
+                return bundled_ffmpeg
+        except Exception as exc:
+            logger.debug("Bundled ffmpeg fallback unavailable", error=str(exc))
+
+        return None
+
     def extract_audio(self, video_path: Path) -> Optional[Path]:
         """
         Extract audio from video file
@@ -41,10 +59,14 @@ class AudioAnalyzer:
         """
         try:
             audio_path = video_path.with_suffix(".wav")
+            ffmpeg_executable = self._resolve_ffmpeg_executable()
+            if not ffmpeg_executable:
+                logger.error("ffmpeg executable not found")
+                return None
 
             # Use ffmpeg to extract audio
             cmd = [
-                "ffmpeg", "-i", str(video_path),
+                ffmpeg_executable, "-i", str(video_path),
                 "-vn",  # No video
                 "-acodec", "pcm_s16le",  # PCM codec
                 "-ar", "16000",  # 16kHz sample rate
@@ -173,7 +195,7 @@ class AudioAnalyzer:
             # Clean up audio file
             try:
                 audio_path.unlink()
-            except:
+            except Exception:
                 pass
 
             return {

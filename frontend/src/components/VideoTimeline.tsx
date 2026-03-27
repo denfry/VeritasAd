@@ -32,6 +32,13 @@ const BRAND_COLORS: Record<string, string> = {
 
 const DEFAULT_COLOR = "bg-primary border-primary/80"
 
+const normalizeBrandLabel = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFKC")
+    .replace(/\s+/g, " ")
+    .trim()
+
 export function VideoTimeline({
   duration,
   markers,
@@ -45,7 +52,7 @@ export function VideoTimeline({
   const [hoveredMarker, setHoveredMarker] = useState<number | null>(null)
   const [zoom, setZoom] = useState(1)
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set())
-  const [minConfidence, setMinConfidence] = useState(50)
+  const [minConfidence, setMinConfidence] = useState(20)
 
   // Group markers by brand
   const groupedMarkers = useMemo(() => {
@@ -53,10 +60,11 @@ export function VideoTimeline({
     markers
       .filter((marker) => ((marker.confidence ?? 0) * 100) >= minConfidence)
       .forEach((marker) => {
-      if (!groups[marker.label]) {
-        groups[marker.label] = []
+      const label = normalizeBrandLabel(marker.label)
+      if (!groups[label]) {
+        groups[label] = []
       }
-      groups[marker.label].push(marker)
+      groups[label].push(marker)
       })
     return groups
   }, [markers, minConfidence])
@@ -72,17 +80,23 @@ export function VideoTimeline({
   const filteredMarkers = useMemo(() => {
     const source = markers.filter((m) => ((m.confidence ?? 0) * 100) >= minConfidence)
     if (selectedBrands.size === 0) return source
-    return source.filter(m => selectedBrands.has(m.label))
+    return source.filter(m => selectedBrands.has(normalizeBrandLabel(m.label)))
   }, [markers, selectedBrands, minConfidence])
 
   // Get color for brand
   const getBrandColor = (brandName: string) => {
+    const normalized = normalizeBrandLabel(brandName)
     // Check exact match first
     if (BRAND_COLORS[brandName]) return BRAND_COLORS[brandName]
+    for (const [brand, color] of Object.entries(BRAND_COLORS)) {
+      if (normalizeBrandLabel(brand) === normalized) {
+        return color
+      }
+    }
     
     // Check partial match
     for (const [brand, color] of Object.entries(BRAND_COLORS)) {
-      if (brandName.toLowerCase().includes(brand.toLowerCase())) {
+      if (normalized.includes(normalizeBrandLabel(brand))) {
         return color
       }
     }
@@ -101,12 +115,13 @@ export function VideoTimeline({
   }
 
   const toggleBrand = (brand: string) => {
+    const normalized = normalizeBrandLabel(brand)
     setSelectedBrands(prev => {
       const next = new Set(prev)
-      if (next.has(brand)) {
-        next.delete(brand)
+      if (next.has(normalized)) {
+        next.delete(normalized)
       } else {
-        next.add(brand)
+        next.add(normalized)
       }
       return next
     })
@@ -138,13 +153,13 @@ export function VideoTimeline({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setMinConfidence((prev) => (prev === 50 ? 0 : 50))}
+              onClick={() => setMinConfidence((prev) => (prev === 20 ? 0 : 20))}
               className={`text-xs px-2 py-1 rounded-full border transition-colors ${
-                minConfidence >= 50 ? "border-primary/50 text-primary bg-primary/10" : "border-border text-muted-foreground"
+                minConfidence >= 20 ? "border-primary/50 text-primary bg-primary/10" : "border-border text-muted-foreground"
               }`}
-              title="Show only brands with confidence above 50%"
+              title="Show only brands with confidence above 20%"
             >
-              {minConfidence >= 50 ? "Confidence >50%" : "All confidence"}
+              {minConfidence >= 20 ? "Confidence >20%" : "All confidence"}
             </button>
             <button
               onClick={() => setZoom(z => Math.max(1, z - 0.5))}
@@ -186,7 +201,7 @@ export function VideoTimeline({
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
-              {brand} ({groupedMarkers[brand].length})
+              {groupedMarkers[brand][0]?.label || brand} ({groupedMarkers[brand].length})
             </button>
           ))}
         </div>
@@ -298,6 +313,7 @@ export function VideoTimeline({
               const totalExposure = markers.reduce((sum, m) => sum + (m.duration || 2), 0)
               const avgConfidence = markers.reduce((sum, m) => sum + (m.confidence || 0), 0) / markers.length
               const colorClass = getBrandColor(brand)
+              const displayLabel = markers[0]?.label || brand
               
               return (
                 <motion.button
@@ -313,7 +329,7 @@ export function VideoTimeline({
                   transition={{ delay: 0.5 + idx * 0.05 }}
                 >
                   <div className={`w-full h-1 rounded-full mb-2 ${colorClass.split(' ')[0]}`} />
-                  <div className="text-xs font-semibold truncate">{brand}</div>
+                  <div className="text-xs font-semibold truncate">{displayLabel}</div>
                   <div className="text-[10px] text-muted-foreground space-y-0.5 mt-1">
                     <div className="flex justify-between">
                       <span>Detections:</span>

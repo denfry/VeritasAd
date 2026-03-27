@@ -23,7 +23,7 @@ export function SiteHeader() {
 
   return (
     <motion.header
-      className="sticky top-0 z-50 border-b border-border/50 glass"
+      className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/65"
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
@@ -32,7 +32,7 @@ export function SiteHeader() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 font-semibold text-lg group">
           <motion.span
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary text-primary-foreground shadow-primary"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full gradient-premium text-primary-foreground shadow-[0_14px_30px_-12px_hsl(var(--primary)/0.55)]"
             whileHover={{ scale: 1.05, rotate: 5 }}
             transition={{ duration: 0.2 }}
           >
@@ -47,10 +47,10 @@ export function SiteHeader() {
             <Link
               key={link.href}
               href={link.href}
-              className="relative px-3 py-2 text-muted-foreground hover:text-foreground transition-colors group"
+              className="relative px-3 py-2 text-muted-foreground hover:text-foreground transition-colors group rounded-full hover:bg-accent/60"
             >
               {link.label}
-              <span className="absolute inset-x-2 -bottom-px h-px bg-gradient-primary scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+              <span className="absolute inset-x-3 -bottom-px h-px origin-center scale-x-0 bg-gradient-to-r from-transparent via-primary to-transparent group-hover:scale-x-100 transition-transform duration-300" />
             </Link>
           ))}
         </nav>
@@ -93,7 +93,7 @@ export function SiteHeader() {
           <motion.button
             type="button"
             onClick={() => setIsOpen((open) => !open)}
-            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-primary/5 transition-all"
+            className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background/80 text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-primary/5 transition-all backdrop-blur-sm"
             aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
             whileTap={{ scale: 0.95 }}
           >
@@ -128,7 +128,7 @@ export function SiteHeader() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className="md:hidden border-t border-border/50 glass"
+            className="md:hidden border-t border-border/50 bg-background/90 backdrop-blur-2xl"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}

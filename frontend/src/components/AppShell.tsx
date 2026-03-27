@@ -83,23 +83,23 @@ export function AppShell({ children }: AppShellProps) {
   const planInfo = planConfig[userPlan as keyof typeof planConfig] || planConfig.free
 
   return (
-    <div className="relative flex min-h-screen overflow-hidden bg-background/80 text-foreground">
+    <div className="relative flex min-h-screen overflow-hidden text-foreground">
       <div className="pointer-events-none absolute inset-0 z-0">
         <div className="absolute -left-24 top-[-180px] h-[460px] w-[460px] rounded-full bg-sky-500/10 blur-3xl" />
         <div className="absolute -right-24 bottom-[-180px] h-[520px] w-[520px] rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.12)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.12)_1px,transparent_1px)] bg-[size:40px_40px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.08)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.08)_1px,transparent_1px)] bg-[size:44px_44px]" />
       </div>
       
       {/* Sidebar - Desktop */}
       <motion.aside 
         initial={false}
         animate={{ width: isCollapsed ? 80 : 256 }}
-        className="hidden md:flex flex-col border-r border-border/40 bg-card/30 backdrop-blur-2xl sticky top-0 h-screen transition-all duration-300 overflow-visible z-30"
+        className="hidden md:flex flex-col border-r border-border/50 bg-card/55 backdrop-blur-2xl sticky top-0 h-screen transition-all duration-300 overflow-visible z-30"
       >
         <div className="p-4 flex items-center justify-between border-b border-border/20">
           <Link href="/" className="flex items-center gap-3 font-bold text-xl group px-2 overflow-hidden whitespace-nowrap">
             <motion.div
-              className="h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-primary text-primary-foreground shadow-lg shadow-primary/20 flex"
+            className="h-8 w-8 shrink-0 items-center justify-center rounded-full gradient-premium text-primary-foreground shadow-lg shadow-primary/20 flex"
               whileHover={{ scale: 1.05, rotate: 5 }}
             >
               <ShieldCheck className="h-4 w-4" />
@@ -132,7 +132,7 @@ export function AppShell({ children }: AppShellProps) {
                 href={item.href}
                 title={isCollapsed ? item.label : ""}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative",
+                  "flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all duration-200 group relative",
                   isActive 
                     ? "bg-primary/10 text-primary font-semibold" 
                     : "hover:bg-muted text-muted-foreground hover:text-foreground",
@@ -198,7 +198,7 @@ export function AppShell({ children }: AppShellProps) {
             disabled={isSigningOut}
             title={isCollapsed ? "Sign out" : ""}
             className={cn(
-              "flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-all group disabled:opacity-50",
+                  "flex items-center gap-3 w-full px-4 py-2.5 rounded-2xl text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-all group disabled:opacity-50",
               isCollapsed && "justify-center px-0"
             )}
           >

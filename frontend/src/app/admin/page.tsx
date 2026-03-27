@@ -153,7 +153,7 @@ export default function AdminPage() {
 
   return (
     <AppShell>
-      <section className="container mx-auto max-w-[1600px] px-4 py-8 space-y-8">
+      <section className="container mx-auto max-w-[1600px] px-4 py-8 space-y-8 lg:py-12">
         {/* Header */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
           <div className="space-y-1">
@@ -162,7 +162,7 @@ export default function AdminPage() {
                 <Shield className="h-7 w-7" />
               </div>
               <div>
-                <h1 className="text-3xl font-black tracking-tighter uppercase">Command Center</h1>
+                <h1 className="text-3xl font-semibold tracking-tight lg:text-4xl">Command Center</h1>
                 <div className="flex items-center gap-2">
                   <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
                     <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -174,18 +174,18 @@ export default function AdminPage() {
             </div>
           </div>
           
-          <div className="flex flex-wrap items-center gap-3 bg-muted/30 p-2 rounded-2xl border border-border/50">
+          <div className="flex flex-wrap items-center gap-3 bg-muted/20 p-2 rounded-full border border-border/50 backdrop-blur-sm">
              <div className="flex items-center gap-4 px-4 border-r border-border/50">
                 <LiveMetric label="CPU" value={`${cpuUsage.toFixed(0)}%`} icon={<Cpu className="h-3 w-3" />} color="text-blue-500" />
                 <LiveMetric label="MEM" value={`${memUsage.toFixed(0)}%`} icon={<Activity className="h-3 w-3" />} color="text-purple-500" />
                 <LiveMetric label="REQ" value={liveRequests} icon={<Globe className="h-3 w-3" />} color="text-emerald-500" />
              </div>
              <div className="flex gap-2">
-                <button onClick={() => loadData(true)} disabled={refreshing} className="btn btn-outline h-10 px-4 rounded-xl gap-2 font-bold text-xs">
+                <button onClick={() => loadData(true)} disabled={refreshing} className="btn btn-outline h-10 px-4 rounded-full gap-2 font-semibold text-xs">
                   <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
                   Sync Core
                 </button>
-                <Link href="/admin/audit-logs" className="btn btn-primary h-10 px-5 rounded-xl gap-2 font-bold text-xs shadow-lg shadow-primary/20">
+                <Link href="/admin/audit-logs" className="btn btn-primary h-10 px-5 rounded-full gap-2 font-semibold text-xs shadow-lg shadow-primary/20">
                    <ShieldAlert className="h-3.5 w-3.5" />
                    Audit Trail
                 </Link>
@@ -240,11 +240,11 @@ export default function AdminPage() {
         {/* Charts Section */}
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Real-time Traffic */}
-          <div className="lg:col-span-2 card p-8 space-y-8 shadow-2xl shadow-black/5 border-border/40 bg-gradient-to-br from-card to-card/50">
+          <div className="lg:col-span-2 surface p-8 space-y-8 bg-gradient-to-br from-card to-card/50">
             <div className="flex items-center justify-between">
                <div>
-                 <h2 className="text-xl font-black uppercase tracking-tight">Neural Traffic Flow</h2>
-                 <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">Real-time analysis & load telemetry</p>
+                <h2 className="text-xl font-semibold tracking-tight">Neural Traffic Flow</h2>
+                 <p className="text-xs text-muted-foreground font-semibold uppercase tracking-[0.22em] mt-1">Real-time analysis & load telemetry</p>
                </div>
                <div className="flex gap-6">
                   <LegendItem color="#3b82f6" label="Analyses" />
@@ -291,8 +291,8 @@ export default function AdminPage() {
 
           {/* Plan Distribution & Live Feed */}
           <div className="space-y-8">
-            <div className="card p-8 space-y-6 shadow-xl border-border/40">
-               <h2 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground">Plan Distribution</h2>
+            <div className="surface p-8 space-y-6">
+               <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Plan Distribution</h2>
                <div className="h-[200px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -313,18 +313,18 @@ export default function AdminPage() {
                </div>
                <div className="grid grid-cols-2 gap-2">
                   {analytics?.plan_distribution?.map((entry, index: number) => (
-                    <div key={entry.name} className="flex items-center gap-2 p-2 rounded-xl bg-muted/30 border border-border/50">
+                    <div key={entry.name} className="flex items-center gap-2 p-2 rounded-xl bg-muted/20 border border-border/50">
                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                       <span className="text-[10px] font-black uppercase tracking-tighter truncate">{entry.name}</span>
-                       <span className="ml-auto text-[10px] font-bold opacity-60">{entry.value}</span>
+                       <span className="text-[10px] font-semibold uppercase tracking-tighter truncate">{entry.name}</span>
+                       <span className="ml-auto text-[10px] font-semibold opacity-60">{entry.value}</span>
                     </div>
                   ))}
                </div>
             </div>
 
-            <div className="card p-8 space-y-6 shadow-xl border-border/40 overflow-hidden relative">
+            <div className="surface p-8 space-y-6 overflow-hidden relative">
                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground">Live Protocol Feed</h2>
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Live Protocol Feed</h2>
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                </div>
                <div className="space-y-4">
@@ -352,15 +352,15 @@ export default function AdminPage() {
         </div>
 
         {/* Core Repository */}
-        <div className="card overflow-hidden border-border/40 shadow-2xl shadow-black/5 bg-card/50">
+        <div className="surface overflow-hidden bg-card/60">
           <div className="p-8 border-b border-border/40 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-2xl bg-muted border border-border/50 flex items-center justify-center">
                 <Users className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h2 className="text-2xl font-black uppercase tracking-tight">Identity Repository</h2>
-                <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Manage authorization nodes & resources</p>
+                <h2 className="text-2xl font-semibold tracking-tight">Identity Repository</h2>
+                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-[0.22em]">Manage authorization nodes & resources</p>
               </div>
             </div>
             
@@ -370,12 +370,12 @@ export default function AdminPage() {
                  <input 
                   type="text" 
                   placeholder="Scan Identities..." 
-                  className="input-field h-12 pl-12 w-80 bg-background/50 text-sm font-bold border-border/50"
+                  className="input-field h-12 pl-12 w-80 bg-background/50 text-sm font-medium border-border/50"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                  />
                </div>
-               <button className="btn btn-outline h-12 px-6 rounded-2xl border-border/50 hover:bg-muted font-black text-[10px] uppercase tracking-widest gap-2">
+               <button className="btn btn-outline h-12 px-6 rounded-full border-border/50 hover:bg-muted font-semibold text-[10px] uppercase tracking-[0.22em] gap-2">
                  <Filter className="h-4 w-4" />
                  Parameters
                </button>

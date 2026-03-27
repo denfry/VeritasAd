@@ -2,8 +2,7 @@
 
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Cookie, Settings, Check } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { X, Cookie, Settings } from "lucide-react"
 import { Switch } from "@/components/ui/Switch"
 
 interface CookieCategory {
@@ -71,7 +70,6 @@ const DEFAULT_CONSENT: ConsentState = {
 const STORAGE_KEY = "veritasad_cookie_consent"
 
 export function CookieConsent() {
-  const [isOpen, setIsOpen] = React.useState(false)
   const [showSettings, setShowSettings] = React.useState(false)
   const [consent, setConsent] = React.useState<ConsentState>(DEFAULT_CONSENT)
   const [isVisible, setIsVisible] = React.useState(false)
@@ -193,9 +191,9 @@ export function CookieConsent() {
                   </p>
                 </div>
                 <button
-                  onClick={() => setIsVisible(false)}
-                  className="rounded-md p-1 hover:bg-muted"
-                >
+                    onClick={() => setIsVisible(false)}
+                    className="rounded-md p-1 hover:bg-muted"
+                  >
                   <X className="h-4 w-4" />
                 </button>
               </div>

@@ -61,7 +61,17 @@ def test_has_video_payload_detects_expected_shapes(info, expected):
         (
             "HTTP Error 429: Too Many Requests",
             ErrorCode.VIDEO_DOWNLOAD_FAILED,
-            "network limitation",
+            "temporary platform or network limitation",
+        ),
+        (
+            "HTTP Error 403: Forbidden while downloading fragment 218",
+            ErrorCode.VIDEO_DOWNLOAD_FAILED,
+            "temporary platform or network limitation",
+        ),
+        (
+            "yt-dlp failed: fragment not found; The downloaded file is empty",
+            ErrorCode.VIDEO_DOWNLOAD_FAILED,
+            "temporary platform or network limitation",
         ),
         (
             "some unexpected ffmpeg failure",

@@ -1,19 +1,20 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
-# Выполняем миграции Alembic перед запуском, если не задана переменная SKIP_MIGRATIONS
+# Run Alembic migrations before startup unless explicitly disabled.
 if [ "$SKIP_MIGRATIONS" != "true" ]; then
     echo "Running Alembic migrations..."
-    # Пытаемся запустить миграции с небольшой задержкой/повторами в случае конфликтов таблиц версий
-    for i in {1..5}; do
-        alembic upgrade head && break || {
-            echo "Migration attempt $i failed, retrying in 2s..."
-            sleep 2
-        }
+    i=1
+    while [ "$i" -le 5 ]; do
+        if alembic upgrade head; then
+            break
+        fi
+        echo "Migration attempt $i failed, retrying in 2s..."
+        sleep 2
+        i=$((i + 1))
     done
 else
     echo "Skipping migrations as requested..."
 fi
 
-# Запускаем основную команду
 exec "$@"

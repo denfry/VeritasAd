@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.core.errors import ValidationException
 from app.core.redis import RedisClient
 from app.models.database import Analysis, SourceType, User
+from app.services.link_detector import LinkDetector
 from app.services.video_processor import VideoProcessor
 from app.services.disclosure_detector import DisclosureDetector
 from app.services.video_download_errors import classify_processing_error
@@ -67,7 +68,7 @@ class AnalysisService:
         self.processor = processor
         self.disclosure_detector = disclosure_detector
 
-    def _build_post_response(
+    async def _build_post_response(
         self, url: str, info: Dict[str, Any], source_type: SourceType
     ) -> Dict[str, Any]:
         """Build response for post-only analysis (no video)."""
@@ -75,27 +76,28 @@ class AnalysisService:
         title = info.get("title")
         uploader = info.get("uploader")
         view_count = info.get("view_count")
-        disclosure = self.disclosure_detector.analyze(
+        disclosure = await self.disclosure_detector.analyze(
             text=description, description=title or ""
         )
         disclosure_markers = disclosure.get("markers", [])
-        has_disclosure = disclosure.get("has_disclosure", False) or bool(
-            disclosure_markers
-        )
-        has_advertising = has_disclosure
+        text_content = f"{title or ''} {description}".strip()
+        link_detector = LinkDetector()
+        link_result = link_detector.analyze(text=text_content, description=description)
+
+        has_disclosure = disclosure.get("has_disclosure", False) or bool(disclosure_markers)
+        has_advertising = has_disclosure or link_result.get("has_ad_signals", False)
         
         # Detect brands in text
-        text_content = f"{title or ''} {description}".strip()
         detected_brands = self.processor.detect_brands_in_text(text_content)
-        
-        if detected_brands:
-            has_advertising = True # If brands are detected, likely commercial
-            
+
         classification = classify_advertising(
             has_advertising=has_advertising,
             disclosure_markers=disclosure_markers,
             detected_brands=detected_brands,
             detected_keywords=[],
+            has_cta=link_result.get("has_cta", False),
+            has_commercial_links=link_result.get("has_ad_signals", False),
+            commercial_urls=link_result.get("urls", []),
         )
 
         return {
@@ -117,6 +119,9 @@ class AnalysisService:
             "detected_brands": detected_brands,
             "detected_keywords": [],
             "transcript": "",
+            "link_score": link_result.get("link_score", 0.0),
+            "cta_matches": link_result.get("cta_matches", []),
+            "commercial_urls": link_result.get("urls", []),
         }
 
     async def start_video_analysis(
@@ -142,39 +147,53 @@ class AnalysisService:
         if url and not file:
             info: Optional[Dict[str, Any]] = None
             info_error: Optional[str] = None
-            try:
-                logger.info(f"Extracting video info from URL: {url}")
-                with YoutubeDL(
-                    {
-                        "skip_download": True,
-                        "quiet": True,
-                        "no_warnings": False,
-                        "socket_timeout": settings.DOWNLOAD_SOCKET_TIMEOUT,
-                        "retries": settings.DOWNLOAD_RETRIES,
-                        "fragment_retries": settings.DOWNLOAD_FRAGMENT_RETRIES,
-                        "noplaylist": True,
-                        "js_runtimes": {"node": {}, "deno": {}},
-                        "extract_flat": False,
-                        "ignoreerrors": False,
-                    }
-                ) as ydl:
-                    info = ydl.extract_info(url, download=False)
-                    logger.info(f"Successfully extracted info: {info.get('title', 'Unknown') if info else 'No info'}")
-            except Exception as exc:
-                info_error = str(exc)
-                logger.error(f"Failed to extract video info from {url}: {type(exc).__name__} - {info_error}")
-                logger.debug(f"Full exception details:", exc_info=True)
+            # YouTube requests are queued directly because request-time metadata
+            # probing is prone to bot checks and the worker already has download fallbacks.
+            if source_type != SourceType.YOUTUBE:
+                try:
+                    logger.info(f"Extracting video info from URL: {url}")
+                    with YoutubeDL(
+                        {
+                            "skip_download": True,
+                            "quiet": True,
+                            "no_warnings": False,
+                            "socket_timeout": settings.DOWNLOAD_SOCKET_TIMEOUT,
+                            "retries": settings.DOWNLOAD_RETRIES,
+                            "fragment_retries": settings.DOWNLOAD_FRAGMENT_RETRIES,
+                            "noplaylist": True,
+                            "js_runtimes": {"node": {}, "deno": {}},
+                            "extract_flat": False,
+                            "ignoreerrors": False,
+                        }
+                    ) as ydl:
+                        info = ydl.extract_info(url, download=False)
+                        logger.info(f"Successfully extracted info: {info.get('title', 'Unknown') if info else 'No info'}")
+                except Exception as exc:
+                    info_error = str(exc)
+                    logger.error(f"Failed to extract video info from {url}: {type(exc).__name__} - {info_error}")
+                    logger.debug("Full exception details:", exc_info=True)
 
-            if info and not _has_video_payload(info):
-                logger.info(f"No video payload detected, treating as post analysis")
-                await increment_usage_fn(user, session)
-                return self._build_post_response(url, info, source_type)
-            
-            # If info extraction failed, return error early
-            if info_error:
-                logger.warning(f"Video info extraction failed, returning error to user")
-                friendly = classify_processing_error(info_error)
-                raise ValidationException(friendly["user_message"])
+                if not info:
+                    try:
+                        from app.services.social_parsers import extract_social_post
+
+                        logger.info("yt-dlp returned no info, attempting social parser fallback")
+                        info = await extract_social_post(url)
+                        if info:
+                            info_error = None
+                    except Exception as fallback_exc:
+                        logger.warning("social_parser_fallback_failed error=%s", str(fallback_exc))
+
+                if info and not _has_video_payload(info):
+                    logger.info("No video payload detected, treating as post analysis")
+                    await increment_usage_fn(user, session)
+                    return await self._build_post_response(url, info, source_type)
+
+                # If info extraction failed, return error early for non-YouTube sources.
+                if info_error:
+                    logger.warning("Video info extraction failed, returning error to user")
+                    friendly = classify_processing_error(info_error)
+                    raise ValidationException(friendly["user_message"])
 
             source_url = url
             # Queue URL source and download inside background task.
@@ -233,13 +252,23 @@ class AnalysisService:
         )
 
         logger.info(f"Queuing Celery task: task_id={task_id}")
-        from app.tasks.video_analysis import analyze_video_task
-        analyze_video_task.delay(
-            task_id=task_id,
-            video_path_param=str(video_path) if video_path else "",
-            source_url=source_url,
-            source_type=source_type.value,
-        )
+        from app.tasks.video_analysis import analyze_video_task, download_video_task
+
+        if source_url:
+            download_video_task.delay(
+                task_id=task_id,
+                video_path_param=str(video_path) if video_path else "",
+                source_url=source_url,
+                source_type=source_type.value,
+            )
+        else:
+            analyze_video_task.delay(
+                task_id=task_id,
+                video_path_param=str(video_path) if video_path else "",
+                source_url=source_url,
+                source_type=source_type.value,
+                initial_progress=0,
+            )
 
         await increment_usage_fn(user, session)
 
@@ -301,7 +330,7 @@ class AnalysisService:
             }
 
         await increment_usage_fn(user, session)
-        return self._build_post_response(url, info, _infer_source_type(url))
+        return await self._build_post_response(url, info, _infer_source_type(url))
 
     async def get_user_analyses(
         self,

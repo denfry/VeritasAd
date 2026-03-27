@@ -18,12 +18,12 @@ export default function MonitorPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Brand Intelligence</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-3xl font-semibold tracking-tight lg:text-4xl">Brand Intelligence</h1>
+          <p className="text-muted-foreground mt-1 text-sm leading-7">
             Proactively monitor keywords and brands across social platforms.
           </p>
         </div>
-        <button className="btn btn-primary shadow-lg shadow-primary/20">
+        <button className="btn btn-primary h-11 px-5 rounded-full shadow-lg shadow-primary/20">
           <Plus className="mr-2 h-4 w-4" />
           New Monitor
         </button>
@@ -31,20 +31,20 @@ export default function MonitorPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="card p-6 space-y-2">
+        <div className="surface p-6 space-y-2">
           <h3 className="text-sm font-medium text-muted-foreground">Active Monitors</h3>
-          <div className="text-2xl font-bold">12</div>
+          <div className="text-2xl font-semibold">12</div>
           <div className="text-xs text-emerald-500 flex items-center gap-1">
             <Activity className="h-3 w-3" />
             Running smoothly
           </div>
         </div>
-        <div className="card p-6 space-y-2">
+        <div className="surface p-6 space-y-2">
           <h3 className="text-sm font-medium text-muted-foreground">Total Detections (24h)</h3>
           <div className="text-2xl font-bold">1,248</div>
           <div className="text-xs text-muted-foreground">+12% from yesterday</div>
         </div>
-        <div className="card p-6 space-y-2">
+        <div className="surface p-6 space-y-2">
           <h3 className="text-sm font-medium text-muted-foreground">API Usage</h3>
           <div className="text-2xl font-bold">85%</div>
           <div className="w-full bg-secondary h-1.5 rounded-full overflow-hidden mt-2">
@@ -87,7 +87,7 @@ export default function MonitorPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden">
+        <div className="surface overflow-hidden">
           <div className="relative w-full overflow-auto">
             <table className="w-full caption-bottom text-sm">
               <thead className="[&_tr]:border-b">

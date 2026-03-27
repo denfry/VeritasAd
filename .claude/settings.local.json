@@ -3,7 +3,12 @@
     "allow": [
       "Bash(python3:*)",
       "Bash(cd:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(docker compose:*)",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Bash(docker exec:*)",
+      "Bash(grep -v \"^$\")",
+      "Bash(find C:UsersdabinDocumentsProjectsVeritasAd -name *cookie* -o -name *refresh*)"
     ]
   }
 }

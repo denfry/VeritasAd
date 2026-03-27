@@ -18,7 +18,7 @@ from app.core.config import settings
 from app.core.redis import get_redis, RedisClient
 from app.core.errors import ValidationException, VideoProcessingException
 from app.models.database import Analysis, AnalysisStatus, SourceType, get_db, User
-from app.tasks.video_analysis import analyze_video_task
+from app.tasks.video_analysis import analyze_video_task, download_video_task
 from app.utils.ad_classification import classify_advertising
 
 logger = logging.getLogger(__name__)
@@ -238,51 +238,52 @@ async def check_video(
             settings, "EXTRACT_INFO_TIMEOUT", settings.DOWNLOAD_SOCKET_TIMEOUT
         )
 
-        def _extract_info() -> Optional[Dict[str, Any]]:
-            with YoutubeDL(
-                {
-                    "skip_download": True,
-                    "quiet": True,
-                    "no_warnings": False,
-                    "socket_timeout": settings.DOWNLOAD_SOCKET_TIMEOUT,
-                    "retries": settings.DOWNLOAD_RETRIES,
-                    "fragment_retries": settings.DOWNLOAD_FRAGMENT_RETRIES,
-                    "noplaylist": True,
-                    "js_runtimes": {"node": {}, "deno": {}},
-                    "extract_flat": False,
-                    "ignoreerrors": False,
-                }
-            ) as ydl:
-                return ydl.extract_info(url, download=False)
+        if source_type != SourceType.YOUTUBE:
+            def _extract_info() -> Optional[Dict[str, Any]]:
+                with YoutubeDL(
+                    {
+                        "skip_download": True,
+                        "quiet": True,
+                        "no_warnings": False,
+                        "socket_timeout": settings.DOWNLOAD_SOCKET_TIMEOUT,
+                        "retries": settings.DOWNLOAD_RETRIES,
+                        "fragment_retries": settings.DOWNLOAD_FRAGMENT_RETRIES,
+                        "noplaylist": True,
+                        "js_runtimes": {"node": {}, "deno": {}},
+                        "extract_flat": False,
+                        "ignoreerrors": False,
+                    }
+                ) as ydl:
+                    return ydl.extract_info(url, download=False)
 
-        try:
-            logger.info(f"Extracting video info from URL: {url}")
-            info = await asyncio.wait_for(
-                asyncio.to_thread(_extract_info),
-                timeout=float(extract_timeout),
-            )
-            logger.info(
-                f"Successfully extracted info: {info.get('title', 'Unknown') if info else 'No info'}"
-            )
-        except asyncio.TimeoutError:
-            info_error = f"Extraction timed out after {extract_timeout}s"
-            logger.error(f"Timeout extracting video info from {url}")
-        except Exception as exc:
-            info_error = str(exc)
-            logger.error(
-                f"Failed to extract video info from {url}: {type(exc).__name__} - {info_error}"
-            )
-            logger.debug("Full exception details:", exc_info=True)
+            try:
+                logger.info(f"Extracting video info from URL: {url}")
+                info = await asyncio.wait_for(
+                    asyncio.to_thread(_extract_info),
+                    timeout=float(extract_timeout),
+                )
+                logger.info(
+                    f"Successfully extracted info: {info.get('title', 'Unknown') if info else 'No info'}"
+                )
+            except asyncio.TimeoutError:
+                info_error = f"Extraction timed out after {extract_timeout}s"
+                logger.error(f"Timeout extracting video info from {url}")
+            except Exception as exc:
+                info_error = str(exc)
+                logger.error(
+                    f"Failed to extract video info from {url}: {type(exc).__name__} - {info_error}"
+                )
+                logger.debug("Full exception details:", exc_info=True)
 
-        if info and not _has_video_payload(info):
-            logger.info(f"No video payload detected, treating as post analysis")
-            await increment_usage(user, db)
-            return await _build_post_response(url, info, source_type)
+            if info and not _has_video_payload(info):
+                logger.info(f"No video payload detected, treating as post analysis")
+                await increment_usage(user, db)
+                return await _build_post_response(url, info, source_type)
 
-        # If info extraction failed, return error early
-        if info_error:
-            logger.warning(f"Video info extraction failed, returning error to user")
-            raise ValidationException(f"Failed to fetch video info: {info_error}")
+            # If info extraction failed, return error early
+            if info_error:
+                logger.warning(f"Video info extraction failed, returning error to user")
+                raise ValidationException(f"Failed to fetch video info: {info_error}")
 
     video_path: Optional[Path] = None
     source_url: Optional[str] = None
@@ -348,6 +349,7 @@ async def check_video(
             video_path_param=str(video_path),
             source_url=None,
             source_type=source_type.value,
+            initial_progress=0,
         )
     else:
         # For URL sources, pass URL to task for download with progress tracking
@@ -373,7 +375,7 @@ async def check_video(
             task_id, progress=0, status="queued", message="Queued for processing"
         )
 
-        analyze_video_task.delay(
+        download_video_task.delay(
             task_id=task_id,
             video_path_param=str(temp_video_path),
             source_url=source_url,

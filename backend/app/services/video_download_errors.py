@@ -60,13 +60,17 @@ def classify_processing_error(error_text: str) -> Dict[str, str]:
             "temporary failure in name resolution",
             "connection reset",
             "http error 429",
+            "http error 403",
             "too many requests",
+            "fragment not found",
+            "the downloaded file is empty",
+            "forbidden",
         ]
     ):
         return {
             "error_code": ErrorCode.VIDEO_DOWNLOAD_FAILED,
             "user_message": (
-                "Service could not download the video due to a network limitation. "
+                "Service could not download the video due to a temporary platform or network limitation. "
                 "Please retry later."
             ),
         }

@@ -213,8 +213,8 @@ export default function PricingPage() {
       {/* Subscription Plans */}
       <section className="container mx-auto max-w-6xl px-4 py-8">
         <div className="text-center mb-12">
-          <h2 className="text-2xl font-black tracking-tight mb-2">Subscription Clusters</h2>
-          <p className="text-muted-foreground font-medium">
+          <h2 className="text-2xl font-semibold tracking-tight mb-2">Subscription tiers</h2>
+          <p className="text-muted-foreground">
             Monthly synchronization with automated daily analysis quotas.
           </p>
         </div>
@@ -225,12 +225,12 @@ export default function PricingPage() {
             return (
               <div
                 key={plan.name}
-                className={`card p-6 flex flex-col relative transition-all hover:scale-[1.02] shadow-xl shadow-black/5 ${
+                className={`surface p-6 flex flex-col relative transition-all hover:scale-[1.02] ${
                   plan.popular ? "ring-2 ring-primary border-primary/20 bg-primary/[0.02]" : "border-border/50"
                 }`}
               >
                 {plan.popular && (
-                  <span className="bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full absolute -top-3 left-1/2 -translate-x-1/2 shadow-lg">
+                  <span className="bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-[0.22em] px-3 py-1 rounded-full absolute -top-3 left-1/2 -translate-x-1/2 shadow-lg">
                     Highest Vector
                   </span>
                 )}
@@ -240,7 +240,7 @@ export default function PricingPage() {
                     <div className="p-2 rounded-lg bg-primary/10 text-primary">
                        {plan.icon}
                     </div>
-                    <h3 className="text-lg font-bold">{plan.name}</h3>
+                    <h3 className="text-lg font-semibold">{plan.name}</h3>
                   </div>
                   <div className="flex items-baseline gap-2 flex-wrap">
                     <PricePerMonth amount={plan.priceRub} className="text-3xl font-black" />
@@ -248,7 +248,7 @@ export default function PricingPage() {
                       <Price amount={plan.originalPriceRub} className="text-sm text-muted-foreground line-through opacity-50" />
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-3 font-medium leading-relaxed">{plan.description}</p>
+                  <p className="text-xs text-muted-foreground mt-3 leading-relaxed">{plan.description}</p>
                 </div>
 
                 <ul className="space-y-3 text-sm text-muted-foreground flex-1 mb-8">
@@ -268,7 +268,7 @@ export default function PricingPage() {
                     }
                     handleSubscriptionUpgrade(planKey)
                   }}
-                  className={`btn w-full py-4 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all shadow-lg ${
+                  className={`btn w-full py-4 rounded-full font-semibold uppercase tracking-[0.22em] text-[10px] transition-all shadow-lg ${
                     plan.popular ? "btn-primary shadow-primary/20" : "btn-outline hover:bg-muted"
                   }`}
                 >
@@ -282,10 +282,10 @@ export default function PricingPage() {
 
       {/* Pay-as-you-go Section */}
       <section className="container mx-auto max-w-6xl px-4 py-12 mb-12">
-        <div className="card p-10 bg-muted/30 border-dashed border-2 border-border/50 rounded-[2rem]">
+        <div className="surface p-10 border-dashed border-2 border-border/50 rounded-[2rem]">
           <div className="text-center mb-12">
-            <h2 className="text-2xl font-black tracking-tight mb-2">On-Demand Units</h2>
-            <p className="text-muted-foreground font-medium">
+            <h2 className="text-2xl font-semibold tracking-tight mb-2">On-demand units</h2>
+            <p className="text-muted-foreground">
               Burst compute capacity. No recurring authorization required.
             </p>
           </div>
@@ -297,7 +297,7 @@ export default function PricingPage() {
               return (
                 <div
                   key={pkg.name}
-                  className={`card p-8 flex flex-col relative transition-all hover:translate-y-[-4px] bg-background shadow-2xl shadow-black/5 ${
+                  className={`surface p-8 flex flex-col relative transition-all hover:translate-y-[-4px] bg-background ${
                     pkg.highlight ? "border-primary/30 ring-1 ring-primary/10" : "border-border/50"
                   }`}
                 >
@@ -307,18 +307,18 @@ export default function PricingPage() {
 
                   <div className="mb-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-black">{pkg.name}</h3>
+                      <h3 className="text-xl font-semibold">{pkg.name}</h3>
                     </div>
                     <div className="flex items-baseline gap-2">
                       <Price amount={pkg.priceRub} className="text-4xl font-black" />
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-primary mt-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary mt-2">
                       {pricePerAnalysis} / UNIT
                     </p>
-                    <p className="text-xs text-muted-foreground mt-4 font-medium">{pkg.description}</p>
+                    <p className="text-xs text-muted-foreground mt-4">{pkg.description}</p>
                   </div>
 
-                  <div className="space-y-3 text-[10px] font-black uppercase tracking-widest flex-1 border-t border-border/50 pt-6 mb-8">
+                  <div className="space-y-3 text-[10px] font-semibold uppercase tracking-[0.22em] flex-1 border-t border-border/50 pt-6 mb-8">
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">Compute Units:</span>
                       <span className="text-sm font-black">{pkg.credits}</span>
@@ -332,7 +332,7 @@ export default function PricingPage() {
                   <button
                     onClick={() => handleCreditPackagePurchase(pkg.name.toLowerCase())}
                     disabled={selectedPackage === pkg.name.toLowerCase()}
-                    className={`btn w-full py-4 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all ${
+                    className={`btn w-full py-4 rounded-full font-semibold uppercase tracking-[0.22em] text-[10px] transition-all ${
                       pkg.highlight ? "btn-primary shadow-lg shadow-primary/20" : "btn-outline"
                     }`}
                   >

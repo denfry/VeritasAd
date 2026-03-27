@@ -32,7 +32,10 @@ class AnalysisResult(BaseModel):
     detected_brands: List[BrandDetection] = []
     detected_keywords: List[str] = []
     transcript: Optional[str] = None
-    disclosure_text: Optional[str] = None
+    disclosure_text: List[str] = []
+    link_score: Optional[float] = None
+    cta_matches: List[str] = []
+    commercial_urls: List[str] = []
     ad_classification: Optional[str] = None
     ad_reason: Optional[str] = None
     method: Optional[str] = Field(None, description="Detection method (e.g. rule-based, llm-pro)")
@@ -67,7 +70,7 @@ class AnalysisUpdate(BaseModel):
     detected_brands: Optional[dict] = None
     detected_keywords: Optional[List[str]] = None
     transcript: Optional[str] = None
-    disclosure_text: Optional[str] = None
+    disclosure_text: Optional[List[str]] = None
     ad_classification: Optional[str] = None
     ad_reason: Optional[str] = None
     method: Optional[str] = None

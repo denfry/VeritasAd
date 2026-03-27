@@ -207,7 +207,7 @@ export default function AuditLogsPage() {
 
   return (
     <AppShell>
-      <section className="container mx-auto max-w-7xl px-4 py-10 space-y-8">
+      <section className="container mx-auto max-w-7xl px-4 py-10 space-y-8 lg:py-14">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
@@ -216,17 +216,17 @@ export default function AuditLogsPage() {
                  <ArrowLeft className="h-5 w-5" />
               </Link>
               <Shield className="h-6 w-6 text-primary" />
-              <h1 className="text-3xl font-extrabold tracking-tight">Security Archive</h1>
+              <h1 className="text-3xl font-semibold tracking-tight lg:text-4xl">Security Archive</h1>
             </div>
             <p className="text-muted-foreground font-medium ml-12">Comprehensive audit trail of all platform events and administrative actions.</p>
           </div>
           
           <div className="flex items-center gap-3">
-            <button onClick={handleExport} className="btn btn-outline h-11 px-6 rounded-xl gap-2 font-bold transition-all hover:bg-muted">
+            <button onClick={handleExport} className="btn btn-outline h-11 px-6 rounded-full gap-2 font-semibold transition-all hover:bg-muted">
               <Download className="h-4 w-4" />
               Export .CSV
             </button>
-            <button onClick={() => loadData(true)} className="btn btn-primary h-11 px-6 rounded-xl gap-2 font-bold shadow-lg shadow-primary/20">
+            <button onClick={() => loadData(true)} className="btn btn-primary h-11 px-6 rounded-full gap-2 font-semibold shadow-lg shadow-primary/20">
                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                Sync Logs
             </button>
@@ -235,20 +235,20 @@ export default function AuditLogsPage() {
 
         {/* Stats Grid */}
         <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
-          <div className="card p-5 bg-gradient-to-br from-card to-muted/20">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Vector Events</p>
+          <div className="surface p-5 bg-gradient-to-br from-card to-muted/20">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">Total Vector Events</p>
             <p className="text-2xl font-black mt-1">{stats?.total_events}</p>
           </div>
           {stats?.events_by_category.slice(0, 4).map((cat) => (
-            <div key={cat.category} className="card p-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{cat.category}</p>
+            <div key={cat.category} className="surface p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">{cat.category}</p>
               <p className="text-2xl font-black mt-1">{cat.count}</p>
             </div>
           ))}
         </div>
 
         {/* Filters */}
-        <div className="card p-6 bg-muted/30 border-dashed border-2">
+        <div className="surface p-6 bg-muted/20 border-dashed border-2">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative md:col-span-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -257,7 +257,7 @@ export default function AuditLogsPage() {
                 placeholder="Filter by actor..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="input-field pl-10 h-11 bg-background text-sm font-bold"
+                className="input-field pl-10 h-11 bg-background text-sm font-medium"
               />
             </div>
             
@@ -297,7 +297,7 @@ export default function AuditLogsPage() {
         </div>
 
         {/* Logs Table */}
-        <div className="card overflow-hidden border-border/50 shadow-2xl shadow-black/5">
+        <div className="surface overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground bg-muted/10 border-b border-border/50">
@@ -377,14 +377,14 @@ export default function AuditLogsPage() {
               <button
                 onClick={handlePrevPage}
                 disabled={history.length === 0}
-                className="btn btn-outline btn-sm h-9 px-4 rounded-lg font-bold disabled:opacity-30"
+                className="btn btn-outline btn-sm h-9 px-4 rounded-full font-semibold disabled:opacity-30"
               >
                 Prev
               </button>
               <button
                 onClick={handleNextPage}
                 disabled={!logsResponse?.has_more}
-                className="btn btn-outline btn-sm h-9 px-4 rounded-lg font-bold disabled:opacity-30"
+                className="btn btn-outline btn-sm h-9 px-4 rounded-full font-semibold disabled:opacity-30"
               >
                 Next
               </button>

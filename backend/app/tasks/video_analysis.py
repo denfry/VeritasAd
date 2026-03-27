@@ -1,10 +1,18 @@
-from celery import Task
+try:
+    from celery import Task
+    from celery.exceptions import SoftTimeLimitExceeded
+except ImportError:  # pragma: no cover - optional dependency for worker runtime
+    class Task:  # type: ignore[override]
+        pass
+    class SoftTimeLimitExceeded(Exception):  # type: ignore[override]
+        pass
 from typing import Dict, Any
 from datetime import datetime, timezone
 import structlog
 from pathlib import Path
 import asyncio
 from app.core.celery import celery_app
+from app.core.errors import ErrorCode
 from app.core.redis import RedisClient
 from app.core.config import settings
 from app.services.video_processor import VideoProcessor
@@ -12,7 +20,7 @@ from app.services.link_detector import LinkDetector
 from app.services.video_download_errors import classify_processing_error
 from app.models.database import AsyncSessionLocal, Analysis, AnalysisStatus
 from app.utils.ad_classification import classify_advertising
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 logger = structlog.get_logger(__name__)
 
@@ -30,13 +38,219 @@ class CallbackTask(Task):
         )
 
 
-@celery_app.task(base=CallbackTask, bind=True, name="analyze_video")
+async def _mark_task_failed(
+    task_redis: RedisClient,
+    task_id: str,
+    error_info: Dict[str, str],
+) -> None:
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(Analysis).where(Analysis.task_id == task_id))
+        analysis = result.scalar_one_or_none()
+        if analysis:
+            analysis.status = AnalysisStatus.FAILED
+            analysis.error_message = error_info["user_message"]
+            analysis.progress = 0
+            await db.commit()
+
+    await task_redis.set_task_progress(
+        task_id,
+        progress=0,
+        status="failed",
+        message=error_info["user_message"],
+        stage="failed",
+        error_code=error_info["error_code"],
+    )
+
+
+def _dispose_db_connections() -> None:
+    # Dispose old engine connections before creating a new event loop.
+    from app.models.database import engine as _db_engine
+
+    _db_engine.sync_engine.dispose(close=False)
+
+
+@celery_app.task(
+    base=CallbackTask,
+    bind=True,
+    name="download_video",
+    soft_time_limit=settings.CELERY_TASK_SOFT_TIME_LIMIT,
+    time_limit=settings.CELERY_TASK_TIME_LIMIT,
+)
+def download_video_task(
+    self,
+    task_id: str,
+    video_path_param: str,
+    source_url: str,
+    source_type: str = "url",
+) -> Dict[str, Any]:
+    """Download a remote source to disk, then enqueue analysis."""
+
+    async def run_download():
+        processor = VideoProcessor()
+        task_redis = RedisClient()
+        video_path_current = video_path_param
+        download_succeeded = False
+
+        try:
+            await task_redis.connect()
+
+            await task_redis.set_task_progress(
+                task_id,
+                progress=0,
+                status="processing",
+                message="Preparing download",
+                stage="download_prepare",
+            )
+
+            async with AsyncSessionLocal() as db:
+                result = await db.execute(select(Analysis).where(Analysis.task_id == task_id))
+                analysis = result.scalar_one_or_none()
+                if not analysis:
+                    raise ValueError(f"Analysis not found: {task_id}")
+
+                analysis.status = AnalysisStatus.PROCESSING
+                await db.commit()
+
+            progress_lock = asyncio.Lock()
+            last_reported_progress = 0
+
+            async def persist_progress(progress: int) -> None:
+                async with AsyncSessionLocal() as progress_db:
+                    await progress_db.execute(
+                        update(Analysis)
+                        .where(Analysis.task_id == task_id)
+                        .values(progress=progress)
+                    )
+                    await progress_db.commit()
+
+            async def update_progress(progress: int, message: str, stage: str = "download"):
+                nonlocal last_reported_progress
+
+                async with progress_lock:
+                    if progress <= last_reported_progress:
+                        return
+                    last_reported_progress = progress
+
+                await task_redis.set_task_progress(
+                    task_id,
+                    progress=progress,
+                    status="processing",
+                    message=message,
+                    stage=stage,
+                )
+
+                try:
+                    await persist_progress(progress)
+                except Exception as db_err:
+                    logger.warning(
+                        "download_progress_db_update_failed",
+                        error=str(db_err),
+                        task_id=task_id,
+                    )
+
+            await update_progress(5, "Downloading source video", "download")
+            downloaded_path = await asyncio.to_thread(
+                processor.download_video,
+                source_url,
+                progress_callback=update_progress,
+            )
+            if not downloaded_path:
+                raise RuntimeError(f"Video download returned no file for URL: {source_url}")
+
+            video_path_current = str(downloaded_path)
+
+            async with AsyncSessionLocal() as db:
+                result = await db.execute(select(Analysis).where(Analysis.task_id == task_id))
+                analysis = result.scalar_one_or_none()
+                if analysis:
+                    analysis.file_path = video_path_current
+                    analysis.progress = max(analysis.progress or 0, 20)
+                    await db.commit()
+
+            await task_redis.set_task_progress(
+                task_id,
+                progress=20,
+                status="processing",
+                message="Download complete, queuing analysis",
+                stage="download_complete",
+            )
+
+            analyze_video_task.apply_async(
+                kwargs={
+                    "task_id": task_id,
+                    "video_path_param": video_path_current,
+                    "source_url": source_url,
+                    "source_type": source_type,
+                    "initial_progress": 20,
+                },
+                queue="analysis",
+            )
+
+            logger.info(
+                "download_completed",
+                task_id=task_id,
+                source_url=source_url,
+                video_path=video_path_current,
+            )
+            download_succeeded = True
+
+            return {
+                "task_id": task_id,
+                "status": "queued_for_analysis",
+                "video_path": video_path_current,
+            }
+
+        except SoftTimeLimitExceeded as e:
+            logger.warning("download_timed_out", task_id=task_id, error=str(e))
+            error_info = {
+                "error_code": ErrorCode.VIDEO_DOWNLOAD_FAILED,
+                "user_message": "Video download timed out before completion. Please retry later or upload the file directly.",
+            }
+            await _mark_task_failed(task_redis, task_id, error_info)
+            raise
+        except Exception as e:
+            logger.exception("download_failed", task_id=task_id, error=str(e))
+            error_info = classify_processing_error(str(e))
+            await _mark_task_failed(task_redis, task_id, error_info)
+            raise
+        finally:
+            try:
+                if not download_succeeded and video_path_current:
+                    path_to_cleanup = Path(video_path_current)
+                    if path_to_cleanup.exists():
+                        path_to_cleanup.unlink()
+                        logger.info(
+                            "partial_download_cleaned",
+                            task_id=task_id,
+                            path=str(path_to_cleanup),
+                        )
+            except Exception as cleanup_error:
+                logger.warning(
+                    "download_cleanup_failed",
+                    task_id=task_id,
+                    path=video_path_current,
+                    error=str(cleanup_error),
+                )
+            await task_redis.close()
+
+    _dispose_db_connections()
+    return asyncio.run(run_download())
+
+
+@celery_app.task(
+    base=CallbackTask,
+    bind=True,
+    name="analyze_video",
+    soft_time_limit=settings.CELERY_TASK_SOFT_TIME_LIMIT,
+    time_limit=settings.CELERY_TASK_TIME_LIMIT,
+)
 def analyze_video_task(
     self,
     task_id: str,
     video_path_param: str,
     source_url: str | None = None,
     source_type: str = "file",
+    initial_progress: int = 0,
 ) -> Dict[str, Any]:
     """
     Background task for video analysis
@@ -54,7 +268,6 @@ def analyze_video_task(
         processor = VideoProcessor()
         task_redis = RedisClient()
         video_path_current = video_path_param  # Keep track of video path for cleanup
-        task_id_current = task_id  # Keep track of task_id for logging
 
         try:
             await task_redis.connect()
@@ -62,7 +275,7 @@ def analyze_video_task(
             # Update status to processing
             await task_redis.set_task_progress(
                 task_id,
-                progress=0,
+                progress=max(initial_progress, 0),
                 status="processing",
                 message="Preparing analysis",
                 stage="prepare",
@@ -85,13 +298,32 @@ def analyze_video_task(
 
                 # Update status
                 analysis.status = AnalysisStatus.PROCESSING
+                analysis.progress = max(initial_progress, 0)
                 await db.commit()
 
-                # Lock for database operations to prevent concurrent access
-                db_lock = asyncio.Lock()
+                # Progress updates use a dedicated session to avoid re-entrant commits
+                # on the main analysis session while yt-dlp emits callback events.
+                progress_lock = asyncio.Lock()
+                last_reported_progress = 0
+
+                async def persist_progress(progress: int) -> None:
+                    async with AsyncSessionLocal() as progress_db:
+                        await progress_db.execute(
+                            update(Analysis)
+                            .where(Analysis.task_id == task_id)
+                            .values(progress=progress)
+                        )
+                        await progress_db.commit()
 
                 # Progress callback
                 async def update_progress(progress: int, message: str, stage: str = "processing"):
+                    nonlocal last_reported_progress
+
+                    async with progress_lock:
+                        if progress <= last_reported_progress:
+                            return
+                        last_reported_progress = progress
+
                     # Update Redis (fast, handles concurrency better)
                     await task_redis.set_task_progress(
                         task_id,
@@ -100,40 +332,20 @@ def analyze_video_task(
                         message=message,
                         stage=stage,
                     )
-                    
-                    # Update DB with lock to prevent concurrent commit errors
+
+                    # Update DB in its own session so callback commits do not collide
+                    # with the main analysis transaction.
                     try:
-                        async with db_lock:
-                            analysis.progress = progress
-                            await db.commit()
+                        await persist_progress(progress)
                     except Exception as db_err:
                         # Log but don't fail the whole analysis if just a progress update failed
                         logger.warning("progress_db_update_failed", error=str(db_err), task_id=task_id)
 
-                url_metadata = {}
-                # Download video with progress tracking (for URL sources)
-                if source_type != "file" and source_url:
-                    # Fetch URL metadata (description, title, etc.)
-                    await update_progress(5, "Fetching video info", "prepare")
-                    url_metadata = await processor.get_url_metadata(source_url)
-                    
-                    # Download with progress tracking
-                    await update_progress(10, "Uploading source", "upload")
-                    downloaded_path = processor.download_video(
-                        source_url,
-                        progress_callback=update_progress
-                    )
-                    if downloaded_path:
-                        video_path_current = str(downloaded_path)
-                    else:
-                        raise Exception(f"Video download returned no file for URL: {source_url}")
-
                 # Run video processing
                 await update_progress(25, "Analyzing video", "analyze")
                 metadata = await processor.get_video_metadata(Path(video_path_current))
-                async with db_lock:
-                    analysis.duration = metadata.get("duration")
-                    await db.commit()
+                analysis.duration = metadata.get("duration")
+                await db.commit()
 
                 await update_progress(45, "Detecting brands", "brand_detection")
                 # detect_logos - синхронный метод, выполняем в thread pool
@@ -177,8 +389,8 @@ def analyze_video_task(
                 # analyze метод DisclosureDetector - теперь асинхронный
                 transcript = audio_result.get("transcript", "")
                 
-                # Get description from URL metadata if available, fallback to video metadata
-                description = url_metadata.get("description") or metadata.get("description", "")
+                # URL fetches happen in the download worker; analysis stays local.
+                description = metadata.get("description", "")
                 
                 # Run disclosure detection
                 disclosure_result = await processor.disclosure_detector.analyze(
@@ -203,8 +415,14 @@ def analyze_video_task(
                 text_score = audio_score
                 disclosure_score = disclosure_result.get("score", 0.0)
                 disclosure_markers = disclosure_result.get("markers", [])
-                cta_matches = disclosure_result.get("cta_matches", [])
                 link_score = link_result.get("score", 0.0)
+                cta_matches = list(
+                    dict.fromkeys(
+                        (disclosure_result.get("cta_matches", []) or [])
+                        + (link_result.get("cta_matches", []) or [])
+                    )
+                )
+                commercial_urls = link_result.get("urls", [])
 
                 # Combine detected brands from visual, OCR, and context discovery
                 all_detected_brands = visual_result.get("detected_brands", [])
@@ -247,27 +465,29 @@ def analyze_video_task(
                 )
 
                 # Update analysis record
-                async with db_lock:
-                    analysis.has_advertising = has_advertising
-                    analysis.confidence_score = confidence_score
-                    analysis.visual_score = visual_score
-                    analysis.audio_score = audio_score
-                    analysis.text_score = text_score
-                    analysis.disclosure_score = disclosure_score
-                    analysis.detected_brands = all_detected_brands
-                    analysis.detected_keywords = audio_result.get("keywords", [])
-                    analysis.transcript = audio_result.get("transcript", "")
-                    analysis.disclosure_markers = disclosure_markers
-                    analysis.erids = disclosure_result.get("erids", [])
-                    analysis.promo_codes = disclosure_result.get("promo_codes", [])
-                    analysis.ad_classification = classification["classification"]
-                    analysis.ad_reason = disclosure_result.get("ad_reason") or classification["reason"]
-                    analysis.method = disclosure_result.get("method")
-                    analysis.status = AnalysisStatus.COMPLETED
-                    analysis.progress = 100
-                    analysis.completed_at = datetime.now(timezone.utc)
-                    
-                    await db.commit()
+                analysis.has_advertising = has_advertising
+                analysis.confidence_score = confidence_score
+                analysis.visual_score = visual_score
+                analysis.audio_score = audio_score
+                analysis.text_score = text_score
+                analysis.disclosure_score = disclosure_score
+                analysis.detected_brands = all_detected_brands
+                analysis.detected_keywords = audio_result.get("keywords", [])
+                analysis.transcript = audio_result.get("transcript", "")
+                analysis.disclosure_markers = disclosure_markers
+                analysis.link_score = link_score
+                analysis.cta_matches = cta_matches
+                analysis.commercial_urls = commercial_urls
+                analysis.erids = disclosure_result.get("erids", [])
+                analysis.promo_codes = disclosure_result.get("promo_codes", [])
+                analysis.ad_classification = classification["classification"]
+                analysis.ad_reason = disclosure_result.get("ad_reason") or classification["reason"]
+                analysis.method = disclosure_result.get("method")
+                analysis.status = AnalysisStatus.COMPLETED
+                analysis.progress = 100
+                analysis.completed_at = datetime.now(timezone.utc)
+
+                await db.commit()
                 
                 # Update Redis
                 await task_redis.set_task_progress(
@@ -300,35 +520,23 @@ def analyze_video_task(
                     "transcript": audio_result.get("transcript", ""),
                     "disclosure_markers": disclosure_markers,
                     "cta_matches": cta_matches,
-                    "commercial_urls": link_result.get("urls", []),
+                    "commercial_urls": commercial_urls,
                     "ad_classification": classification["classification"],
                     "ad_reason": classification["reason"],
                 }
                 
+        except SoftTimeLimitExceeded as e:
+            logger.warning("analysis_timed_out", task_id=task_id, error=str(e))
+            error_info = {
+                "error_code": ErrorCode.PROCESSING_FAILED,
+                "user_message": "Video analysis took too long and was stopped. Please retry later or use a shorter video.",
+            }
+            await _mark_task_failed(task_redis, task_id, error_info)
+            raise
         except Exception as e:
             logger.exception("analysis_failed", task_id=task_id, error=str(e))
             error_info = classify_processing_error(str(e))
-            
-            # Update database
-            async with AsyncSessionLocal() as db:
-                result = await db.execute(select(Analysis).where(Analysis.task_id == task_id))
-                analysis = result.scalar_one_or_none()
-                if analysis:
-                    analysis.status = AnalysisStatus.FAILED
-                    analysis.error_message = error_info["user_message"]
-                    analysis.progress = 0
-                    await db.commit()
-            
-            # Update Redis
-            await task_redis.set_task_progress(
-                task_id,
-                progress=0,
-                status="failed",
-                message=error_info["user_message"],
-                stage="failed",
-                error_code=error_info["error_code"],
-            )
-            
+            await _mark_task_failed(task_redis, task_id, error_info)
             raise
         finally:
             try:
@@ -344,5 +552,4 @@ def analyze_video_task(
                 )
             await task_redis.close()
 
-    # Run async function using asyncio.run
     return asyncio.run(run_analysis())

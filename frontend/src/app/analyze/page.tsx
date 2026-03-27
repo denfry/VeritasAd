@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type DragEvent, type FormEvent } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
@@ -43,6 +43,7 @@ export default function AnalyzePage() {
   const [progressStage, setProgressStage] = useState("idle")
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const analysisAbortRef = useRef<AbortController | null>(null)
+  const currentVideoId = result?.analysis_type === "video" ? result.video_id : undefined
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -56,9 +57,15 @@ export default function AnalyzePage() {
     try {
       const data = await fetchAnalysisResult({ taskId })
       setResult(data)
-      setProgress(100)
-      setProgressStatus(data.status ?? "Completed")
-      setProgressStage("complete")
+      const loadedStatus = (data.status ?? "").toLowerCase()
+      if (["completed", "failed"].includes(loadedStatus)) {
+        setProgress(100)
+        setProgressStage(loadedStatus === "completed" ? "complete" : "failed")
+      } else {
+        setProgress(data.progress ?? 0)
+        setProgressStage(loadedStatus === "processing" ? "analyze" : "upload")
+      }
+      setProgressStatus(data.error || data.status || "Queued for analysis")
     } catch (error: unknown) {
       console.error("Failed to load task result:", error)
       toast.error("Failed to load analysis results.")
@@ -87,7 +94,7 @@ export default function AnalyzePage() {
       return []
     }
     return result.detected_brands
-      .filter((brand) => (brand.confidence ?? 0) >= 0.5)
+      .filter((brand) => (brand.confidence ?? 0) >= 0.2)
       .flatMap((brand) => {
         const sorted = [...(brand.timestamps ?? [])].sort((a, b) => a - b)
         if (!sorted.length) return []
@@ -110,17 +117,21 @@ export default function AnalyzePage() {
     return [...(result?.detected_brands ?? [])].sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))
   }, [result?.detected_brands])
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const isAnalysisPending = Boolean(
+    result && !["completed", "failed"].includes(normalizedStatus),
+  )
+
+  const handleDragOver = (e: DragEvent) => {
     e.preventDefault()
     setIsDragging(true)
   }
 
-  const handleDragLeave = (e: React.DragEvent) => {
+  const handleDragLeave = (e: DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
     const droppedFile = e.dataTransfer.files?.[0]
@@ -132,7 +143,7 @@ export default function AnalyzePage() {
     }
   }
 
-  async function handleAnalyze(event: React.FormEvent<HTMLFormElement>) {
+  async function handleAnalyze(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!user) {
       toast.error("Please sign in first")
@@ -217,10 +228,10 @@ export default function AnalyzePage() {
 
   return (
     <AppShell>
-      <section className="container mx-auto max-w-5xl px-4 py-12">
+      <section className="container mx-auto max-w-7xl px-4 py-12 lg:py-16">
         {/* Header */}
         <motion.div
-          className="text-center mb-10"
+          className="mx-auto mb-12 max-w-3xl text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -234,7 +245,7 @@ export default function AnalyzePage() {
             Content analysis
           </motion.p>
           <motion.h1
-            className="text-4xl font-extrabold tracking-tight"
+            className="text-4xl font-semibold tracking-tight lg:text-5xl"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -242,7 +253,7 @@ export default function AnalyzePage() {
             Analyze content for advertising
           </motion.h1>
           <motion.p
-            className="mt-3 text-muted-foreground max-w-2xl mx-auto font-medium"
+            className="mt-4 text-sm leading-7 text-muted-foreground max-w-2xl mx-auto lg:text-base"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -253,7 +264,7 @@ export default function AnalyzePage() {
         </motion.div>
 
 
-        <div className="grid gap-8 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
           {/* Left Column - Form */}
           <motion.div
             className="space-y-6"
@@ -262,7 +273,7 @@ export default function AnalyzePage() {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <motion.form
-              className="card p-6 space-y-6"
+              className="surface p-6 lg:p-8 space-y-6"
               onSubmit={handleAnalyze}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -270,7 +281,7 @@ export default function AnalyzePage() {
             >
               {/* URL Input */}
               <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center gap-2">
+                <label className="flex items-center gap-2 text-sm font-medium">
                   <LinkIcon className="h-4 w-4 text-muted-foreground" />
                   Video or Post URL
                 </label>
@@ -308,23 +319,21 @@ export default function AnalyzePage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Upload video file</label>
                 <label
-                  className={`flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed px-4 py-8 text-sm transition-all duration-300 ${
+                  className={`group flex cursor-pointer flex-col items-center gap-3 rounded-[1.5rem] border border-dashed px-4 py-9 text-sm transition-all duration-300 ${
                     isDragging
-                      ? "border-primary bg-primary/5 scale-[1.02]"
-                      : "border-border bg-muted/30 hover:bg-muted/50 hover:border-primary/50"
+                      ? "border-primary bg-primary/5 shadow-[0_0_0_1px_hsl(var(--primary)/0.18),0_24px_60px_rgba(59,130,246,0.12)] scale-[1.01]"
+                      : "border-border/70 bg-muted/20 hover:bg-muted/35 hover:border-primary/35"
                   }`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                 >
-                  <UploadCloud className={`h-8 w-8 ${isDragging ? "text-primary" : "text-muted-foreground"}`} />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/60 bg-background/80 shadow-sm">
+                    <UploadCloud className={`h-6 w-6 ${isDragging ? "text-primary" : "text-muted-foreground"}`} />
+                  </div>
                   <div className="text-center">
                     {file ? (
-                      <motion.div
-                        className="flex items-center gap-2 text-foreground font-medium"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
+                      <motion.div className="flex items-center gap-2 text-foreground font-medium" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
                         {file.name}
                       </motion.div>
@@ -353,7 +362,7 @@ export default function AnalyzePage() {
               <motion.button
                 type="submit"
                 disabled={isSubmitting || (!url && !file)}
-                className="btn btn-primary w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed group"
+                className="btn btn-primary w-full h-12 disabled:opacity-50 disabled:cursor-not-allowed group"
                 whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
                 whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
               >
@@ -387,7 +396,7 @@ export default function AnalyzePage() {
                 <button
                   type="button"
                   onClick={handleCancelAnalysis}
-                  className="btn w-full py-3 border border-red-500/50 text-red-400 hover:bg-red-500/10"
+                className="btn btn-outline w-full h-12 border-red-500/25 text-red-500 hover:bg-red-500/10"
                 >
                   <span className="inline-flex items-center gap-2">
                     <XCircle className="h-4 w-4" />
@@ -400,14 +409,14 @@ export default function AnalyzePage() {
 
           {/* Right Column - Results */}
           <motion.div
-            className="lg:sticky lg:top-24 h-fit space-y-6"
+            className="lg:sticky lg:top-24 h-fit space-y-4"
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <div className="card p-6 space-y-6">
+            <div className="surface p-6 space-y-6">
               <div>
-                <h2 className="text-lg font-semibold flex items-center gap-2">
+                <h2 className="text-lg font-semibold flex items-center gap-2 tracking-tight">
                   Analysis Report
                   {isSubmitting && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
                 </h2>
@@ -420,7 +429,7 @@ export default function AnalyzePage() {
               </div>
 
               <AnimatePresence mode="wait">
-                {result ? (
+                {result && !isAnalysisPending ? (
                   <motion.div
                     className="space-y-6"
                     key="results"
@@ -431,7 +440,7 @@ export default function AnalyzePage() {
                   >
                     {/* Status & Summary Card */}
                     <motion.div
-                      className={`rounded-xl p-5 border relative overflow-hidden ${
+                    className={`rounded-[1.5rem] p-5 border relative overflow-hidden ${
                         normalizedStatus === "completed"
                           ? "bg-emerald-500/5 border-emerald-500/20" 
                           : result.error 
@@ -460,8 +469,8 @@ export default function AnalyzePage() {
                           )}
                         </div>
                         <div className="flex-1">
-                          <p className="font-bold text-sm uppercase tracking-wider text-muted-foreground/80 mb-1">Final Verdict</p>
-                          <h3 className="text-xl font-bold mb-2">
+                          <p className="font-semibold text-xs uppercase tracking-[0.22em] text-muted-foreground/80 mb-1">Final Verdict</p>
+                          <h3 className="text-xl font-semibold mb-2">
                              {result.has_advertising ? "Advertising Detected" : "No Advertising Detected"}
                           </h3>
                           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -473,7 +482,7 @@ export default function AnalyzePage() {
 
                     {/* Scores Grid */}
                     <div className="grid gap-4">
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Signal strength</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.22em]">Signal strength</p>
                       <div className="space-y-4">
                         <ScoreBar
                           label="Overall Confidence"
@@ -504,10 +513,19 @@ export default function AnalyzePage() {
                       </div>
                     </div>
 
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.22em]">Commercial signals</p>
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <SignalChip label="Link score" value={result.link_score ?? 0} />
+                        <SignalChip label="CTA matches" value={result.cta_matches?.length ?? 0} />
+                        <SignalChip label="Commercial URLs" value={result.commercial_urls?.length ?? 0} />
+                      </div>
+                    </div>
+
                     {/* Detected Brands - Enhanced List */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Detected Brands</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.22em]">Detected Brands</p>
                         {result.detected_brands && result.detected_brands.length > 0 && (
                           <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
                             {result.detected_brands.length}
@@ -520,22 +538,22 @@ export default function AnalyzePage() {
                           sortedBrands.map((brand, index) => (
                             <motion.div
                               key={`${brand.name}-${index}`}
-                              className="group flex items-center gap-3 rounded-xl border border-border/50 bg-muted/20 p-3 hover:bg-muted/40 hover:border-border transition-all"
+                            className="group flex items-center gap-3 rounded-2xl border border-border/60 bg-background/80 p-3 hover:bg-muted/35 hover:border-primary/30 transition-all"
                               initial={{ opacity: 0, x: 20 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: 0.3 + index * 0.05 }}
                             >
-                              <div className="h-10 w-10 shrink-0 rounded-lg bg-background border flex items-center justify-center overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
+                              <div className="h-11 w-11 shrink-0 rounded-xl bg-background border border-border/60 flex items-center justify-center overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
                                 {brand.logo_url ? (
                                   // eslint-disable-next-line @next/next/no-img-element
                                   <img src={brand.logo_url} alt={brand.name} className="h-7 w-7 object-contain" />
                                 ) : (
-                                  <span className="text-lg font-bold text-primary/40">{brand.name[0]}</span>
+                                  <span className="text-sm font-semibold text-primary/50">{brand.name[0]}</span>
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-2">
-                                  <h4 className="text-sm font-bold truncate">{brand.name}</h4>
+                                  <h4 className="text-sm font-semibold truncate">{brand.name}</h4>
                                   <span className="text-xs font-mono font-bold text-primary">{Math.round((brand.confidence ?? 0) * 100)}%</span>
                                 </div>
                                 <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground font-medium">
@@ -555,22 +573,22 @@ export default function AnalyzePage() {
 
                     {/* Timeline with better label */}
                     <div className="space-y-3">
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Exposure Timeline</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.22em]">Exposure Timeline</p>
                       <VideoTimeline duration={result.duration ?? 0} markers={markers} showFilter={true} />
                     </div>
 
                     {/* Export Actions - New Section */}
-                    {normalizedStatus === "completed" && (
+                    {normalizedStatus === "completed" && currentVideoId && (
                       <div className="pt-2 flex gap-2">
                         <button 
                           onClick={async () => {
                             try {
                               toast.info("Generating PDF report...")
-                              const blob = await downloadPdfReport(videoId)
+                              const blob = await downloadPdfReport(currentVideoId)
                               const url = window.URL.createObjectURL(blob)
                               const a = document.createElement('a')
                               a.href = url
-                              a.download = `veritasad-report-${videoId}.pdf`
+                              a.download = `veritasad-report-${currentVideoId}.pdf`
                               document.body.appendChild(a)
                               a.click()
                               window.URL.revokeObjectURL(url)
@@ -581,7 +599,7 @@ export default function AnalyzePage() {
                               toast.error("Failed to download PDF report")
                             }
                           }}
-                          className="btn btn-outline flex-1 text-xs py-2 h-9 font-bold"
+                          className="btn btn-outline flex-1 text-xs h-10 font-semibold"
                         >
                            Download PDF Report
                         </button>
@@ -590,12 +608,27 @@ export default function AnalyzePage() {
                             navigator.clipboard.writeText(window.location.href)
                             toast.success("Results link copied to clipboard")
                           }}
-                          className="btn btn-outline flex-1 text-xs py-2 h-9 font-bold"
+                          className="btn btn-outline flex-1 text-xs h-10 font-semibold"
                         >
                            Share Results
                         </button>
                       </div>
                     )}
+                  </motion.div>
+                ) : isSubmitting || isAnalysisPending ? (
+                  <motion.div
+                    key="pending"
+                    className="space-y-6"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <PendingState
+                      progress={progress}
+                      progressStatus={progressStatus}
+                      progressStage={progressStage}
+                      isSubmitting={isSubmitting}
+                    />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -605,25 +638,7 @@ export default function AnalyzePage() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    {isSubmitting ? (
-                      <div className="space-y-6">
-                        <Skeleton className="h-32 w-full rounded-2xl" />
-                        <div className="space-y-4">
-                          <Skeleton className="h-4 w-32" />
-                          <Skeleton className="h-10 w-full rounded-xl" />
-                          <Skeleton className="h-10 w-full rounded-xl" />
-                        </div>
-                        <div className="space-y-3">
-                          <Skeleton className="h-4 w-24" />
-                          <div className="grid grid-cols-2 gap-3">
-                            <Skeleton className="h-16 w-full rounded-xl" />
-                            <Skeleton className="h-16 w-full rounded-xl" />
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <EmptyState />
-                    )}
+                    <EmptyState />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -711,6 +726,15 @@ function ScoreBar({ label, value, delay = 0, color = "confidence", tooltip, icon
   )
 }
 
+function SignalChip({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+      <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className="mt-1 text-lg font-semibold tabular-nums">{value}</div>
+    </div>
+  )
+}
+
 function EmptyState() {
   const examples = [
     { platform: 'YouTube', url: 'https://youtube.com/watch?v=...' },
@@ -748,5 +772,59 @@ function EmptyState() {
         ))}
       </div>
     </motion.div>
+  )
+}
+
+function PendingState({
+  progress,
+  progressStatus,
+  progressStage,
+  isSubmitting,
+}: {
+  progress: number
+  progressStatus: string
+  progressStage: string
+  isSubmitting: boolean
+}) {
+  const label =
+    progressStage === "upload"
+      ? "Content is being uploaded"
+      : progressStage === "download"
+        ? "Content is being prepared for analysis"
+        : "Content is on the analysis queue"
+
+  return (
+    <div className="rounded-[1.5rem] border border-border/60 bg-muted/20 p-6">
+      <div className="flex items-start gap-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+          <Loader2 className="h-5 w-5 animate-spin" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground/80">
+            Waiting for content
+          </p>
+          <h3 className="mt-1 text-xl font-semibold tracking-tight">
+            {isSubmitting ? "Content is being processed" : "Content queued for analysis"}
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            {label}. The verdict will appear here once the pipeline finishes.
+          </p>
+          <div className="mt-4 space-y-3">
+            <ProgressBar value={progress} label={progressStatus || "Preparing analysis"} stage={progressStage} />
+            <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              <span className="rounded-full border border-border/60 bg-background/70 px-3 py-1">
+                {isSubmitting ? "Processing" : "Queued"}
+              </span>
+              <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-primary">
+                {progress}% uploaded
+              </span>
+              <span className="rounded-full border border-border/60 bg-background/70 px-3 py-1">
+                Waiting for result
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

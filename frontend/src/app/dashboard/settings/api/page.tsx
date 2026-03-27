@@ -30,20 +30,20 @@ export default function ApiSettingsPage() {
   return (
     <div className="max-w-4xl space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">API Settings</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-3xl font-semibold tracking-tight lg:text-4xl">API Settings</h1>
+        <p className="text-muted-foreground mt-1 text-sm leading-7">
           Manage your API keys and access tokens for programmatic access to VeritasAd.
         </p>
       </div>
 
       <div className="grid gap-6">
-        <div className="card p-6">
+        <div className="surface p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Key className="h-4 w-4 text-primary" />
               Your API Key
             </h2>
-            <div className="text-[10px] uppercase font-bold text-muted-foreground bg-muted px-2 py-1 rounded">
+            <div className="text-[10px] uppercase font-semibold tracking-[0.22em] text-muted-foreground bg-muted px-2 py-1 rounded-full">
               {user?.plan} PLAN
             </div>
           </div>
@@ -54,11 +54,11 @@ export default function ApiSettingsPage() {
                 type={showKey ? "text" : "password"}
                 readOnly
                 value={user?.api_key || "No API key generated"}
-                className="input-field font-mono pr-20 bg-muted/30"
+              className="input-field font-mono pr-20 bg-muted/20"
               />
               <button 
                 onClick={() => setShowKey(!showKey)}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-primary text-xs font-semibold hover:underline"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-primary text-xs font-semibold hover:underline"
               >
                 {showKey ? "HIDE" : "SHOW"}
               </button>
@@ -66,7 +66,7 @@ export default function ApiSettingsPage() {
             <button 
               onClick={copyToClipboard}
               disabled={!user?.api_key}
-              className="btn btn-outline min-w-[120px]"
+            className="btn btn-outline min-w-[120px] rounded-full"
             >
               {copied ? (
                 <>
@@ -82,7 +82,7 @@ export default function ApiSettingsPage() {
             </button>
           </div>
 
-          <div className="flex items-start gap-3 text-sm text-amber-600 bg-amber-500/5 p-4 rounded-lg border border-amber-500/10">
+          <div className="flex items-start gap-3 text-sm text-amber-600 bg-amber-500/5 p-4 rounded-2xl border border-amber-500/10">
             <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0" />
             <div>
               <p className="font-semibold">Security Warning</p>
@@ -94,8 +94,8 @@ export default function ApiSettingsPage() {
           </div>
         </div>
 
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
+        <div className="surface p-6">
+            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" />
             Usage & Quotas
           </h2>
@@ -130,11 +130,11 @@ export default function ApiSettingsPage() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-muted/20 rounded-xl border border-dashed">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-muted/20 rounded-2xl border border-dashed">
           <div className="text-sm text-muted-foreground">
              Need a higher limit or custom integration assistance?
           </div>
-          <Link href="/pricing" className="btn btn-primary btn-sm">
+          <Link href="/pricing" className="btn btn-primary btn-sm rounded-full">
              View Enterprise Plans
           </Link>
         </div>

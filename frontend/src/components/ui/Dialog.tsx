@@ -7,11 +7,10 @@ import { cn } from "@/lib/utils"
 
 interface DialogProps {
   open?: boolean
-  onOpenChange?: (open: boolean) => void
   children?: React.ReactNode
 }
 
-const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) => {
+const Dialog: React.FC<DialogProps> = ({ open, children }) => {
   return <AnimatePresence>{open && children}</AnimatePresence>
 }
 

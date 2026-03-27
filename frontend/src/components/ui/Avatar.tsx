@@ -1,4 +1,5 @@
 "use client"
+/* eslint-disable @next/next/no-img-element */
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
@@ -25,6 +26,26 @@ export function Avatar({ src, alt, fallback, size = "md", className }: AvatarPro
     ? fallback.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
     : "?"
 
+  if (src && !error) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return (
+      <div
+        className={cn(
+          "relative flex shrink-0 overflow-hidden rounded-full bg-muted",
+          sizeClasses[size],
+          className
+        )}
+      >
+        <img
+          src={src}
+          alt={alt || "Avatar"}
+          className="aspect-square h-full w-full object-cover"
+          onError={() => setError(true)}
+        />
+      </div>
+    )
+  }
+
   return (
     <div
       className={cn(
@@ -33,18 +54,9 @@ export function Avatar({ src, alt, fallback, size = "md", className }: AvatarPro
         className
       )}
     >
-      {src && !error ? (
-        <img
-          src={src}
-          alt={alt || "Avatar"}
-          className="aspect-square h-full w-full object-cover"
-          onError={() => setError(true)}
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary font-medium">
-          {initials}
-        </div>
-      )}
+      <div className="flex h-full w-full items-center justify-center bg-primary/10 text-primary font-medium">
+        {initials}
+      </div>
     </div>
   )
 }

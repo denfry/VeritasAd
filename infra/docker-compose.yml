@@ -54,6 +54,7 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - ENVIRONMENT=production
       - LOG_LEVEL=INFO
+      - YTDLP_COOKIES_FILE=/app/data/cookies/youtube_cookies.txt
     volumes:
       - ../backend:/app
       - backend_data:/app/data
@@ -88,6 +89,7 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - ENVIRONMENT=production
+      - YTDLP_COOKIES_FILE=/app/data/cookies/youtube_cookies.txt
     volumes:
       - ../backend:/app
       - backend_data:/app/data
@@ -100,6 +102,29 @@ services:
       - veritasad-network
     restart: unless-stopped
     command: celery -A app.core.celery:celery_app worker --loglevel=info --concurrency=2
+
+  # ==================== YT COOKIES REFRESHER ====================
+  yt-cookies-refresh:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: veritasad-yt-cookies-refresh
+    environment:
+      - YTDLP_COOKIES_FILE=/app/data/cookies/youtube_cookies.txt
+      - YTDLP_COOKIES_SOURCE_FILE=/cookies/youtube_cookies.txt
+      - YTDLP_COOKIES_REFRESH_INTERVAL_SECONDS=43200
+      - SKIP_MIGRATIONS=true
+      - LOG_LEVEL=INFO
+    volumes:
+      - ../backend/cookies:/cookies:ro
+      - backend_data:/app/data
+    depends_on:
+      - backend
+    command: sh /app/scripts/run_cookie_refresh_loop.sh
+    entrypoint: /app/entrypoint.sh
+    restart: unless-stopped
+    networks:
+      - veritasad-network
 
   # ==================== FLOWER (Celery Monitoring) ====================
   flower:

@@ -34,12 +34,14 @@ export default function DashboardPage() {
   const router = useRouter()
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
 
   const loadData = useCallback(async (page: number = 0) => {
     if (!user) return
     setIsLoading(true)
+    setLoadError(null)
     try {
       const data = await fetchAnalysisHistory({ limit: PAGE_SIZE, offset: page * PAGE_SIZE })
       if (page === 0) {
@@ -51,6 +53,7 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Failed to fetch dashboard history:", error)
       if (page === 0) setHistory([])
+      setLoadError(error instanceof Error ? error.message : "Failed to load dashboard data")
     } finally {
       setIsLoading(false)
     }
@@ -154,8 +157,22 @@ export default function DashboardPage() {
 
   if (!user) return null
 
+  if (loadError && history.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="card p-6 border border-red-500/20 bg-red-500/5">
+          <h2 className="text-lg font-semibold">Dashboard unavailable</h2>
+          <p className="mt-2 text-sm text-muted-foreground">{loadError}</p>
+          <button className="btn btn-primary mt-4" onClick={() => loadData(0)}>
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <Toaster position="top-right" richColors />
       
       {/* DEV SANDBOX - Only in Development */}
@@ -204,7 +221,7 @@ export default function DashboardPage() {
             Welcome back
           </motion.p>
           <motion.h1
-            className="text-3xl font-bold tracking-tight"
+            className="text-3xl font-semibold tracking-tight lg:text-4xl"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
@@ -234,7 +251,7 @@ export default function DashboardPage() {
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
-          <Link href="/analyze" className="btn btn-primary px-4 rounded-lg gap-2">
+          <Link href="/analyze" className="btn btn-primary px-4 rounded-full gap-2">
             <BarChart3 className="h-4 w-4" />
             New Analysis
           </Link>
@@ -306,17 +323,17 @@ export default function DashboardPage() {
 
       {/* Recent Analyses */}
       <motion.div
-        className="card overflow-hidden"
+        className="surface overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
-        <div className="flex items-center justify-between p-5 border-b">
+        <div className="flex items-center justify-between p-5 border-b border-border/60">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
               <History className="h-4 w-4" />
             </div>
-            <h2 className="font-semibold">Recent Analyses</h2>
+            <h2 className="font-semibold">Recent analyses</h2>
           </div>
           <Link
             href="/history"
@@ -347,7 +364,7 @@ export default function DashboardPage() {
               
               {/* Pagination */}
               {hasMore && (
-                <div className="p-4 flex justify-center border-t">
+                <div className="p-4 flex justify-center border-t border-border/60">
                   <button
                     onClick={loadMore}
                     disabled={isLoading}
@@ -369,7 +386,7 @@ export default function DashboardPage() {
             </>
           ) : (
             <div className="p-12 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-4">
                 <FileVideo className="h-8 w-8 text-muted-foreground/50" />
               </div>
               <h3 className="font-semibold mb-1">No analyses yet</h3>
@@ -404,13 +421,13 @@ function AnalysisRow({ analysis, index }: { analysis: AnalysisHistoryItem; index
 
   return (
     <motion.div
-      className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+      className="flex items-center justify-between p-4 hover:bg-muted/25 transition-colors"
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.05 * index }}
     >
       <div className="flex items-center gap-4 min-w-0">
-        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+        <div className="h-10 w-10 rounded-xl bg-muted/60 flex items-center justify-center shrink-0">
           {statusIcon}
         </div>
         <div className="min-w-0">
@@ -419,9 +436,9 @@ function AnalysisRow({ analysis, index }: { analysis: AnalysisHistoryItem; index
               {analysis.source_type?.toUpperCase() || 'VIDEO'}
             </p>
             {analysis.has_advertising && (
-              <span className="text-[10px] font-medium bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full border border-red-500/20">
-                Ad
-              </span>
+            <span className="text-[10px] font-medium bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full border border-red-500/20">
+              Ad
+            </span>
             )}
           </div>
           <p className="text-xs text-muted-foreground">

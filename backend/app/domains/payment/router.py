@@ -407,16 +407,6 @@ async def payment_webhook(
     Handle YooKassa payment webhooks with signature verification.
     Processes both subscription and credit package payments.
     """
-    # First verify IP address before any other processing
-    if not verify_yookassa_ip(request):
-        client_ip = request.client.host if request.client else "unknown"
-        logger.warning(
-            "webhook_ip_not_allowed",
-            client_ip=client_ip,
-            allowed_ips=settings.YOOKASSA_WEBHOOK_IPS,
-        )
-        raise HTTPException(status_code=403, detail="Forbidden: Invalid source IP")
-
     body = await request.body()
 
     if not verify_yookassa_signature(request, body):
@@ -427,6 +417,16 @@ async def payment_webhook(
             headers=dict(request.headers),
         )
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
+
+    # Verify IP address after signature validation
+    if not verify_yookassa_ip(request):
+        client_ip = request.client.host if request.client else "unknown"
+        logger.warning(
+            "webhook_ip_not_allowed",
+            client_ip=client_ip,
+            allowed_ips=settings.YOOKASSA_WEBHOOK_IPS,
+        )
+        raise HTTPException(status_code=403, detail="Forbidden: Invalid source IP")
 
     try:
         payload_data = json.loads(body)

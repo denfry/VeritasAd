@@ -7,9 +7,6 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
-from aiogram.webhook.aiohttp import AiohttpRequestHandler
-from aiogram.webhook.security import BaseHashFilter
-from aiogram.types import ErrorEvent
 from aiohttp import web
 from redis.asyncio import Redis
 
@@ -23,17 +20,6 @@ logging.basicConfig(
     stream=sys.stdout,
 )
 logger = logging.getLogger(__name__)
-
-
-class SecretHashFilter(BaseHashFilter):
-    """Filter to verify webhook secret."""
-
-    def __init__(self, secret: str):
-        super().__init__(secret)
-        self.secret = secret
-
-    async def __call__(self, event: ErrorEvent) -> bool:
-        return True  # Allow all errors for now
 
 
 async def main():
@@ -83,6 +69,8 @@ async def main():
 
 async def setup_webhook(bot: Bot, dp: Dispatcher):
     """Setup webhook for production."""
+    from aiogram.webhook.aiohttp_server import SimpleRequestHandler
+
     webhook_url = f"{settings.WEBHOOK_URL.rstrip('/')}{settings.WEBHOOK_PATH}"
 
     logger.info(f"Setting up webhook at: {webhook_url}")
@@ -105,8 +93,9 @@ async def setup_webhook(bot: Bot, dp: Dispatcher):
     app = web.Application()
 
     # Create request handler
-    request_handler = AiohttpRequestHandler(
+    request_handler = SimpleRequestHandler(
         dispatcher=dp,
+        bot=bot,
         secret_token=settings.WEBHOOK_SECRET,
     )
 

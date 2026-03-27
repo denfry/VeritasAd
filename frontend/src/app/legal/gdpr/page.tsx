@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import Link from "next/link"
-import { ShieldCheck, User, Mail, Download, Trash2, FileText } from "lucide-react"
+import { ShieldCheck, User, Download, Trash2, FileText } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "GDPR Rights | VeritasAd",

@@ -46,8 +46,8 @@ export default function DocsPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest border border-primary/20">
             <BookOpen className="h-3 w-3" /> Documentation
           </div>
-          <h1 className="text-5xl font-extrabold tracking-tight">VeritasAd Knowledge Base</h1>
-          <p className="text-xl text-muted-foreground">
+          <h1 className="text-5xl font-semibold tracking-tight text-balance">VeritasAd Knowledge Base</h1>
+          <p className="text-xl text-muted-foreground text-balance">
             Everything you need to integrate VeritasAd into your workflow and understand the
             automated compliance results.
           </p>
@@ -64,7 +64,7 @@ export default function DocsPage() {
             >
               <Link
                 href={section.href}
-                className="card card-hover p-8 flex flex-col h-full hover:border-primary/50 transition-all group"
+                className="surface card-hover p-8 flex flex-col h-full hover:border-primary/50 transition-all group"
               >
                 <div className={`h-12 w-12 rounded-xl ${section.bgColor} ${section.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                   {section.icon}
@@ -161,7 +161,7 @@ function DocSection({ id, title, icon, children }: { id: string, title: string, 
         </div>
         <h2 className="text-3xl font-bold tracking-tight">{title}</h2>
       </div>
-      <div className="text-muted-foreground leading-relaxed text-lg">
+          <div className="text-muted-foreground leading-relaxed text-lg">
         {children}
       </div>
     </section>
@@ -170,7 +170,7 @@ function DocSection({ id, title, icon, children }: { id: string, title: string, 
 
 function FeatureCard({ icon, title, description }: { icon: ReactNode, title: string, description: string }) {
   return (
-    <div className="p-4 rounded-2xl bg-muted/50 border border-border/50">
+    <div className="surface p-4 rounded-2xl">
        <div className="flex items-center gap-2 mb-2">
          <div className="text-primary">{icon}</div>
          <h4 className="font-bold text-foreground text-sm">{title}</h4>
@@ -189,7 +189,7 @@ function EndpointRow({ method, path, description }: { method: string, path: stri
   }
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border/50 bg-card/50 gap-4">
+    <div className="surface flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl gap-4">
        <div className="flex items-center gap-3">
           <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest ${methodColors[method] || 'bg-muted'}`}>
             {method}

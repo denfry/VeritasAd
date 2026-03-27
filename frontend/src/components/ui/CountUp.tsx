@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { useInView, useMotionValue, useSpring } from "framer-motion"
+import { animate, useInView, useMotionValue, useReducedMotion } from "framer-motion"
 
 interface CountUpProps {
   end: number
@@ -20,39 +20,39 @@ export function CountUp({
 }: CountUpProps) {
   const ref = useRef<HTMLSpanElement>(null)
   const motionValue = useMotionValue(start)
-  
-  // Плавное значение с spring анимацией
-  const springValue = useSpring(motionValue, {
-    damping: 25,
-    stiffness: 100,
-    duration: duration * 1000,
-  })
-  
   const isInView = useInView(ref, { once: true, margin: "-100px" })
+  const reduceMotion = useReducedMotion()
 
   useEffect(() => {
-    if (isInView) {
-      const timeout = setTimeout(() => {
-        motionValue.set(end)
-      }, delay)
-      
-      return () => clearTimeout(timeout)
+    if (!isInView) return
+
+    if (reduceMotion) {
+      motionValue.set(end)
+      return
     }
-  }, [isInView, end, delay, motionValue])
+
+    const timeout = window.setTimeout(() => {
+      const controls = animate(motionValue, end, {
+        duration,
+        ease: [0.22, 1, 0.36, 1],
+      })
+      return () => controls.stop()
+    }, delay * 1000)
+
+    return () => window.clearTimeout(timeout)
+  }, [isInView, end, delay, duration, motionValue, reduceMotion])
 
   useEffect(() => {
-    const unsubscribe = springValue.on("change", (latest) => {
-      if (ref.current) {
-        const formatted = latest.toLocaleString(undefined, {
-          minimumFractionDigits: decimals,
-          maximumFractionDigits: decimals,
-        })
-        ref.current.textContent = formatted
-      }
+    const unsubscribe = motionValue.on("change", (latest) => {
+      if (!ref.current) return
+      ref.current.textContent = latest.toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      })
     })
-    
+
     return () => unsubscribe()
-  }, [springValue, decimals])
+  }, [decimals, motionValue])
 
   return <span ref={ref}>{start}</span>
 }

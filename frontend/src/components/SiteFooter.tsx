@@ -21,7 +21,7 @@ const legalLinks = [
 export function SiteFooter() {
   return (
     <motion.footer
-      className="border-t border-border/50 bg-background/80 backdrop-blur-xl py-12"
+      className="border-t border-border/50 bg-background/75 backdrop-blur-2xl py-12"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.5 }}
@@ -34,7 +34,7 @@ export function SiteFooter() {
           transition={{ duration: 0.5 }}
         >
           <p className="text-base font-semibold text-foreground">VeritasAd</p>
-          <p className="mt-2 max-w-md">
+          <p className="mt-2 max-w-md text-balance">
             AI-first advertising disclosure detection for modern marketing teams,
             compliance officers, and social platforms.
           </p>
@@ -42,7 +42,7 @@ export function SiteFooter() {
             Built with FastAPI, Next.js, and modern ML tooling.
           </p>
         </motion.div>
-        
+
         <div className="grid gap-6 md:grid-cols-2">
           <motion.div
             className="grid gap-2"

@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode } from "react"
+import { type ReactNode } from "react"
 import { motion } from "framer-motion"
 import { CountUp } from "./ui/CountUp"
 
@@ -19,37 +19,32 @@ export function StatCard({
   animateValue?: boolean
   progress?: number
 }) {
-  // Пытаемся извлечь числовое значение для анимации
   const numericValue = typeof value === "number" ? value : parseFloat(value.replace(/[^0-9.]/g, ""))
-  const isNumeric = !isNaN(numericValue) && animateValue
+  const isNumeric = !Number.isNaN(numericValue) && animateValue
 
   return (
     <motion.div
-      className="card card-hover p-5 group"
-      whileHover={{ 
-        y: -4,
-        scale: 1.02,
-      }}
+      className="card card-hover p-5 group relative overflow-hidden"
+      whileHover={{ y: -4, scale: 1.02 }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Background gradient on hover */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-primary opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500 pointer-events-none" />
-      
+      <div className="absolute inset-0 rounded-[1.25rem] bg-gradient-to-br from-primary/8 via-cyan-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
       <div className="relative">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground font-medium">{label}</p>
           {icon ? (
             <motion.div
-              className="text-primary p-2 rounded-lg bg-primary/5 group-hover:bg-primary/10 group-hover:scale-110 transition-all duration-300"
+              className="text-primary p-2 rounded-full bg-primary/10 group-hover:bg-primary/15 group-hover:scale-110 transition-all duration-300"
               whileHover={{ rotate: 5 }}
             >
               {icon}
             </motion.div>
           ) : null}
         </div>
-        
+
         <div className="mt-3 flex items-baseline gap-2">
           {isNumeric ? (
             <motion.p
@@ -71,7 +66,7 @@ export function StatCard({
             </motion.p>
           )}
         </div>
-        
+
         {helper ? (
           <motion.p
             className="mt-2 text-xs text-muted-foreground"
@@ -84,9 +79,9 @@ export function StatCard({
         ) : null}
 
         {progress !== undefined && (
-          <div className="mt-3 h-1.5 rounded-full bg-muted overflow-hidden">
+          <div className="mt-3 h-1.5 rounded-full bg-muted/80 overflow-hidden">
             <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60"
+              className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500"
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(progress, 100)}%` }}
               transition={{ duration: 0.8, ease: "easeOut" }}

@@ -16,9 +16,13 @@ import struct
 import time
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Tuple
-import pyqrcode
 import io
 import structlog
+
+try:
+    import pyqrcode
+except ImportError:  # pragma: no cover - optional dependency
+    pyqrcode = None
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -115,6 +119,10 @@ class TOTP:
     @classmethod
     def generate_qr_code_png(cls, provisioning_uri: str) -> bytes:
         """Generate QR code as PNG bytes."""
+        if pyqrcode is None:
+            raise RuntimeError(
+                "pyqrcode is not installed. Install backend dependencies to enable QR generation."
+            )
         qr = pyqrcode.create(provisioning_uri)
         buffer = io.BytesIO()
         qr.png(buffer, scale=8)

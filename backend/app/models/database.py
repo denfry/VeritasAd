@@ -12,6 +12,7 @@ from sqlalchemy import (
     Index,
     ForeignKey,
     Enum as SQLEnum,
+    text,
 )
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
@@ -293,10 +294,13 @@ class Analysis(Base):
     audio_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     text_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     disclosure_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    link_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     detected_brands: Mapped[Optional[Dict]] = mapped_column(JSON, nullable=True)
     detected_keywords: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
     transcript: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     disclosure_markers: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
+    cta_matches: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
+    commercial_urls: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
     erids: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
     promo_codes: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
     ad_classification: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
@@ -533,6 +537,26 @@ AsyncSessionLocal = async_sessionmaker(
 async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        if "sqlite" in settings.DATABASE_URL.lower():
+            await _sync_sqlite_analysis_columns(conn)
+
+
+async def _sync_sqlite_analysis_columns(conn) -> None:
+    """Add missing analysis columns for local SQLite dev databases."""
+    result = await conn.execute(text("PRAGMA table_info(analyses)"))
+    existing_columns = {row[1] for row in result.fetchall()}
+
+    desired_columns = {
+        "link_score": "REAL",
+        "cta_matches": "JSON",
+        "commercial_urls": "JSON",
+    }
+
+    for column_name, column_type in desired_columns.items():
+        if column_name not in existing_columns:
+            await conn.execute(
+                text(f"ALTER TABLE analyses ADD COLUMN {column_name} {column_type}")
+            )
 
 
 async def close_db() -> None:

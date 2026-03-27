@@ -216,7 +216,16 @@ class VideoProcessor:
 
         return auth_args
 
-    def _build_yt_dlp_download_cmd(self, url: str, video_path: Path, auth_args: Optional[List[str]] = None) -> List[str]:
+    def _build_yt_dlp_download_cmd(
+        self,
+        url: str,
+        video_path: Path,
+        auth_args: Optional[List[str]] = None,
+        *,
+        format_selector: str = "best",
+        concurrent_fragments: Optional[int] = None,
+        youtube_player_client: Optional[str] = None,
+    ) -> List[str]:
         cmd = [
             sys.executable,
             "-m",
@@ -225,8 +234,10 @@ class VideoProcessor:
             "--retries", str(settings.DOWNLOAD_RETRIES),
             "--retry-sleep", "2",
             "--extractor-retries", "3",
-            "--format", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
-            "--concurrent-fragments", str(settings.DOWNLOAD_CONCURRENT_FRAGMENTS),
+            "--format", format_selector,
+            "--concurrent-fragments", str(
+                concurrent_fragments if concurrent_fragments is not None else settings.DOWNLOAD_CONCURRENT_FRAGMENTS
+            ),
             "--fragment-retries", str(settings.DOWNLOAD_FRAGMENT_RETRIES),
             "--socket-timeout", str(settings.DOWNLOAD_SOCKET_TIMEOUT),
             "--no-playlist",
@@ -247,9 +258,10 @@ class VideoProcessor:
             cmd.extend(auth_args)
 
         if self._is_youtube_url(url):
+            player_client = youtube_player_client or "default"
             cmd += [
                 "--extractor-args",
-                "youtube:player_client=android,web",
+                f"youtube:player-client={player_client}",
                 "--user-agent",
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                 "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
@@ -265,6 +277,15 @@ class VideoProcessor:
             "sign in to confirm" in output_lower
             and "not a bot" in output_lower
             and "youtube" in output_lower
+        )
+
+    @staticmethod
+    def _is_fragment_download_error(output: str) -> bool:
+        output_lower = output.lower()
+        return (
+            "fragment not found" in output_lower
+            or "the downloaded file is empty" in output_lower
+            or "requested fragment" in output_lower
         )
 
     def _run_yt_dlp_with_progress(
@@ -332,6 +353,11 @@ class VideoProcessor:
                 "--no-warnings",
             ]
             cmd += self._build_auth_args(url)
+            if self._is_youtube_url(url):
+                cmd += [
+                    "--extractor-args",
+                    "youtube:player_client=default",
+                ]
             cmd.append(url)
 
             process = await asyncio.create_subprocess_exec(
@@ -408,6 +434,50 @@ class VideoProcessor:
                 retry_cmd = self._build_yt_dlp_download_cmd(url, video_path, retry_auth_args)
                 result, output_lines = self._run_yt_dlp_with_progress(retry_cmd, emit_progress)
                 output_text = "".join(output_lines)
+
+            # Retry once with safer fragment settings for partial DASH/HLS failures.
+            if (
+                result.returncode != 0
+                and self._is_youtube_url(url)
+                and self._is_fragment_download_error(output_text)
+            ):
+                logger.info("yt-dlp fragment error detected, retrying with safer download settings")
+                emit_progress(6, "Retrying download with safer settings")
+                safer_attempts = [
+                    {
+                        "format_selector": (
+                            "best[protocol^=http][ext=mp4]/"
+                            "best[protocol^=http]/best[ext=mp4]/best"
+                        ),
+                        "concurrent_fragments": 1,
+                        "youtube_player_client": "web,default",
+                    },
+                    {
+                        "format_selector": (
+                            "best[protocol^=http][ext=mp4]/"
+                            "best[protocol^=http]/best[ext=mp4]/best"
+                        ),
+                        "concurrent_fragments": 1,
+                        "youtube_player_client": "android,web,default",
+                    },
+                ]
+                for attempt_index, attempt in enumerate(safer_attempts, start=1):
+                    retry_cmd = self._build_yt_dlp_download_cmd(
+                        url,
+                        video_path,
+                        auth_args,
+                        format_selector=attempt["format_selector"],
+                        concurrent_fragments=attempt["concurrent_fragments"],
+                        youtube_player_client=attempt["youtube_player_client"],
+                    )
+                    result, output_lines = self._run_yt_dlp_with_progress(retry_cmd, emit_progress)
+                    output_text = "".join(output_lines)
+                    if result.returncode == 0:
+                        break
+                    logger.info(
+                        "yt-dlp safer fragment retry failed",
+                        extra={"attempt": attempt_index, "url": url},
+                    )
 
             if result.returncode != 0:
                 output_tail = "\n".join("".join(output_lines).strip().splitlines()[-8:])
@@ -566,20 +636,23 @@ class VideoProcessor:
             aggregated = self._aggregate_brand_detections(raw_detections, sample_step_seconds=sample_step_seconds)
             if not aggregated and raw_detections:
                 fallback_conf = max(float(det.get("confidence", 0.0)) for det in raw_detections)
-                aggregated = [{
-                    "name": f"Unknown brand (confidence: {fallback_conf:.0%})",
-                    "confidence": fallback_conf,
-                    "timestamps": sorted({
-                        float(ts)
-                        for det in raw_detections
-                        for ts in det.get("timestamps", [det.get("timestamp", 0.0)])
-                    }),
-                    "frame_count": sum(int(det.get("frame_count", 1)) for det in raw_detections),
-                    "detections": sum(int(det.get("frame_count", 1)) for det in raw_detections),
-                    "total_exposure_seconds": 0.0,
-                    "source": "fallback",
-                    "is_unknown": True,
-                }]
+                if fallback_conf >= max(float(settings.BRAND_MIN_CONFIDENCE_DISPLAY), 0.4):
+                    aggregated = [{
+                        "name": f"Unknown brand (confidence: {fallback_conf:.0%})",
+                        "confidence": fallback_conf,
+                        "timestamps": sorted({
+                            float(ts)
+                            for det in raw_detections
+                            for ts in det.get("timestamps", [det.get("timestamp", 0.0)])
+                        }),
+                        "frame_count": sum(int(det.get("frame_count", 1)) for det in raw_detections),
+                        "detections": sum(int(det.get("frame_count", 1)) for det in raw_detections),
+                        "total_exposure_seconds": 0.0,
+                        "source": "fallback",
+                        "is_unknown": True,
+                    }]
+                else:
+                    aggregated = []
 
             avg_score = sum(all_scores) / len(all_scores) if all_scores else 0.0
             visual_score = min(1.0, avg_score * 1.3)
@@ -697,18 +770,20 @@ class VideoProcessor:
 
         if not final_list and unknown_candidates:
             conf = max(unknown_candidates)
-            final_list.append(
-                {
-                    "name": f"Unknown brand (confidence: {conf:.0%})",
-                    "confidence": conf,
-                    "timestamps": [],
-                    "source": "fallback",
-                    "frame_count": 1,
-                    "detections": 1,
-                    "total_exposure_seconds": 0.0,
-                    "is_unknown": True,
-                }
-            )
+            display_threshold = max(min_confidence, 0.4)
+            if conf >= display_threshold:
+                final_list.append(
+                    {
+                        "name": f"Unknown brand (confidence: {conf:.0%})",
+                        "confidence": conf,
+                        "timestamps": [],
+                        "source": "fallback",
+                        "frame_count": 1,
+                        "detections": 1,
+                        "total_exposure_seconds": 0.0,
+                        "is_unknown": True,
+                    }
+                )
 
         final_list.sort(key=lambda x: float(x.get("confidence", 0.0)), reverse=True)
         return final_list
@@ -898,6 +973,7 @@ class VideoProcessor:
         """
         start_time = time.time()
         video_path = None
+        description = ""
 
         try:
             # Get video file

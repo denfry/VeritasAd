@@ -51,6 +51,14 @@ async function getAccessToken(): Promise<string | null> {
   return null
 }
 
+export async function getAuthHeaders(extraHeaders: Record<string, string> = {}): Promise<Record<string, string>> {
+  const token = await getAccessToken()
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extraHeaders,
+  }
+}
+
 async function parseResponseBody(response: Response): Promise<ApiErrorResponse | null> {
   const contentType = response.headers.get("content-type") || ""
   if (!contentType.includes("application/json")) {
@@ -64,14 +72,7 @@ async function parseResponseBody(response: Response): Promise<ApiErrorResponse |
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const token = await getAccessToken()
-  const headers: Record<string, string> = {
-    ...(options.headers || {}),
-  }
-  if (token) {
-    headers.Authorization = `Bearer ${token}`
-  }
-
+  const headers = await getAuthHeaders(options.headers || {})
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,

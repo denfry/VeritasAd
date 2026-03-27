@@ -226,7 +226,6 @@ async def get_current_user(
     if settings.DISABLE_AUTH:
         logger.warning("Authentication is DISABLED. Using mock admin user.")
         # Try to get or create a dev admin user from database
-        from sqlalchemy import select
         from app.models.database import User as DBUser
 
         result = await db.execute(select(DBUser).where(DBUser.email == "dev@veritasad.ai"))

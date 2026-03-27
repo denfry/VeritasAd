@@ -2,11 +2,21 @@ import logging
 import re
 from typing import Dict, Any, Optional
 import httpx
-from bs4 import BeautifulSoup
 import json
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+try:
+    from bs4 import BeautifulSoup
+except ImportError:  # pragma: no cover - optional dependency in some dev containers
+    BeautifulSoup = None  # type: ignore[assignment]
+
+
+def _parse_html(html: str) -> Optional[Any]:
+    if BeautifulSoup is None:
+        return None
+    return BeautifulSoup(html, "html.parser")
 
 async def fetch_telegram_post(url: str) -> Optional[Dict[str, Any]]:
     """Fetch public Telegram post using t.me embed HTML."""
@@ -26,7 +36,9 @@ async def fetch_telegram_post(url: str) -> Optional[Dict[str, Any]]:
                 logger.warning(f"Failed to fetch Telegram embed: {response.status_code}")
                 return None
             
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = _parse_html(response.text)
+            if soup is None:
+                return None
             message_box = soup.find('div', class_='tgme_widget_message_text')
             
             if not message_box:
@@ -67,7 +79,9 @@ async def fetch_vk_post(url: str) -> Optional[Dict[str, Any]]:
             if response.status_code != 200:
                 return None
                 
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = _parse_html(response.text)
+            if soup is None:
+                return None
             
             # VK post text usually in wall_post_text or pi_text
             text_el = soup.find('div', class_='wall_post_text') or soup.find('div', class_='pi_text')
@@ -106,7 +120,9 @@ async def fetch_instagram_post(url: str) -> Optional[Dict[str, Any]]:
             if response.status_code != 200:
                 return None
             
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = _parse_html(response.text)
+            if soup is None:
+                return None
             
             # Find og:description or title
             og_desc = soup.find('meta', property='og:description')
