@@ -61,9 +61,9 @@ class Settings(BaseSettings):
     CELERY_WORKER_MAX_TASKS_PER_CHILD: int = 50
 
     # ==================== SECURITY ====================
-    CORS_ORIGINS: Optional[List[str]] = None
+    CORS_ORIGINS: Optional[Union[List[str], str]] = None
     CORS_ALLOW_CREDENTIALS: bool = True
-    TRUSTED_HOSTS: Optional[List[str]] = None
+    TRUSTED_HOSTS: Optional[Union[List[str], str]] = None
 
     API_KEY_LENGTH: int = 32
     API_KEY_HEADER: str = "X-API-Key"
@@ -397,8 +397,18 @@ class Settings(BaseSettings):
         """Set safe defaults for CORS and trusted hosts if not configured."""
         if not self.CORS_ORIGINS:
             self.CORS_ORIGINS = ["http://localhost:3000", "https://veritasad.ai"]
+        elif isinstance(self.CORS_ORIGINS, str):
+            try:
+                self.CORS_ORIGINS = json.loads(self.CORS_ORIGINS)
+            except json.JSONDecodeError:
+                self.CORS_ORIGINS = [self.CORS_ORIGINS]
         if not self.TRUSTED_HOSTS:
             self.TRUSTED_HOSTS = ["localhost", "veritasad.ai", "*.veritasad.ai"]
+        elif isinstance(self.TRUSTED_HOSTS, str):
+            try:
+                self.TRUSTED_HOSTS = json.loads(self.TRUSTED_HOSTS)
+            except json.JSONDecodeError:
+                self.TRUSTED_HOSTS = [self.TRUSTED_HOSTS]
         return self
 
     def create_directories(self) -> None:
