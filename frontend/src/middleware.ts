@@ -4,6 +4,11 @@ import type { NextRequest } from "next/server"
 const protectedRoutes = ["/dashboard", "/analyze", "/history", "/account", "/admin"]
 
 export function middleware(request: NextRequest) {
+  // Skip auth checks in mock/demo mode — mock auth uses localStorage, not cookies
+  if (process.env.NEXT_PUBLIC_DISABLE_AUTH === "true") {
+    return NextResponse.next()
+  }
+
   const { pathname } = request.nextUrl
 
   const isProtected = protectedRoutes.some(
