@@ -81,8 +81,7 @@ export function PremiumBackdrop({ className }: { className?: string }) {
             "radial-gradient(circle at var(--pointer-x, 50%) var(--pointer-y, 50%), rgba(255,255,255,0.06), transparent 18%)",
         }}
       />
-      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.03))]" />
-      <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.8)_48%,transparent_52%)] [background-size:240px_240px]" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.02))]" />
     </div>
   )
 }

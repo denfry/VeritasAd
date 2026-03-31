@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { 
-  LayoutDashboard, 
-  BarChart3, 
-  History, 
-  CreditCard, 
-  Settings, 
+import {
+  LayoutDashboard,
+  BarChart3,
+  History,
+  CreditCard,
+  Settings,
   LogOut,
   ShieldCheck,
   Activity,
@@ -17,7 +17,7 @@ import {
   ChevronRight,
   User,
   Crown,
-  Zap
+  Zap,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
@@ -35,14 +35,14 @@ const navigation = [
 ]
 
 const planConfig = {
-  free: { label: "Free", icon: User, color: "text-muted-foreground" },
-  starter: { label: "Starter", icon: Zap, color: "text-green-500" },
-  pro: { label: "Pro", icon: Zap, color: "text-blue-500" },
-  business: { label: "Business", icon: Crown, color: "text-amber-500" },
-  enterprise: { label: "Enterprise", icon: Crown, color: "text-purple-500" },
+  free: { label: "Free", icon: User, color: "text-muted-foreground", bg: "bg-muted/60" },
+  starter: { label: "Starter", icon: Zap, color: "text-green-500", bg: "bg-green-500/10" },
+  pro: { label: "Pro", icon: Zap, color: "text-primary", bg: "bg-primary/10" },
+  business: { label: "Business", icon: Crown, color: "text-amber-500", bg: "bg-amber-500/10" },
+  enterprise: { label: "Enterprise", icon: Crown, color: "text-purple-500", bg: "bg-purple-500/10" },
 }
 
-export function DashboardSidebar({ className, showBorder = true }: { className?: string, showBorder?: boolean }) {
+export function DashboardSidebar({ className, showBorder = true }: { className?: string; showBorder?: boolean }) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, signOut } = useAuth()
@@ -52,16 +52,14 @@ export function DashboardSidebar({ className, showBorder = true }: { className?:
 
   useEffect(() => {
     const saved = localStorage.getItem("dashboard-sidebar-collapsed")
-    if (saved) {
-      setIsCollapsed(saved === "true")
-    }
+    if (saved) setIsCollapsed(saved === "true")
     setIsMounted(true)
   }, [])
 
   const toggleSidebar = () => {
-    const newState = !isCollapsed
-    setIsCollapsed(newState)
-    localStorage.setItem("dashboard-sidebar-collapsed", String(newState))
+    const next = !isCollapsed
+    setIsCollapsed(next)
+    localStorage.setItem("dashboard-sidebar-collapsed", String(next))
   }
 
   const handleSignOut = async () => {
@@ -86,52 +84,70 @@ export function DashboardSidebar({ className, showBorder = true }: { className?:
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial={false}
-      animate={{ width: isCollapsed ? 80 : 256 }}
+      animate={{ width: isCollapsed ? 72 : 240 }}
       className={cn(
-        "relative flex h-full flex-col bg-card transition-all duration-300 ease-in-out z-20",
-        showBorder && "border-r",
+        "relative flex h-full flex-col bg-card/80 backdrop-blur-xl transition-all duration-300 ease-in-out z-20",
+        showBorder && "border-r border-border/60",
         className
       )}
     >
-      <div className="flex h-14 items-center justify-between border-b px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold overflow-hidden whitespace-nowrap">
-          <ShieldCheck className="h-6 w-6 shrink-0" />
+      {/* Header */}
+      <div className="flex h-14 items-center justify-between border-b border-border/60 px-4">
+        <Link href="/" className="flex items-center gap-2.5 overflow-hidden whitespace-nowrap group min-w-0">
+          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full gradient-premium text-primary-foreground shadow-[0_4px_12px_-4px_hsl(var(--primary)/0.5)]">
+            <ShieldCheck className="h-3.5 w-3.5" />
+          </span>
           {!isCollapsed && (
-            <motion.span 
+            <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="gradient-text"
+              exit={{ opacity: 0 }}
+              className="gradient-text font-semibold text-sm truncate"
             >
               VeritasAd
             </motion.span>
           )}
         </Link>
-        <button 
+
+        {/* Collapse toggle */}
+        <button
           onClick={toggleSidebar}
-          className="absolute -right-3 top-20 hidden md:flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-md hover:bg-accent"
+          className="absolute -right-3 top-[4.5rem] hidden md:flex h-6 w-6 items-center justify-center rounded-full border border-border/70 bg-background shadow-sm hover:bg-accent transition-colors z-30"
         >
-          {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {isCollapsed ? (
+            <ChevronRight className="h-3 w-3" />
+          ) : (
+            <ChevronLeft className="h-3 w-3" />
+          )}
         </button>
       </div>
-      
-      <div className="flex-1 overflow-y-auto py-4">
-        <nav className="grid gap-1 px-2">
+
+      {/* Nav */}
+      <div className="flex-1 overflow-y-auto py-3">
+        <nav className="grid gap-0.5 px-2">
           {navigation.map((item) => {
-            const isActive = pathname === item.href
+            const isActive = pathname === item.href || (item.href !== "/dashboard" && !item.href.includes("?") && pathname.startsWith(item.href))
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                title={isCollapsed ? item.name : ""}
+                title={isCollapsed ? item.name : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground group",
-                  isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+                  "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 group",
+                  isActive
+                    ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                    : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
                   isCollapsed && "justify-center px-2"
                 )}
               >
-                <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-primary" : "group-hover:text-foreground")} />
+                <item.icon
+                  className={cn(
+                    "h-4 w-4 shrink-0 transition-colors",
+                    isActive ? "text-primary" : "group-hover:text-foreground"
+                  )}
+                />
                 {!isCollapsed && (
                   <motion.span
                     initial={{ opacity: 0 }}
@@ -141,45 +157,50 @@ export function DashboardSidebar({ className, showBorder = true }: { className?:
                     {item.name}
                   </motion.span>
                 )}
+                {isActive && !isCollapsed && (
+                  <motion.span
+                    layoutId="sidebar-active"
+                    className="ml-auto h-1.5 w-1.5 rounded-full bg-primary"
+                  />
+                )}
               </Link>
             )
           })}
         </nav>
       </div>
 
+      {/* User info */}
       {!isCollapsed && user && (
-        <div className="border-t px-3 py-3">
-          <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-2">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
-              <User className="h-4 w-4 text-primary" />
+        <div className="border-t border-border/60 px-3 py-3">
+          <div className="flex items-center gap-3 rounded-xl bg-muted/40 p-2.5">
+            <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", planInfo.bg)}>
+              <planInfo.icon className={cn("h-3.5 w-3.5", planInfo.color)} />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">
-                {user.email?.split('@')[0] || "User"}
+                {user.email?.split("@")[0] || "User"}
               </p>
-              <div className="flex items-center gap-1">
-                <planInfo.icon className={cn("h-3 w-3", planInfo.color)} />
-                <span className={cn("text-xs", planInfo.color)}>
-                  {planInfo.label}
-                </span>
-              </div>
+              <p className={cn("text-xs font-medium", planInfo.color)}>{planInfo.label}</p>
             </div>
           </div>
         </div>
       )}
 
-      <div className="border-t p-4">
-        <button 
+      {/* Sign out */}
+      <div className="border-t border-border/60 p-3">
+        <button
           onClick={handleSignOut}
           disabled={isSigningOut}
+          title={isCollapsed ? "Sign out" : undefined}
           className={cn(
-            "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50",
+            "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-all duration-150 hover:bg-red-500/8 hover:text-red-500 disabled:opacity-50",
             isCollapsed && "justify-center px-2"
           )}
-          title={isCollapsed ? "Sign out" : ""}
         >
           <LogOut className={cn("h-4 w-4 shrink-0", isSigningOut && "animate-pulse")} />
-          {!isCollapsed && <span>{isSigningOut ? "Signing out..." : "Sign out"}</span>}
+          {!isCollapsed && (
+            <span>{isSigningOut ? "Signing out…" : "Sign out"}</span>
+          )}
         </button>
       </div>
     </motion.div>

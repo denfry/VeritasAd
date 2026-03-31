@@ -13,16 +13,15 @@ import { ThreeCardEffect } from "@/components/three/ThreeCardEffect"
 import { ThreeScene } from "@/components/three/ThreeScene"
 import { motion } from "framer-motion"
 
-// ==================== SUBSCRIPTION PLANS (Base prices in RUB) ====================
-
-const SUBSCRIPTION_PLANS_RUB = {
+// Base prices in RUB
+const SUBSCRIPTION_PLANS = {
   free: {
     name: "Free",
     priceRub: 0,
-    description: "For testing and experimentation.",
+    description: "For testing and getting started.",
     features: [
       "30 analyses / month",
-      "LLM tier: Free",
+      "Basic LLM tier",
       "Basic reporting",
       "Community support",
       "Standard processing speed",
@@ -37,13 +36,13 @@ const SUBSCRIPTION_PLANS_RUB = {
     description: "For freelancers and light usage.",
     features: [
       "300 analyses / month",
-      "LLM tier: Starter",
+      "Starter LLM tier",
       "PDF reports",
       "Email support",
       "Priority processing",
       "API access",
     ],
-    cta: "Start Starter",
+    cta: "Get Starter",
     popular: false,
     icon: <Users className="h-5 w-5" />,
   },
@@ -54,7 +53,7 @@ const SUBSCRIPTION_PLANS_RUB = {
     description: "For small business and marketing teams.",
     features: [
       "1 500 analyses / month",
-      "LLM tier: Pro",
+      "Pro LLM tier",
       "Advanced PDF reports",
       "Priority support",
       "Fast processing",
@@ -71,7 +70,7 @@ const SUBSCRIPTION_PLANS_RUB = {
     description: "For agencies and growing companies.",
     features: [
       "5 000 analyses / month",
-      "LLM tier: Business",
+      "Business LLM tier",
       "White-label reports",
       "Dedicated support",
       "Fastest processing",
@@ -89,7 +88,7 @@ const SUBSCRIPTION_PLANS_RUB = {
     description: "For corporations and custom deployments.",
     features: [
       "20 000 analyses / month",
-      "LLM tier: Enterprise",
+      "Enterprise LLM tier",
       "Custom reporting",
       "24/7 dedicated support",
       "SLA guarantee",
@@ -103,14 +102,12 @@ const SUBSCRIPTION_PLANS_RUB = {
   },
 }
 
-// ==================== PAY-AS-YOU-GO PACKAGES (Base prices in RUB) ====================
-
-const CREDIT_PACKAGES_RUB = [
+const CREDIT_PACKAGES = [
   {
     name: "Micro",
     credits: 100,
     priceRub: 1500,
-    validity: 30,
+    validityDays: 30,
     description: "For occasional analysis needs.",
     highlight: false,
   },
@@ -118,28 +115,28 @@ const CREDIT_PACKAGES_RUB = [
     name: "Standard",
     credits: 500,
     priceRub: 5000,
-    validity: 60,
+    validityDays: 60,
     description: "Best value for regular usage.",
     highlight: true,
-    savings: "33%",
+    savingsPct: "33%",
   },
   {
     name: "Pro",
     credits: 1500,
     priceRub: 12000,
-    validity: 90,
+    validityDays: 90,
     description: "For high-volume analysis.",
     highlight: false,
-    savings: "47%",
+    savingsPct: "47%",
   },
   {
     name: "Business",
     credits: 8000,
     priceRub: 40000,
-    validity: 180,
-    description: "Maximum savings for teams.",
+    validityDays: 180,
+    description: "Maximum savings for large teams.",
     highlight: false,
-    savings: "67%",
+    savingsPct: "67%",
   },
 ]
 
@@ -147,13 +144,8 @@ export default function PricingPage() {
   const router = useRouter()
   const { user } = useAuth()
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null)
-  
-  // Currency context - globally available
-  const {
-    selectedCurrency,
-    setSelectedCurrency,
-    formatPrice,
-  } = useCurrency()
+
+  const { selectedCurrency, setSelectedCurrency, formatPrice } = useCurrency()
 
   async function handleSubscriptionUpgrade(plan: string) {
     if (!user) {
@@ -194,22 +186,24 @@ export default function PricingPage() {
   return (
     <ThreeScene intensity="light" type="particles">
       <AppShell>
-        {/* Header with Currency Selector */}
-        <section className="container mx-auto max-w-6xl px-4 py-12 space-y-6">
+        {/* Header */}
+        <section className="container mx-auto max-w-6xl px-4 pt-12 pb-8">
           <motion.div
-            className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-            initial={{ opacity: 0, y: 20 }}
+            className="flex flex-col md:flex-row md:items-end md:justify-between gap-6"
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="text-center md:text-left">
-              <p className="text-xs font-black uppercase tracking-widest text-primary">Deployment Tiers</p>
-              <h1 className="text-4xl font-extrabold tracking-tight mt-1">Flexible Node Clustering</h1>
-              <p className="text-muted-foreground max-w-2xl mt-2 font-medium">
-                Choose a dedicated subscription node or utilize pay-as-you-go compute units.
+            <div>
+              <p className="eyebrow">Pricing</p>
+              <h1 className="mt-2 text-4xl font-semibold tracking-tight">
+                Simple, transparent pricing
+              </h1>
+              <p className="mt-2 text-muted-foreground max-w-lg text-sm leading-6">
+                Choose a monthly subscription or buy credits on demand. No hidden fees.
               </p>
             </div>
-            <div className="flex items-center justify-center md:justify-end gap-3 p-2 bg-muted rounded-2xl border border-border/50">
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Vector:</span>
+            <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-2xl border border-border/50">
+              <span className="eyebrow ml-2">Currency:</span>
               <CurrencySelector
                 selectedCurrency={selectedCurrency}
                 onCurrencyChange={setSelectedCurrency}
@@ -219,55 +213,60 @@ export default function PricingPage() {
         </section>
 
         {/* Subscription Plans */}
-        <section className="container mx-auto max-w-6xl px-4 py-8">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-semibold tracking-tight mb-2">Subscription tiers</h2>
-            <p className="text-muted-foreground">
-              Monthly synchronization with automated daily analysis quotas.
+        <section className="container mx-auto max-w-6xl px-4 py-6">
+          <div className="mb-8 text-center">
+            <h2 className="text-xl font-semibold tracking-tight">Monthly subscriptions</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Renews monthly. Cancel anytime.
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            {Object.entries(SUBSCRIPTION_PLANS_RUB).map(([planKey, plan]) => {
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {Object.entries(SUBSCRIPTION_PLANS).map(([planKey, plan]) => {
               const isPaidPlan = planKey !== "free"
               return (
                 <ThreeCardEffect
                   key={plan.name}
                   glowColor={plan.popular ? "hsl(var(--primary))" : "hsl(var(--muted))"}
-                  intensity={12}
+                  intensity={10}
                 >
                   <div
-                    className={`surface p-6 flex flex-col relative transition-all h-full ${
-                      plan.popular ? "ring-2 ring-primary border-primary/20 bg-primary/[0.02]" : "border-border/50"
+                    className={`surface p-5 flex flex-col relative h-full transition-all duration-200 ${
+                      plan.popular
+                        ? "ring-2 ring-primary/60 border-primary/30"
+                        : "border-border/50"
                     }`}
                   >
                     {plan.popular && (
-                      <span className="bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-[0.22em] px-3 py-1 rounded-full absolute -top-3 left-1/2 -translate-x-1/2 shadow-lg">
-                        Highest Vector
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-md">
+                        Most popular
                       </span>
                     )}
-                    
-                    <div className="mb-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                           {plan.icon}
+
+                    <div className="mb-5">
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <div className="p-1.5 rounded-lg bg-primary/8 text-primary border border-primary/15">
+                          {plan.icon}
                         </div>
-                        <h3 className="text-lg font-semibold">{plan.name}</h3>
+                        <h3 className="font-semibold">{plan.name}</h3>
                       </div>
                       <div className="flex items-baseline gap-2 flex-wrap">
-                        <PricePerMonth amount={plan.priceRub} className="text-3xl font-black" />
-                        {'originalPriceRub' in plan && plan.originalPriceRub && (
-                          <Price amount={plan.originalPriceRub} className="text-sm text-muted-foreground line-through opacity-50" />
+                        <PricePerMonth amount={plan.priceRub} className="text-2xl font-bold" />
+                        {"originalPriceRub" in plan && plan.originalPriceRub && (
+                          <Price
+                            amount={plan.originalPriceRub}
+                            className="text-sm text-muted-foreground line-through opacity-50"
+                          />
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-3 leading-relaxed">{plan.description}</p>
+                      <p className="text-xs text-muted-foreground mt-2 leading-5">{plan.description}</p>
                     </div>
 
-                    <ul className="space-y-3 text-sm text-muted-foreground flex-1 mb-8">
+                    <ul className="space-y-2.5 text-sm flex-1 mb-6">
                       {plan.features.map((feature, idx) => (
                         <li key={idx} className="flex items-start gap-2">
                           <Check className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-                          <span className="text-xs font-bold">{feature}</span>
+                          <span className="text-xs text-muted-foreground">{feature}</span>
                         </li>
                       ))}
                     </ul>
@@ -280,8 +279,8 @@ export default function PricingPage() {
                         }
                         handleSubscriptionUpgrade(planKey)
                       }}
-                      className={`btn w-full py-4 rounded-full font-semibold uppercase tracking-[0.22em] text-[10px] transition-all shadow-lg ${
-                        plan.popular ? "btn-primary shadow-primary/20" : "btn-outline hover:bg-muted"
+                      className={`btn w-full py-2.5 rounded-full text-xs font-semibold uppercase tracking-[0.18em] transition-all ${
+                        plan.popular ? "btn-primary shadow-primary" : "btn-outline"
                       }`}
                     >
                       {plan.cta}
@@ -293,67 +292,78 @@ export default function PricingPage() {
           </div>
         </section>
 
-        {/* Pay-as-you-go Section */}
-        <section className="container mx-auto max-w-6xl px-4 py-12 mb-12">
-          <div className="surface p-10 border-dashed border-2 border-border/50 rounded-[2rem]">
-            <div className="text-center mb-12">
-              <h2 className="text-2xl font-semibold tracking-tight mb-2">On-demand units</h2>
-              <p className="text-muted-foreground">
-                Burst compute capacity. No recurring authorization required.
+        {/* Pay-as-you-go */}
+        <section className="container mx-auto max-w-6xl px-4 py-10 pb-16">
+          <div className="rounded-[2rem] border border-border/50 bg-muted/20 p-8 md:p-10">
+            <div className="mb-8 text-center">
+              <h2 className="text-xl font-semibold tracking-tight">Pay as you go</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Buy credits once and use them whenever. No subscription required.
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {CREDIT_PACKAGES_RUB.map((pkg) => {
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+              {CREDIT_PACKAGES.map((pkg) => {
                 const pricePerAnalysis = formatPrice(pkg.priceRub / pkg.credits)
-                
+                const pkgKey = pkg.name.toLowerCase()
+
                 return (
                   <ThreeCardEffect
                     key={pkg.name}
                     glowColor={pkg.highlight ? "hsl(var(--primary))" : "hsl(var(--muted))"}
-                    intensity={10}
+                    intensity={8}
                   >
                     <div
-                      className={`surface p-8 flex flex-col relative transition-all bg-background h-full ${
+                      className={`surface p-6 flex flex-col relative h-full bg-background transition-all duration-200 ${
                         pkg.highlight ? "border-primary/30 ring-1 ring-primary/10" : "border-border/50"
                       }`}
                     >
                       {pkg.highlight && (
-                        <SavingsBadge originalPrice={pkg.priceRub * (1 / 0.67)} salePrice={pkg.priceRub} className="absolute -top-3 right-6" />
+                        <SavingsBadge
+                          originalPrice={pkg.priceRub * (1 / 0.67)}
+                          salePrice={pkg.priceRub}
+                          className="absolute -top-3 right-5"
+                        />
                       )}
 
-                      <div className="mb-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-xl font-semibold">{pkg.name}</h3>
+                      <div className="mb-5">
+                        <h3 className="font-semibold text-lg">{pkg.name}</h3>
+                        <div className="mt-2 flex items-baseline gap-2">
+                          <Price amount={pkg.priceRub} className="text-3xl font-bold" />
                         </div>
-                        <div className="flex items-baseline gap-2">
-                          <Price amount={pkg.priceRub} className="text-4xl font-black" />
-                        </div>
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary mt-2">
-                          {pricePerAnalysis} / UNIT
+                        <p className="text-xs text-primary font-medium mt-1 uppercase tracking-[0.18em]">
+                          {pricePerAnalysis} / analysis
                         </p>
-                        <p className="text-xs text-muted-foreground mt-4">{pkg.description}</p>
+                        <p className="text-xs text-muted-foreground mt-3 leading-5">{pkg.description}</p>
                       </div>
 
-                      <div className="space-y-3 text-[10px] font-semibold uppercase tracking-[0.22em] flex-1 border-t border-border/50 pt-6 mb-8">
+                      <div className="space-y-2.5 flex-1 border-t border-border/50 pt-4 mb-6">
                         <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">Compute Units:</span>
-                          <span className="text-sm font-black">{pkg.credits}</span>
+                          <span className="text-xs text-muted-foreground">Analyses included</span>
+                          <span className="text-sm font-bold">{pkg.credits.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">SLA Window:</span>
-                          <span className="text-sm font-black">{pkg.validity} Days</span>
+                          <span className="text-xs text-muted-foreground">Valid for</span>
+                          <span className="text-sm font-bold">{pkg.validityDays} days</span>
                         </div>
+                        {pkg.savingsPct && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-muted-foreground">You save</span>
+                            <span className="text-sm font-bold text-emerald-500">{pkg.savingsPct}</span>
+                          </div>
+                        )}
                       </div>
 
                       <button
-                        onClick={() => handleCreditPackagePurchase(pkg.name.toLowerCase())}
-                        disabled={selectedPackage === pkg.name.toLowerCase()}
-                        className={`btn w-full py-4 rounded-full font-semibold uppercase tracking-[0.22em] text-[10px] transition-all ${
-                          pkg.highlight ? "btn-primary shadow-lg shadow-primary/20" : "btn-outline"
+                        onClick={() => handleCreditPackagePurchase(pkgKey)}
+                        disabled={selectedPackage === pkgKey}
+                        className={`btn w-full py-2.5 rounded-full text-xs font-semibold uppercase tracking-[0.18em] transition-all ${
+                          pkg.highlight ? "btn-primary shadow-primary" : "btn-outline"
                         }`}
                       >
-                        {selectedPackage === pkg.name.toLowerCase() ? "Processing..." : `Initialize ${pkg.credits} Units`}
+                        {selectedPackage === pkgKey
+                          ? "Processing..."
+                          : `Buy ${pkg.credits.toLocaleString()} credits`}
                       </button>
                     </div>
                   </ThreeCardEffect>
