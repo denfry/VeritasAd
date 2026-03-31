@@ -321,6 +321,11 @@ class Settings(BaseSettings):
                 UserWarning,
             )
             return "sqlite+aiosqlite:///./veritasad_dev.db"
+        # Ensure async driver is used for PostgreSQL
+        if v.startswith("postgresql://"):
+            v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        elif v.startswith("postgres://"):
+            v = v.replace("postgres://", "postgresql+asyncpg://", 1)
         return v
 
     @field_validator("JWT_SECRET_KEY")
