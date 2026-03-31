@@ -3,7 +3,8 @@ import multiprocessing
 import os
 
 # Server socket
-bind = os.getenv("GUNICORN_BIND", "0.0.0.0:8000")
+_port = os.getenv("PORT", "8000")
+bind = os.getenv("GUNICORN_BIND", f"0.0.0.0:{_port}")
 
 # Worker processes: CPU count * 2 + 1 for I/O-bound FastAPI, capped at 4 for containers
 _default_workers = min(multiprocessing.cpu_count() * 2 + 1, 4)
