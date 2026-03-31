@@ -105,11 +105,6 @@ def create_app() -> FastAPI:
         expose_headers=["X-Request-ID", "X-Process-Time"],
     )
 
-    if settings.ENVIRONMENT == "production":
-        app.add_middleware(
-            TrustedHostMiddleware,
-            allowed_hosts=settings.TRUSTED_HOSTS,
-        )
 
     app.add_middleware(GZipMiddleware, minimum_size=1000)
     
