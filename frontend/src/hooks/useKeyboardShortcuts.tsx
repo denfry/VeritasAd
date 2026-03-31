@@ -79,7 +79,7 @@ export function useKeyboardShortcuts(
         
         if (key === "d") {
           e.preventDefault()
-          router.push("/admin")
+          router.push("/dashboard")
           toast.success("Navigated to Dashboard")
           sequenceState.clear()
           return
@@ -87,24 +87,24 @@ export function useKeyboardShortcuts(
         
         if (key === "u") {
           e.preventDefault()
-          router.push("/admin#users")
-          toast.success("Navigated to Users")
+          router.push("/account")
+          toast.success("Navigated to Account")
           sequenceState.clear()
           return
         }
         
         if (key === "a") {
           e.preventDefault()
-          router.push("/admin#analytics")
-          toast.success("Navigated to Analytics")
+          router.push("/analyze")
+          toast.success("Navigated to Analysis")
           sequenceState.clear()
           return
         }
         
         if (key === "l") {
           e.preventDefault()
-          router.push("/admin/audit-logs")
-          toast.success("Navigated to Audit Logs")
+          router.push("/history")
+          toast.success("Navigated to History")
           sequenceState.clear()
           return
         }
@@ -170,9 +170,9 @@ export function ShortcutsHelpModal({ isOpen, onClose }: { isOpen: boolean; onClo
   const shortcuts = [
     { category: "Navigation", items: [
       { keys: ["g", "d"], description: "Go to Dashboard" },
-      { keys: ["g", "u"], description: "Go to Users" },
-      { keys: ["g", "a"], description: "Go to Analytics" },
-      { keys: ["g", "l"], description: "Go to Audit Logs" },
+      { keys: ["g", "u"], description: "Go to Account" },
+      { keys: ["g", "a"], description: "Go to Analysis" },
+      { keys: ["g", "l"], description: "Go to History" },
     ]},
     { category: "Actions", items: [
       { keys: ["Cmd+K"], description: "Open Command Palette" },

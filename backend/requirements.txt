@@ -41,6 +41,7 @@ reportlab==4.3.0                   # или 4.2.x+ обновления
 
 # OCR
 pytesseract==0.3.13                # ставится, но возможны runtime проблемы
+imageio-ffmpeg==0.6.0              # Bundled ffmpeg fallback for local/dev audio extraction
 
 # HTML parsing
 beautifulsoup4==4.12.3

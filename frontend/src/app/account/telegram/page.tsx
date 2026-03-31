@@ -1,288 +1,415 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { SiteShell } from "@/components/SiteShell"
-import { useAuth } from "@/contexts/auth-context"
+import { useState, useEffect, useCallback } from "react"
+import { AppShell } from "@/components/AppShell"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  CheckCircle2,
+  Link2,
+  Unlink2,
+  Copy,
+  Send,
+  Loader2,
+  Shield,
+  MessageCircle,
+  ArrowLeft,
+  Clock,
+  AlertCircle,
+} from "lucide-react"
+import Link from "next/link"
 import { toast } from "sonner"
-import { Loader2, Link, Unlink, Copy, Check, Send } from "lucide-react"
 import {
   getTelegramLinkStatus,
   generateTelegramLinkToken,
+  linkTelegramAccount,
   unlinkTelegramAccount,
   type TelegramLinkStatus,
 } from "@/lib/api-client"
-import { Button } from "@/components/ui/Button"
+import { TelegramLogin } from "@/components/TelegramLogin"
 
-export default function TelegramAccountPage() {
-  useAuth()
+const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "VeritasAdBot"
+
+export default function TelegramPage() {
   const [loading, setLoading] = useState(true)
   const [linkStatus, setLinkStatus] = useState<TelegramLinkStatus | null>(null)
   const [generating, setGenerating] = useState(false)
   const [unlinking, setUnlinking] = useState(false)
   const [linkToken, setLinkToken] = useState<string | null>(null)
+  const [tokenExpiry, setTokenExpiry] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
+  const [showWidget, setShowWidget] = useState(false)
 
-  const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "VeritasAdBot"
-
-  // Fetch link status on mount
-  useEffect(() => {
-    async function fetchStatus() {
-      try {
-        const status = await getTelegramLinkStatus()
-        setLinkStatus(status)
-      } catch {
-        toast.error("Failed to load link status")
-      } finally {
-        setLoading(false)
-      }
+  const fetchStatus = useCallback(async () => {
+    try {
+      const status = await getTelegramLinkStatus()
+      setLinkStatus(status)
+    } catch {
+      toast.error("Failed to load Telegram link status")
+    } finally {
+      setLoading(false)
     }
-
-    fetchStatus()
   }, [])
 
-  // Generate link token
+  useEffect(() => {
+    fetchStatus()
+  }, [fetchStatus])
+
   const handleGenerateToken = async () => {
     setGenerating(true)
     try {
       const result = await generateTelegramLinkToken()
       setLinkToken(result.token)
-      toast.success("Token generated! Open the bot and send /start {token}")
+      setTokenExpiry(result.expires_in)
+      toast.success("Link token generated successfully")
     } catch {
-      toast.error("Failed to generate token")
+      toast.error("Failed to generate link token")
     } finally {
       setGenerating(false)
     }
   }
 
-  // Copy link to clipboard
   const handleCopyLink = async () => {
     if (!linkToken) return
-
     const botLink = `https://t.me/${BOT_USERNAME.replace("@", "")}?start=${linkToken}`
     await navigator.clipboard.writeText(botLink)
     setCopied(true)
     toast.success("Link copied to clipboard")
-
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Unlink account
   const handleUnlink = async () => {
-    if (!confirm("Are you sure you want to unlink your Telegram account?")) return
-
     setUnlinking(true)
     try {
       await unlinkTelegramAccount()
       setLinkStatus({ is_linked: false })
       setLinkToken(null)
+      setTokenExpiry(null)
       toast.success("Telegram account unlinked")
     } catch {
-      toast.error("Failed to unlink account")
+      toast.error("Failed to unlink Telegram account")
     } finally {
       setUnlinking(false)
     }
   }
 
+  const handleTelegramAuthSuccess = async (authData: {
+    id: number
+    first_name: string
+    last_name?: string
+    username?: string
+    photo_url?: string
+    auth_date: number
+    hash: string
+  }) => {
+    if (!linkToken) {
+      toast.error("Please generate a link token first")
+      return
+    }
+    try {
+      await linkTelegramAccount({
+        telegram_id: authData.id,
+        link_token: linkToken,
+        username: authData.username,
+      })
+      toast.success("Telegram account linked successfully")
+      await fetchStatus()
+      setLinkToken(null)
+      setTokenExpiry(null)
+      setShowWidget(false)
+    } catch {
+      toast.error("Failed to link Telegram account")
+    }
+  }
+
+  const formatExpiry = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    if (hours > 0) return `${hours}h ${minutes}m`
+    return `${minutes}m`
+  }
+
   if (loading) {
     return (
-      <SiteShell>
-        <div className="container mx-auto max-w-2xl px-4 py-8">
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin" />
+      <AppShell>
+        <section className="container mx-auto max-w-3xl px-4 py-12 lg:py-16">
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        </div>
-      </SiteShell>
+        </section>
+      </AppShell>
     )
   }
 
   return (
-    <SiteShell>
-      <section className="container mx-auto max-w-2xl px-4 py-8 space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold">Telegram Linking</h1>
-          <p className="text-muted-foreground">
-            Link your account with Telegram for easy access via the bot
+    <AppShell>
+      <section className="container mx-auto max-w-3xl px-4 py-12 lg:py-16 space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-2"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <Link href="/account" className="p-2 rounded-xl hover:bg-muted transition-colors">
+              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+            </Link>
+            <h1 className="text-3xl font-semibold tracking-tight">Telegram Integration</h1>
+          </div>
+          <p className="text-muted-foreground font-medium">
+            Connect your Telegram account for seamless access and notifications
           </p>
-        </div>
+        </motion.div>
 
-        {/* Status Card */}
-        <div className="card p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {linkStatus?.is_linked ? (
-                <div className="h-10 w-10 rounded-full bg-green-500/15 flex items-center justify-center">
-                  <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+        <AnimatePresence mode="wait">
+          {linkStatus?.is_linked ? (
+            <motion.div
+              key="linked"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="space-y-6"
+            >
+              <div className="surface p-8 space-y-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-6 opacity-5">
+                  <MessageCircle className="h-32 w-32" />
                 </div>
-              ) : (
-                <div className="h-10 w-10 rounded-full bg-gray-500/15 flex items-center justify-center">
-                  <Link className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+
+                <div className="flex items-center justify-between relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                      <CheckCircle2 className="h-7 w-7 text-emerald-500" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold">Telegram Connected</h2>
+                      <p className="text-sm text-muted-foreground font-medium">
+                        {linkStatus.telegram_username ? `@${linkStatus.telegram_username}` : "Account linked"}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleUnlink}
+                    disabled={unlinking}
+                    className="btn btn-outline h-11 px-5 rounded-full gap-2 text-red-500 border-red-500/20 hover:bg-red-500/10 font-semibold disabled:opacity-50"
+                  >
+                    {unlinking ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Unlink2 className="h-4 w-4" />
+                    )}
+                    Disconnect
+                  </button>
                 </div>
-              )}
-              <div>
-                <h3 className="font-medium">
-                  {linkStatus?.is_linked ? "Telegram linked" : "Telegram not linked"}
-                </h3>
-                {linkStatus?.is_linked && linkStatus.telegram_username && (
-                  <p className="text-sm text-muted-foreground">
-                    @{linkStatus.telegram_username}
-                  </p>
+
+                {linkStatus.linked_at && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground pt-4 border-t border-border/50">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>Linked on {new Date(linkStatus.linked_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span>
+                  </div>
                 )}
               </div>
-            </div>
 
-            {linkStatus?.is_linked && (
-              <Button
-                variant="outline"
-                onClick={handleUnlink}
-                disabled={unlinking}
-                className="gap-2"
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="surface p-8 space-y-6"
               >
-                {unlinking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4" />}
-                Unlink
-              </Button>
-            )}
-          </div>
-
-          {linkStatus?.is_linked && linkStatus.linked_at && (
-            <div className="text-sm text-muted-foreground pt-4 border-t">
-              Linked on {new Date(linkStatus.linked_at).toLocaleDateString("en-US")}
-            </div>
-          )}
-        </div>
-
-        {/* Link Instructions */}
-        {!linkStatus?.is_linked && (
-          <div className="card p-6 space-y-4">
-            <h3 className="font-medium">How to link Telegram:</h3>
-
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start gap-3">
-                <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-medium">1</span>
-                </div>
-                <p className="text-muted-foreground">
-                  Open the Telegram bot{" "}
-                  <a
-                    href={`https://t.me/${BOT_USERNAME.replace("@", "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline inline-flex items-center gap-1"
-                  >
-                    @{BOT_USERNAME.replace("@", "")}
-                    <Send className="h-3 w-3" />
-                  </a>
-                </p>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-medium">2</span>
-                </div>
-                <div className="space-y-2 flex-1">
-                  <p className="text-muted-foreground">
-                    Click the button to generate a link token:
-                  </p>
-                  <Button
-                    onClick={handleGenerateToken}
-                    disabled={generating}
-                    className="w-full gap-2"
-                  >
-                    {generating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Generating token...
-                      </>
-                    ) : (
-                      <>
-                        <Link className="h-4 w-4" />
-                        Generate link token
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {linkToken && (
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-medium">3</span>
-                  </div>
-                  <div className="space-y-2 flex-1">
-                    <p className="text-muted-foreground">
-                      Send the bot a command with the token or use the direct link:
-                    </p>
-                    <div className="flex gap-2">
-                      <code className="flex-1 px-3 py-2 bg-muted rounded-md text-sm font-mono">
-                        /start {linkToken}
-                      </code>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={handleCopyLink}
-                        title="Copy link"
-                      >
-                        {copied ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </Button>
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  Connected Features
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {[
+                    { title: "Quick Analysis", desc: "Send videos directly via Telegram bot" },
+                    { title: "Notifications", desc: "Get alerts when analysis completes" },
+                    { title: "Unified History", desc: "Sync analysis across web and Telegram" },
+                    { title: "Telegram Login", desc: "Sign in to website using Telegram" },
+                  ].map((feature, i) => (
+                    <div key={i} className="p-4 rounded-2xl bg-muted/20 border border-border/50 space-y-1">
+                      <p className="text-sm font-semibold">{feature.title}</p>
+                      <p className="text-xs text-muted-foreground">{feature.desc}</p>
                     </div>
-                    <a
-                      href={`https://t.me/${BOT_USERNAME.replace("@", "")}?start=${linkToken}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-primary hover:underline text-sm"
-                    >
-                      <Send className="h-3 w-3" />
-                      Open in Telegram
-                    </a>
+                  ))}
+                </div>
+              </motion.div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="unlinked"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="space-y-6"
+            >
+              <div className="surface p-8 space-y-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-6 opacity-5">
+                  <MessageCircle className="h-32 w-32" />
+                </div>
+
+                <div className="flex items-center gap-4 relative z-10">
+                  <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center">
+                    <Link2 className="h-7 w-7 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Not Connected</h2>
+                    <p className="text-sm text-muted-foreground font-medium">
+                      Link your Telegram account to unlock additional features
+                    </p>
                   </div>
                 </div>
-              )}
 
-              <div className="flex items-start gap-3">
-                <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-medium">4</span>
+                <div className="pt-4 border-t border-border/50 space-y-4">
+                  <p className="text-sm text-muted-foreground font-medium">Choose a linking method:</p>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <button
+                      onClick={() => {
+                        setShowWidget(true)
+                        setLinkToken(null)
+                      }}
+                      className="p-5 rounded-2xl bg-muted/20 border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-left space-y-3 group"
+                    >
+                      <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                        <MessageCircle className="h-5 w-5 text-blue-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">Telegram Login Widget</p>
+                        <p className="text-xs text-muted-foreground">Quick one-click authorization</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowWidget(false)
+                        handleGenerateToken()
+                      }}
+                      disabled={generating}
+                      className="p-5 rounded-2xl bg-muted/20 border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all text-left space-y-3 group disabled:opacity-50"
+                    >
+                      <div className="h-10 w-10 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                        {generating ? (
+                          <Loader2 className="h-5 w-5 text-purple-500 animate-spin" />
+                        ) : (
+                          <Link2 className="h-5 w-5 text-purple-500" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">Link Token</p>
+                        <p className="text-xs text-muted-foreground">Generate a token for the bot</p>
+                      </div>
+                    </button>
+                  </div>
                 </div>
-                <p className="text-muted-foreground">
-                  The bot will automatically link your Telegram account to the website
-                </p>
               </div>
-            </div>
 
-            <div className="mt-4 p-3 bg-blue-500/15 border border-blue-500/40 rounded-lg text-sm">
-              <p className="text-blue-800 dark:text-blue-200">
-                <strong>Token is valid for 24 hours.</strong> After linking, you&apos;ll be able
-                to use the bot for video analysis and viewing statistics.
-              </p>
-            </div>
-          </div>
-        )}
+              <AnimatePresence>
+                {showWidget && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="surface p-8 space-y-4">
+                      <h3 className="text-lg font-semibold">Telegram Login</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Click the button below to authorize via Telegram
+                      </p>
+                      <TelegramLogin
+                        botUsername={BOT_USERNAME}
+                        onAuthSuccess={handleTelegramAuthSuccess}
+                        onAuthError={(error) => toast.error(error.message)}
+                        size="large"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-        {/* Benefits */}
-        <div className="card p-6 space-y-4">
-          <h3 className="font-medium">Benefits of linking:</h3>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-              Quick access to analysis via Telegram
-            </li>
-            <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-              Notifications when analysis is ready
-            </li>
-            <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-              Unified analysis history on website and bot
-            </li>
-            <li className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-              Log in to website via Telegram Login Widget
-            </li>
-          </ul>
-        </div>
+              <AnimatePresence>
+                {linkToken && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="surface p-8 space-y-6">
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Send className="h-5 w-5 text-primary" />
+                        Link via Bot
+                      </h3>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/20 border border-border/50">
+                          <code className="text-sm font-mono font-medium">/start {linkToken}</code>
+                          <button
+                            onClick={handleCopyLink}
+                            className="p-2.5 rounded-xl hover:bg-muted transition-colors"
+                            title="Copy link"
+                          >
+                            {copied ? (
+                              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                            ) : (
+                              <Copy className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </button>
+                        </div>
+
+                        {tokenExpiry && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>Token expires in {formatExpiry(tokenExpiry)}</span>
+                          </div>
+                        )}
+
+                        <a
+                          href={`https://t.me/${BOT_USERNAME.replace("@", "")}?start=${linkToken}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-sm text-primary hover:underline font-medium"
+                        >
+                          <Send className="h-4 w-4" />
+                          Open @{BOT_USERNAME.replace("@", "")} in Telegram
+                        </a>
+                      </div>
+
+                      <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                        <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Send the <code className="text-xs font-mono">/start</code> command with your token to the bot. The bot will automatically link your account once verified.
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="surface p-8 space-y-6"
+              >
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  Why Connect Telegram?
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {[
+                    { title: "Quick Analysis", desc: "Send videos directly via Telegram bot" },
+                    { title: "Notifications", desc: "Get alerts when analysis completes" },
+                    { title: "Unified History", desc: "Sync analysis across web and Telegram" },
+                    { title: "Telegram Login", desc: "Sign in to website using Telegram" },
+                  ].map((feature, i) => (
+                    <div key={i} className="p-4 rounded-2xl bg-muted/20 border border-border/50 space-y-1">
+                      <p className="text-sm font-semibold">{feature.title}</p>
+                      <p className="text-xs text-muted-foreground">{feature.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
-    </SiteShell>
+    </AppShell>
   )
 }

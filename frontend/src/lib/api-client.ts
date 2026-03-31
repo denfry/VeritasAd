@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/lib/api-config"
 import { supabase } from "@/lib/supabase"
 import type {
   AnalysisCheckResponse,
@@ -10,8 +11,6 @@ import type {
   AnalysisHistoryItem,
   CursorPaginationResponse,
 } from "@/types/api"
-
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "")
 
 type ApiErrorResponse = {
   detail?: unknown
@@ -95,6 +94,15 @@ export async function analyzeVideo(params: { url?: string; file?: File }): Promi
     form.append("file", params.file)
   }
   return request<AnalysisCheckResponse>("/api/v1/analyze/check", {
+    method: "POST",
+    body: form,
+  })
+}
+
+export async function analyzePost(params: { url: string }): Promise<AnalysisResult> {
+  const form = new FormData()
+  form.append("url", params.url)
+  return request<AnalysisResult>("/api/v1/analyze/post", {
     method: "POST",
     body: form,
   })

@@ -1,0 +1,37 @@
+{
+  "output_dir": "C:\\Users\\dabin\\Documents\\Projects\\VeritasAd\\data\\annotated\\auto_dataset_video_smoke_ffmpeg",
+  "target_videos": 1,
+  "target_posts": 0,
+  "video_queries": [
+    "sponsored review promo code",
+    "affiliate review partner discount",
+    "brand integration ad read",
+    "обзор промокод реклама",
+    "спонсор интеграция скидка",
+    "партнерский материал бренд",
+    "tech review unboxing",
+    "gaming highlights stream",
+    "news analysis today",
+    "tutorial how to build"
+  ],
+  "telegram_channels": [
+    "banksta",
+    "meduzalive",
+    "rozetked",
+    "vcnews",
+    "tproger",
+    "thevillage",
+    "durov"
+  ],
+  "queued_sources": [
+    {
+      "content_type": "video",
+      "source_type": "file",
+      "source_key": "C:\\Users\\dabin\\Documents\\Projects\\VeritasAd\\data\\uploads\\20260124_150333_b5ecc338.mp4",
+      "source_file": "C:\\Users\\dabin\\Documents\\Projects\\VeritasAd\\data\\uploads\\20260124_150333_b5ecc338.mp4",
+      "title": "20260124_150333_b5ecc338",
+      "origin": "local_directory"
+    }
+  ],
+  "resume": false
+}

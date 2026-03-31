@@ -1,18 +1,26 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Manrope, Space_Grotesk } from "next/font/google"
 import "./globals.css"
 import { Providers } from "./providers"
 import { PremiumBackdrop } from "@/components/PremiumBackdrop"
 
-const inter = Inter({ subsets: ["latin"] })
+const bodyFont = Manrope({
+  subsets: ["latin"],
+  variable: "--font-body",
+})
+
+const displayFont = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-display",
+})
 
 export const metadata: Metadata = {
   title: {
-    default: "VeritasAd - AI Advertising Detection",
+    default: "VeritasAd | Ad Intelligence Command Center",
     template: "%s | VeritasAd",
   },
   description:
-    "Neural network-based advertising detection in video content. Analyze videos and social posts for sponsored content disclosure.",
+    "AI advertising detection for video and social content with self-hosted MVP support, live analysis progress, and premium compliance reporting.",
   keywords: ["advertising detection", "AI", "video analysis", "sponsored content", "disclosure"],
   authors: [{ name: "VeritasAd" }],
   openGraph: {
@@ -32,7 +40,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} relative antialiased`}>
+      <body className={`${bodyFont.variable} ${displayFont.variable} relative antialiased`}>
         <Providers>
           <PremiumBackdrop />
           <div className="relative z-10">{children}</div>

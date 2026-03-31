@@ -14,17 +14,14 @@ type AuthContextType = {
   user: User | null
   session: Session | null
   loading: boolean
-  /** false если не заданы NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY (используется mock) */
   supabaseConfigured: boolean
-  /** true если используется mock-аутентификация для локальной разработки */
   isMock: boolean
-  /** true если авторизация отключена (DISABLE_AUTH=true на бэкенде) */
   authDisabled: boolean
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
-  /** Только для DEV: обновить данные текущего мок-пользователя */
   updateMockUser: (updates: Partial<User>) => void
+  refreshSession: () => Promise<void>
 }
 
 // Mock user для режима без авторизации
@@ -54,10 +51,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Проверяем, отключена ли авторизация через переменную окружения или в режиме разработки без Supabase
-  const authDisabled = 
-    process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true' || 
-    (process.env.NODE_ENV === 'development' && !process.env.NEXT_PUBLIC_SUPABASE_URL)
+  const authDisabled = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true'
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const isRealSupabase = !!supabaseUrl && !!supabaseAnonKey && !authDisabled
 
   useEffect(() => {
     if (authDisabled) {
@@ -143,17 +140,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const refreshSession = async () => {
+    if (authDisabled) {
+      setSession(DEFAULT_MOCK_SESSION)
+      setUser(DEFAULT_MOCK_USER)
+      return
+    }
+    if (isRealSupabase) {
+      const { data: { session: currentSession } } = await supabase.auth.getSession()
+      setSession(currentSession)
+      setUser(currentSession?.user ?? null)
+      return
+    }
+    const accessToken = localStorage.getItem("access_token")
+    if (accessToken) {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        if (response.ok) {
+          const userData = await response.json()
+          const newUser = {
+            id: String(userData.id || userData.sub || "0"),
+            email: userData.email || userData.sub || "unknown",
+            role: userData.role || "user",
+            plan: userData.plan || "free",
+            created_at: userData.created_at || new Date().toISOString(),
+            daily_used: userData.daily_used || 0,
+            daily_limit: userData.daily_limit || 10,
+            total_analyses: userData.total_analyses || 0,
+          }
+          setUser(newUser)
+          setSession({
+            user: newUser,
+            access_token: accessToken,
+            refresh_token: localStorage.getItem("refresh_token") || "",
+            expires_at: Date.now() + 86400000,
+          })
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
   const value = {
     user,
     session,
     loading,
-    supabaseConfigured: !authDisabled,
-    isMock: authDisabled,
+    supabaseConfigured: isRealSupabase,
+    isMock: !isRealSupabase && !authDisabled,
     authDisabled,
     signIn,
     signUp,
     signOut,
     updateMockUser,
+    refreshSession,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

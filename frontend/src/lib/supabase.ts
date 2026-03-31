@@ -3,22 +3,23 @@ import { createMockClient, type MockSupabaseClient } from "./mock-auth"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const authDisabled = process.env.NEXT_PUBLIC_DISABLE_AUTH === "true"
 
 const isProduction = process.env.NODE_ENV === "production"
+const shouldUseMockAuth = authDisabled || !(supabaseUrl && supabaseAnonKey)
 
-// В продакшене обязательно наличие конфигурации Supabase
-if (isProduction && (!supabaseUrl || !supabaseAnonKey)) {
+// Missing Supabase is only acceptable in explicit self-hosted MVP mode.
+if (isProduction && !authDisabled && (!supabaseUrl || !supabaseAnonKey)) {
   console.error("Supabase configuration is missing in production environment!")
-  // В рантайме бросаем ошибку, если это не серверный билд (где env может быть пустым при сборке, но не при запуске)
   if (typeof window !== "undefined") {
-    throw new Error("Missing Supabase environment variables")
+    throw new Error(
+      "Missing Supabase environment variables. Set NEXT_PUBLIC_DISABLE_AUTH=true for self-hosted MVP mode."
+    )
   }
 }
 
-// Используем mock-клиент если не заданы переменные Supabase (только для разработки/тестов)
-export const supabase =
-  supabaseUrl && supabaseAnonKey
-    ? (createClient(supabaseUrl, supabaseAnonKey) as unknown as MockSupabaseClient)
-    : createMockClient()
+export const supabase = !shouldUseMockAuth
+  ? (createClient(supabaseUrl, supabaseAnonKey) as unknown as MockSupabaseClient)
+  : createMockClient()
 
-export const isMockAuth = !(supabaseUrl && supabaseAnonKey)
+export const isMockAuth = shouldUseMockAuth

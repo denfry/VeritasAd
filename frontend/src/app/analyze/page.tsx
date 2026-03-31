@@ -18,15 +18,17 @@ import {
   Tag,
   Timer,
   UploadCloud,
+  MessageSquare,
 } from "lucide-react"
 import { AppShell } from "@/components/AppShell"
+import { ApiConnectionStatus } from "@/components/ApiConnectionStatus"
 import { ProgressBar } from "@/components/ProgressBar"
 import { VideoTimeline } from "@/components/VideoTimeline"
-import { Skeleton } from "@/components/ui/Skeleton"
 import { useAuth } from "@/contexts/auth-context"
-import { analyzeVideo, fetchAnalysisResult, streamAnalysisProgress, downloadPdfReport, ApiError } from "@/lib/api-client"
+import { analyzeVideo, analyzePost, fetchAnalysisResult, streamAnalysisProgress, downloadPdfReport, ApiError } from "@/lib/api-client"
 import type { AnalysisResult } from "@/types/api"
 import { getPlatformIcon } from "@/lib/platforms"
+import { ThreeScene } from "@/components/three/ThreeScene"
 
 export default function AnalyzePage() {
   const router = useRouter()
@@ -44,6 +46,17 @@ export default function AnalyzePage() {
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const analysisAbortRef = useRef<AbortController | null>(null)
   const currentVideoId = result?.analysis_type === "video" ? result.video_id : undefined
+
+  const detectedMode = useMemo(() => {
+    if (file) return "video"
+    if (!url.trim()) return null
+    const lower = url.toLowerCase()
+    const isPostUrl = /t\.me\/[\w]+\/\d+/.test(lower) || /vk\.com\/(wall|video)/.test(lower)
+    const isVideoUrl = /youtu\.?be|instagram\.com\/(p|reel)|tiktok\.com/i.test(lower)
+    if (isPostUrl) return "post"
+    if (isVideoUrl) return "video"
+    return "video"
+  }, [url, file])
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -163,44 +176,53 @@ export default function AnalyzePage() {
     analysisAbortRef.current = new AbortController()
 
     try {
-      const response = await analyzeVideo({ url: url.trim() || undefined, file: file ?? undefined })
-      setResult(response)
-
-      if (response.task_id) {
-        await streamAnalysisProgress({
-          taskId: response.task_id,
-          signal: analysisAbortRef.current.signal,
-          onMessage: (payload) => {
-            setProgress(payload.progress ?? 0)
-            setProgressStatus(payload.message ?? payload.status ?? "Processing")
-            setProgressStage(payload.stage ?? "processing")
-          },
-          onError: (error) => {
-            if (error.name !== "AbortError") {
-              toast.error(error.message)
-            }
-          },
-        })
-        try {
-          const finalResult = await fetchAnalysisResult({ taskId: response.task_id })
-          setResult(finalResult)
-          setProgress(100)
-          setProgressStatus(finalResult.status ?? "Completed")
-          setProgressStage("complete")
-          setUrl("")
-        } catch (error: unknown) {
-          if (error instanceof ApiError && error.response.status === 401) {
-            await handleAuthExpired()
-            return
-          }
-          toast.error("Failed to load analysis results.")
-          setUrl("")
-        }
-      } else {
+      if (detectedMode === "post" && !file) {
+        const data = await analyzePost({ url: url.trim() })
+        setResult(data)
         setProgress(100)
         setProgressStatus("Completed")
         setProgressStage("complete")
         setUrl("")
+      } else {
+        const response = await analyzeVideo({ url: url.trim() || undefined, file: file ?? undefined })
+        setResult(response)
+
+        if (response.task_id) {
+          await streamAnalysisProgress({
+            taskId: response.task_id,
+            signal: analysisAbortRef.current.signal,
+            onMessage: (payload) => {
+              setProgress(payload.progress ?? 0)
+              setProgressStatus(payload.message ?? payload.status ?? "Processing")
+              setProgressStage(payload.stage ?? "processing")
+            },
+            onError: (error) => {
+              if (error.name !== "AbortError") {
+                toast.error(error.message)
+              }
+            },
+          })
+          try {
+            const finalResult = await fetchAnalysisResult({ taskId: response.task_id })
+            setResult(finalResult)
+            setProgress(100)
+            setProgressStatus(finalResult.status ?? "Completed")
+            setProgressStage("complete")
+            setUrl("")
+          } catch (error: unknown) {
+            if (error instanceof ApiError && error.response.status === 401) {
+              await handleAuthExpired()
+              return
+            }
+            toast.error("Failed to load analysis results.")
+            setUrl("")
+          }
+        } else {
+          setProgress(100)
+          setProgressStatus("Completed")
+          setProgressStage("complete")
+          setUrl("")
+        }
       }
     } catch (error: unknown) {
       if (error instanceof Error && error.name === "AbortError") {
@@ -227,78 +249,95 @@ export default function AnalyzePage() {
   }
 
   return (
-    <AppShell>
-      <section className="container mx-auto max-w-7xl px-4 py-12 lg:py-16">
-        {/* Header */}
-        <motion.div
-          className="mx-auto mb-12 max-w-3xl text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <motion.p
-            className="text-sm font-bold text-primary mb-2 uppercase tracking-widest"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-          >
-            Content analysis
-          </motion.p>
-          <motion.h1
-            className="text-4xl font-semibold tracking-tight lg:text-5xl"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            Analyze content for advertising
-          </motion.h1>
-          <motion.p
-            className="mt-4 text-sm leading-7 text-muted-foreground max-w-2xl mx-auto lg:text-base"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            Upload a video or paste a URL from YouTube, Telegram, Instagram, TikTok, or VK.
-            Get instant insights about sponsored content and brand mentions.
-          </motion.p>
-        </motion.div>
-
-
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
-          {/* Left Column - Form */}
+    <ThreeScene intensity="light" type="particles">
+      <AppShell>
+        <section className="container mx-auto max-w-7xl px-4 py-12 lg:py-16">
+          {/* Header */}
           <motion.div
-            className="space-y-6"
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mx-auto mb-12 max-w-3xl text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            <motion.form
-              className="surface p-6 lg:p-8 space-y-6"
-              onSubmit={handleAnalyze}
-              initial={{ opacity: 0, y: 20 }}
+            <motion.p
+              className="text-sm font-bold text-primary mb-2 uppercase tracking-widest"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              Content analysis
+            </motion.p>
+            <motion.h1
+              className="text-4xl font-semibold tracking-tight lg:text-5xl"
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              Analyze content for advertising
+            </motion.h1>
+            <motion.p
+              className="mt-4 text-sm leading-7 text-muted-foreground max-w-2xl mx-auto lg:text-base"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              {/* URL Input */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium">
-                  <LinkIcon className="h-4 w-4 text-muted-foreground" />
-                  Video or Post URL
-                </label>
-                <div className="relative">
-                  <input
-                    type="url"
-                    placeholder="https://youtube.com/... or https://t.me/..."
-                    className="input-field pr-12"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    disabled={isSubmitting || !!file}
-                  />
-                  {url && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <PlatformBadge url={url} />
-                    </div>
-                  )}
+              Upload a video or paste a URL from YouTube, Telegram, Instagram, TikTok, or VK.
+              Get instant insights about sponsored content and brand mentions.
+            </motion.p>
+          </motion.div>
+
+          <div className="mx-auto mb-8 max-w-5xl">
+            <ApiConnectionStatus />
+          </div>
+
+
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
+            {/* Left Column - Form */}
+            <motion.div
+              className="space-y-6"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <motion.form
+                className="surface p-6 lg:p-8 space-y-6"
+                onSubmit={handleAnalyze}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                {/* URL Input */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 text-sm font-medium">
+                      <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                      Video or Post URL
+                    </label>
+                    {detectedMode && !file && (
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                        detectedMode === "post"
+                          ? "bg-purple-500/10 text-purple-500 border border-purple-500/20"
+                          : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                      }`}>
+                        {detectedMode === "post" ? <MessageSquare className="h-3 w-3" /> : <FileVideo className="h-3 w-3" />}
+                        {detectedMode === "post" ? "Post Analysis" : "Video Analysis"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="url"
+                      placeholder="https://youtube.com/... or https://t.me/..."
+                      className="input-field pr-12"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      disabled={isSubmitting || !!file}
+                    />
+                    {url && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <PlatformBadge url={url} />
+                      </div>
+                    )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Supports: YouTube, Telegram, Instagram, TikTok, VK
@@ -522,6 +561,69 @@ export default function AnalyzePage() {
                       </div>
                     </div>
 
+                    {result.analysis_type === "post" && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.22em]">Post Details</p>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-purple-500/10 text-purple-500 border border-purple-500/20">
+                            <MessageSquare className="h-3 w-3" />
+                            Post Analysis
+                          </span>
+                        </div>
+                        {result.title && (
+                          <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Title</p>
+                            <p className="text-sm font-semibold">{result.title}</p>
+                          </div>
+                        )}
+                        {result.uploader && (
+                          <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Author</p>
+                            <p className="text-sm font-semibold">{result.uploader}</p>
+                          </div>
+                        )}
+                        {result.disclosure_markers && result.disclosure_markers.length > 0 && (
+                          <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Disclosure Markers</p>
+                            <div className="flex flex-wrap gap-2">
+                              {result.disclosure_markers.map((marker: string, i: number) => (
+                                <span key={i} className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 text-xs font-bold border border-amber-500/20">
+                                  {marker}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {result.cta_matches && result.cta_matches.length > 0 && (
+                          <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">CTA Matches</p>
+                            <div className="space-y-1.5">
+                              {result.cta_matches.map((cta: string, i: number) => (
+                                <div key={i} className="flex items-center gap-2 text-xs">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                  <span className="text-muted-foreground">{cta}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {result.commercial_urls && result.commercial_urls.length > 0 && (
+                          <div className="rounded-xl border border-border/50 bg-muted/20 p-4">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Commercial URLs</p>
+                            <div className="space-y-1.5">
+                              {result.commercial_urls.map((url: string, i: number) => (
+                                <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-xs text-primary hover:underline truncate">
+                                  {url}
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {result.analysis_type !== "post" && (
+                      <>
                     {/* Detected Brands - Enhanced List */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
@@ -576,6 +678,8 @@ export default function AnalyzePage() {
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.22em]">Exposure Timeline</p>
                       <VideoTimeline duration={result.duration ?? 0} markers={markers} showFilter={true} />
                     </div>
+                    </>
+                    )}
 
                     {/* Export Actions - New Section */}
                     {normalizedStatus === "completed" && currentVideoId && (
@@ -647,6 +751,7 @@ export default function AnalyzePage() {
         </div>
       </section>
     </AppShell>
+    </ThreeScene>
   )
 }
 

@@ -13,6 +13,7 @@ import { fetchAnalysisHistory, ApiError } from "@/lib/api-client"
 import type { AnalysisHistoryItem } from "@/types/api"
 import { motion, AnimatePresence } from "framer-motion"
 import { formatDistanceToNow } from "date-fns"
+import { ThreeScene } from "@/components/three/ThreeScene"
 
 const PLATFORMS = [
   { id: "youtube", label: "YouTube" },
@@ -113,7 +114,8 @@ export default function HistoryPage() {
   }
 
   return (
-    <AppShell>
+    <ThreeScene intensity="light" type="particles">
+      <AppShell>
       <section className="container mx-auto max-w-6xl px-4 py-12 space-y-10">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -432,5 +434,6 @@ export default function HistoryPage() {
         )}
       </section>
     </AppShell>
+    </ThreeScene>
   )
 }

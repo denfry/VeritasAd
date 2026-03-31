@@ -19,8 +19,13 @@ from app.services.audio_analyzer import AudioAnalyzer
 from app.services.disclosure_detector import DisclosureDetector
 from app.services.brand_ocr import BrandOCR
 from app.services.cloud_brand_detector import CloudBrandDetector
+from app.services.link_detector import LinkDetector
 from app.core.config import settings
-from app.utils.ad_classification import classify_advertising
+from app.utils.ad_classification import (
+    classify_advertising,
+    compute_analysis_decision,
+    merge_brand_detections,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -172,6 +177,31 @@ class VideoProcessor:
             "рекламный баннер",
             "торговая марка",
             "фирменный знак",
+        }
+        self.brand_context_keywords: Set[str] = {
+            "ad",
+            "advertising",
+            "sponsored",
+            "promo",
+            "discount",
+            "bonus",
+            "partner",
+            "official",
+            "shop",
+            "order",
+            "buy",
+            "link",
+            "app",
+            "реклама",
+            "промокод",
+            "скидка",
+            "бонус",
+            "партнер",
+            "спонсор",
+            "ссылка",
+            "сайт",
+            "заказать",
+            "купить",
         }
         # Initialize sub-analyzers
         self.audio_analyzer = AudioAnalyzer(model_size=settings.WHISPER_MODEL)
@@ -765,7 +795,15 @@ class VideoProcessor:
                 item["timestamps"],
                 sample_step_seconds=max(sample_step_seconds, 0.2),
             )
-            if float(item["confidence"]) >= min_confidence:
+            source = str(item.get("source", "")).lower()
+            confidence = float(item["confidence"])
+            detections = int(item.get("detections", item.get("frame_count", 1)))
+            exposure = float(item["total_exposure_seconds"])
+            repeated_evidence = detections >= 2 or exposure >= max(sample_step_seconds * 1.5, 1.0)
+            strong_single_hit = confidence >= max(min_confidence + 0.18, 0.72)
+            trusted_source = any(token in source for token in ("ocr", "text_content", "cloud_"))
+
+            if confidence >= min_confidence and (repeated_evidence or strong_single_hit or trusted_source):
                 final_list.append(item)
 
         if not final_list and unknown_candidates:
@@ -787,6 +825,12 @@ class VideoProcessor:
 
         final_list.sort(key=lambda x: float(x.get("confidence", 0.0)), reverse=True)
         return final_list
+
+    def _has_commercial_context(self, text: str, span: tuple[int, int]) -> bool:
+        start = max(0, span[0] - 64)
+        end = min(len(text), span[1] + 64)
+        window = text[start:end].casefold()
+        return any(keyword in window for keyword in self.brand_context_keywords)
 
     def _resolve_brand_alias(self, brand_name: str) -> str:
         """
@@ -916,43 +960,63 @@ class VideoProcessor:
             return []
 
         detected = []
-        text_lower = text.lower()
-        
-        # Check for each brand in the text
+        text_casefold = text.casefold()
+
         for brand in self.brands:
-            brand_lower = brand.lower()
-            # Simple keyword matching with boundaries to avoid partial word matches
-            # e.g. avoid matching "Apple" in "Pineapple" if possible, but strict regex might be too slow for 500 brands
-            # For now, simple inclusion with basic boundary check is faster and often sufficient
-            
-            # Check canonical name
-            if brand_lower in text_lower:
-                # Basic boundary check
-                pattern = r'(?<!\w)' + re.escape(brand_lower) + r'(?!\w)'
-                if re.search(pattern, text_lower):
+            brand_casefold = brand.casefold()
+            if brand_casefold in text_casefold:
+                pattern = re.compile(r"(?<!\w)" + re.escape(brand_casefold) + r"(?!\w)")
+                matches = list(pattern.finditer(text_casefold))
+                if matches:
+                    occurrences = len(matches)
+                    commercial_context = any(
+                        self._has_commercial_context(text, (match.start(), match.end()))
+                        for match in matches
+                    )
+                    confidence = 0.92 if " " in brand else 0.82
+                    if len(brand) <= 3:
+                        confidence = 0.66
+                    if occurrences > 1:
+                        confidence += 0.08
+                    if commercial_context:
+                        confidence += 0.08
+
                     detected.append({
                         "name": brand,
-                        "confidence": 1.0, # High confidence for text match
+                        "confidence": min(1.0, confidence),
                         "source": "text_content",
-                        "occurrences": len(re.findall(pattern, text_lower))
+                        "occurrences": occurrences,
                     })
                     continue
 
-            # Check aliases
             if settings.ENABLE_BRAND_ALIASES and self.brand_aliases:
                 for alias in self.brand_aliases.get(brand, []):
-                    alias_lower = alias.lower()
-                    pattern = r'(?<!\w)' + re.escape(alias_lower) + r'(?!\w)'
-                    if re.search(pattern, text_lower):
-                        detected.append({
-                            "name": brand, # Return canonical name
-                            "confidence": 1.0,
-                            "source": "text_content (alias)",
-                            "occurrences": len(re.findall(pattern, text_lower))
-                        })
-                        break # Found the brand via alias, move to next brand
+                    alias_casefold = alias.casefold()
+                    pattern = re.compile(r"(?<!\w)" + re.escape(alias_casefold) + r"(?!\w)")
+                    matches = list(pattern.finditer(text_casefold))
+                    if matches:
+                        occurrences = len(matches)
+                        commercial_context = any(
+                            self._has_commercial_context(text, (match.start(), match.end()))
+                            for match in matches
+                        )
+                        confidence = 0.76
+                        if len(alias) <= 3:
+                            confidence = 0.62
+                        if occurrences > 1:
+                            confidence += 0.08
+                        if commercial_context:
+                            confidence += 0.08
 
-        return detected
+                        detected.append({
+                            "name": brand,
+                            "confidence": min(1.0, confidence),
+                            "source": "text_content (alias)",
+                            "occurrences": occurrences,
+                        })
+                        break
+
+        return merge_brand_detections(detected)
 
     async def process(
         self,
@@ -1026,45 +1090,60 @@ class VideoProcessor:
                 description=description, 
                 plan="free"
             )
-
-            # Calculate final scores
-            visual_score = visual_result["score"]
-            audio_score = audio_result["score"]
-            text_score = audio_score  # Same as audio for now
-            disclosure_score = disclosure_result["score"]
-            disclosure_markers = disclosure_result.get("markers", [])
-            
-            # Combine detected brands from visual, OCR, and context discovery
-            all_detected_brands = visual_result.get("detected_brands", [])
-            
-            # Add contextually discovered brands (from text near erid/promo)
-            discovered_brands = disclosure_result.get("discovered_brands", [])
-            for db in discovered_brands:
-                # Only add if not already detected visually (avoid duplicates)
-                if not any(v.get("name", "").lower() == db["name"].lower() for v in all_detected_brands):
-                    all_detected_brands.append({
-                        "name": db["name"],
-                        "confidence": db["confidence"],
-                        "source": db["source"],
-                        "is_discovered": True
-                    })
-
-            # Weighted final score
-            confidence_score = (
-                visual_score * 0.3 +
-                audio_score * 0.3 +
-                text_score * 0.2 +
-                disclosure_score * 0.2
+            link_result = await loop.run_in_executor(
+                None,
+                LinkDetector().analyze,
+                transcript,
+                description,
             )
 
+            text_detected_brands = self.detect_brands_in_text(f"{transcript}\n{description}")
+
+            visual_score = visual_result["score"]
+            audio_score = audio_result["score"]
+            disclosure_score = disclosure_result["score"]
+            disclosure_markers = disclosure_result.get("markers", [])
             has_disclosure = disclosure_result.get("has_disclosure", False) or bool(disclosure_markers)
-            has_advertising = confidence_score > 0.4 or has_disclosure
+            link_score = link_result.get("link_score", 0.0)
+            discovered_brands = [
+                {
+                    "name": db["name"],
+                    "confidence": db["confidence"],
+                    "source": db["source"],
+                    "is_discovered": True,
+                }
+                for db in disclosure_result.get("discovered_brands", [])
+            ]
+
+            all_detected_brands = merge_brand_detections(
+                visual_result.get("detected_brands", []),
+                text_detected_brands,
+                discovered_brands,
+            )
+
+            decision = compute_analysis_decision(
+                visual_score=visual_score,
+                audio_score=audio_score,
+                disclosure_score=disclosure_score,
+                link_score=link_score,
+                detected_brands=all_detected_brands,
+                disclosure_markers=disclosure_markers,
+                detected_keywords=audio_result.get("keywords", []),
+                has_cta=disclosure_result.get("has_cta", False) or link_result.get("has_cta", False),
+                has_commercial_links=link_result.get("has_ad_signals", False),
+            )
+            text_score = float(decision["text_score"])
+            confidence_score = float(decision["confidence_score"])
+            has_advertising = bool(decision["has_advertising"]) or has_disclosure
 
             classification = classify_advertising(
                 has_advertising=has_advertising,
                 disclosure_markers=disclosure_markers,
                 detected_brands=all_detected_brands,
                 detected_keywords=audio_result.get("keywords", []),
+                has_cta=disclosure_result.get("has_cta", False) or link_result.get("has_cta", False),
+                has_commercial_links=link_result.get("has_ad_signals", False),
+                commercial_urls=link_result.get("urls", []),
             )
 
             processing_time = time.time() - start_time
@@ -1080,12 +1159,20 @@ class VideoProcessor:
                 "audio_score": audio_score,
                 "text_score": text_score,
                 "disclosure_score": disclosure_score,
+                "link_score": link_score,
 
                 # Detections
                 "detected_brands": all_detected_brands,
                 "detected_keywords": audio_result["keywords"],
                 "transcript": audio_result["transcript"],
                 "disclosure_text": disclosure_markers,
+                "cta_matches": list(
+                    dict.fromkeys(
+                        (disclosure_result.get("cta_matches", []) or [])
+                        + (link_result.get("cta_matches", []) or [])
+                    )
+                ),
+                "commercial_urls": link_result.get("urls", []),
                 "erids": disclosure_result.get("erids", []),
                 "promo_codes": disclosure_result.get("promo_codes", []),
                 "ad_classification": classification["classification"],

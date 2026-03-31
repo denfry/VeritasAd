@@ -8,6 +8,7 @@ import { ArrowRight, Github, Globe, Loader2, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 import { SiteShell } from "@/components/SiteShell"
 import { useAuth } from "@/contexts/auth-context"
+import { ThreeScene } from "@/components/three/ThreeScene"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -44,8 +45,9 @@ export default function LoginPage() {
   }
 
   return (
-    <SiteShell>
-      <section className="container mx-auto grid min-h-[calc(100vh-8rem)] max-w-7xl gap-8 px-4 py-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:py-16">
+    <ThreeScene intensity="light" type="particles">
+      <SiteShell>
+        <section className="container mx-auto grid min-h-[calc(100vh-8rem)] max-w-7xl gap-8 px-4 py-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:py-16">
         <motion.div
           className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-background/70 p-8 shadow-[0_28px_90px_rgba(0,0,0,0.12)] backdrop-blur-2xl lg:p-10"
           initial={{ opacity: 0, y: 18 }}
@@ -196,5 +198,6 @@ export default function LoginPage() {
         </motion.div>
       </section>
     </SiteShell>
+    </ThreeScene>
   )
 }

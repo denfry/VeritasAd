@@ -1,146 +1,117 @@
-# AGENTS.md - VeritasAd Development Guide
+# AGENTS.md — VeritasAd
 
-Guidelines for agentic coding agents working on the VeritasAd project.
+Neural network-based advertising detection system. FastAPI backend + Next.js 15 frontend.
 
-## Project Overview
+## Commands
 
-Neural network-based advertising detection system:
-- **Frontend**: Next.js 15 (React 19), TypeScript, Tailwind CSS
-- **Backend**: FastAPI (Python 3.12), SQLAlchemy, PostgreSQL/Redis
-- **Infrastructure**: Docker, Celery
-
----
-
-## Build, Lint, and Test Commands
-
-### Frontend
+### Frontend (`frontend/`)
 
 ```bash
-cd frontend
-
-npm run dev              # Dev server on 0.0.0.0:3000
-npm run build            # Production build
-npm run start            # Start production server
-npm run lint             # ESLint
-npm run type-check       # TypeScript check
+npm run dev          # Dev server on 0.0.0.0:3000
+npm run build        # Production build
+npm run start        # Start production server
+npm run lint         # ESLint (next lint)
+npm run type-check   # TypeScript check (next build --no-lint)
 ```
 
-### Backend
+No test runner is configured for the frontend.
+
+### Backend (`backend/`)
 
 ```bash
-cd backend
-source .venv/bin/activate  # Linux/Mac
-.venv\Scripts\activate     # Windows
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000  # Dev server
+alembic revision --autogenerate -m "desc"                         # New migration
+alembic upgrade head                                              # Apply migrations
+```
 
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+### Backend Tests
 
-# Linting & Formatting
-black .                   # Format (line-length: 100)
-ruff check .              # Lint
-ruff check . --fix        # Fix auto-fixable issues
-mypy .                    # Type checking
+```bash
+uv run pytest                          # Run all tests
+uv run pytest tests/test_api.py        # Run single test file
+uv run pytest tests/unit/              # Run unit tests only
+uv run pytest tests/integration/       # Run integration tests only
+uv run pytest -k "test_something"      # Run test by name substring
+uv run pytest tests/test_api.py::test_function_name  # Run single test
+uv run pytest --cov=app                # Run with coverage
+```
 
-# Testing
-pytest                                    # All tests
-pytest tests/unit/                        # Unit tests only
-pytest tests/integration/                 # Integration tests
-pytest tests/unit/domains/test_x.py        # Single test file
-pytest tests/unit/domains/test_x.py::test_fn  # Single test function
-pytest --cov=app --cov-report=html        # Coverage report
+Tests use pytest + pytest-asyncio (auto mode), in-memory SQLite. Fixtures in `tests/conftest.py`.
 
-# Pre-commit
-pre-commit install
+### Linting & Formatting
+
+```bash
+# Backend
+uv run black backend/
+uv run ruff check backend/
+uv run ruff check --fix backend/
+uv run mypy backend/app/
+
+# Frontend
+cd frontend && npm run lint
+
+# Pre-commit (runs all hooks)
 pre-commit run --all-files
 ```
 
----
+## Code Style
 
-## Code Style Guidelines
+### TypeScript / React (Frontend)
 
-### TypeScript/React (Frontend)
-
-**File Organization:**
-- Path aliases: `@/*` → `./src/*`
-- Components: `src/components/`, `src/app/` (Next.js App Router)
-- Hooks: `src/hooks/`, Utilities: `src/lib/`, Types: `src/types/`
-
-**Naming:**
-- Components: PascalCase (`SiteHeader.tsx`, `Button.tsx`)
-- Hooks: `use*` prefix (`useKeyboardShortcuts.tsx`)
-- Interfaces: PascalCase (`ButtonProps`)
-- Multi-export files: lowercase with hyphens (`types/api.ts`)
-
-**Imports:** Use explicit extensions, `type` keyword for type-only imports. Order: React → external → internal → types.
-
-**Patterns:** Use `forwardRef`, functional components with generics, `clsx` + `tailwind-merge` (`cn()`), React Query for server state.
-
-**Styling:** Tailwind CSS v4, CSS variables in globals.css, `dark:` prefix for dark mode.
-
----
+- **Strict TypeScript** (`strict: true`, ES2022 target, `noEmit: true`)
+- **Path alias**: `@/*` maps to `./src/*`
+- **Components**: PascalCase (`UploadPanel.tsx`), placed in `src/components/`
+- **Hooks**: camelCase, prefixed with `use` (`useAnalysis.ts`)
+- **Pages**: Next.js App Router in `src/app/`, kebab-case route segments
+- **Imports**: Absolute paths via `@/` alias. Group: React/next, third-party, internal
+- **Styling**: Tailwind CSS v4 with `clsx` + `tailwind-merge` via `cn()` utility
+- **Dark mode**: `class` strategy via `next-themes`
+- **State**: TanStack React Query for server state, React state for UI state
+- **ESLint**: `next/core-web-vitals` + `next/typescript`
 
 ### Python (Backend)
 
-**File Organization:**
-- Domain-driven: `app/domains/`
-- API routes: `app/api/`, Models: `app/models/`, Schemas: `app/schemas/`
-- Services: `app/services/`, Core: `app/core/`
+- **Line length**: 100 (Black + Ruff)
+- **Formatting**: Black (auto-formatted), Ruff for linting
+- **Ruff rules**: `E, F, I, N, W, UP` (auto-import sorting via `I`)
+- **Naming**: `snake_case` for functions/variables, `PascalCase` for classes
+- **Type hints**: Required on function signatures. `disallow_untyped_defs = false` but `check_untyped_defs = true`
+- **Imports**: Standard lib, third-party, local — separated by blank lines (Ruff `I` handles this)
+- **Database**: SQLAlchemy 2.0 async, models in `backend/app/models/`
+- **Schemas**: Pydantic v2 in `backend/app/schemas/`
+- **Routes**: FastAPI routers in `backend/app/api/`
+- **Business logic**: Domain-driven in `backend/app/domains/`
+- **Error handling**: Custom exceptions in `core/exceptions.py`, HTTPException for API errors
+- **Logging**: `structlog` for structured logging
+- **Async**: Use `async def` for I/O-bound handlers; pytest-asyncio `auto` mode
 
-**Naming:**
-- Classes: PascalCase (`UserService`)
-- Functions/variables: snake_case (`get_user_by_id`)
-- Constants: UPPER_SNAKE_CASE
-- Private methods: `_` prefix
+## Project Structure
 
-**Imports (PEP 8):**
-```python
-# Standard library
-import os
-from typing import Optional
+```
+backend/app/          # FastAPI app
+  api/                # Route definitions
+  core/               # Config, exceptions, security
+  domains/            # Business logic
+  models/             # SQLAlchemy models
+  schemas/            # Pydantic schemas
+  services/           # Service layer
+  tasks/              # Celery background tasks
 
-# Third-party
-from fastapi import APIRouter
-from sqlalchemy.ext.asyncio import AsyncSession
-
-# Local application
-from app.models.user import User
+frontend/src/
+  app/                # Next.js App Router pages
+  components/         # React components
+  contexts/           # React contexts
+  hooks/              # Custom hooks
+  lib/                # Utilities
+  types/              # TypeScript types
 ```
 
-**Type Hints:** Python 3.12+ syntax, `Optional[X]` over `X | None`, strict mypy enabled.
+## Key Notes
 
-**Database:** Async SQLAlchemy, Alembic migrations, Pydantic schemas.
-
-**Error Handling:** `HTTPException` for HTTP errors, custom exceptions in `app/core/exceptions.py`, structured logging with `structlog`.
-
-**Testing:** pytest + pytest-asyncio, `tests/unit/` and `tests/integration/`, fixtures in `tests/conftest.py`.
-
----
-
-## Configuration
-
-**Frontend (.env):** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-
-**Backend (.env):** `DATABASE_URL`, `REDIS_URL`, `SECRET_KEY`, `SUPABASE_*`, `ENVIRONMENT`
-
-**Migrations:**
-```bash
-alembic revision --autogenerate -m "description"
-alembic upgrade head
-alembic downgrade -1
-```
-
----
-
-## Key Technologies
-
-**Frontend:** Next.js 15, React 19, TypeScript 5.7, Tailwind CSS 4, Supabase, React Query, Recharts, Framer Motion, Lucide React, Sonner
-
-**Backend:** FastAPI, SQLAlchemy 2.0 (async), PostgreSQL, Redis, Celery, Alembic, Pydantic v2, Python 3.12
-
----
-
-## Important Notes
-
-1. No frontend tests configured
-2. Strict linting: ESLint (next/core-web-vitals, next/typescript), Black + Ruff
-3. Mock auth when Supabase env vars missing
-4. Dark mode via next-themes
+- Package manager: **uv** for backend (uses `uv.lock`), **npm** for frontend
+- Python 3.12 required (`>=3.12,<3.13`)
+- Auth via Supabase (frontend) + python-jose/PyJWT (backend)
+- Celery + Redis for background tasks
+- ML stack: PyTorch, Transformers, faster-whisper, librosa, OpenCV
+- Observability: OpenTelemetry + Sentry + structlog
+- All modules (admin, analytics, billing, bot) are placeholders

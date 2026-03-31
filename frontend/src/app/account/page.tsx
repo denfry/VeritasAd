@@ -28,6 +28,7 @@ import Link from "next/link"
 import { format, formatDistanceToNow } from "date-fns"
 import { motion, AnimatePresence } from "framer-motion"
 import { Skeleton } from "@/components/ui/Skeleton"
+import { ThreeScene } from "@/components/three/ThreeScene"
 
 type AccountTab = "overview" | "profile" | "security" | "billing"
 
@@ -173,8 +174,9 @@ export default function AccountPage() {
 
   if (authLoading || loading) {
     return (
-      <AppShell>
-        <section className="container mx-auto max-w-7xl px-4 py-12 space-y-10 lg:py-16">
+      <ThreeScene intensity="light" type="particles">
+        <AppShell>
+          <section className="container mx-auto max-w-7xl px-4 py-12 space-y-10 lg:py-16">
           {/* Profile Header skeleton */}
           <div className="surface p-8">
             <div className="flex flex-col md:flex-row md:items-center gap-8">
@@ -203,29 +205,33 @@ export default function AccountPage() {
           </div>
         </section>
       </AppShell>
+      </ThreeScene>
     )
   }
 
   if (loadError && !profile) {
     return (
-      <AppShell>
-        <section className="container mx-auto max-w-7xl px-4 py-12">
-          <div className="surface p-8 space-y-4">
-            <h1 className="text-2xl font-semibold">Account unavailable</h1>
-            <p className="text-sm text-muted-foreground">{loadError}</p>
-            <button className="btn btn-primary h-11 px-5 rounded-full" onClick={loadAllData}>
-              Retry
-            </button>
-          </div>
-        </section>
-      </AppShell>
+      <ThreeScene intensity="light" type="particles">
+        <AppShell>
+          <section className="container mx-auto max-w-7xl px-4 py-12">
+            <div className="surface p-8 space-y-4">
+              <h1 className="text-2xl font-semibold">Account unavailable</h1>
+              <p className="text-sm text-muted-foreground">{loadError}</p>
+              <button className="btn btn-primary h-11 px-5 rounded-full" onClick={loadAllData}>
+                Retry
+              </button>
+            </div>
+          </section>
+        </AppShell>
+      </ThreeScene>
     )
   }
 
   if (!profile) return null
 
   return (
-    <AppShell>
+    <ThreeScene intensity="light" type="particles">
+      <AppShell>
       <section className="container mx-auto max-w-7xl px-4 py-12 space-y-10 lg:py-16">
         {/* Profile Header Card */}
         <motion.div 
@@ -619,6 +625,7 @@ export default function AccountPage() {
         </AnimatePresence>
       </section>
     </AppShell>
+    </ThreeScene>
   )
 }
 

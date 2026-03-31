@@ -2,27 +2,47 @@ try:
     from celery import Task
     from celery.exceptions import SoftTimeLimitExceeded
 except ImportError:  # pragma: no cover - optional dependency for worker runtime
+
     class Task:  # type: ignore[override]
         pass
+
     class SoftTimeLimitExceeded(Exception):  # type: ignore[override]
         pass
+
+
 from typing import Dict, Any
 from datetime import datetime, timezone
 import structlog
 from pathlib import Path
 import asyncio
+import threading
 from app.core.celery import celery_app
 from app.core.errors import ErrorCode
 from app.core.redis import RedisClient
 from app.core.config import settings
 from app.services.video_processor import VideoProcessor
 from app.services.link_detector import LinkDetector
+from app.services.report_generator import ReportGenerator
 from app.services.video_download_errors import classify_processing_error
 from app.models.database import AsyncSessionLocal, Analysis, AnalysisStatus
-from app.utils.ad_classification import classify_advertising
+from app.utils.ad_classification import (
+    classify_advertising,
+    compute_analysis_decision,
+    merge_brand_detections,
+)
 from sqlalchemy import select, update
 
 logger = structlog.get_logger(__name__)
+
+
+def _run_task_inline(task_callable: Any, kwargs: Dict[str, Any]) -> None:
+    def runner() -> None:
+        try:
+            task_callable(**kwargs)
+        except Exception as exc:
+            logger.exception("inline_task_runner_failed", task=repr(task_callable), error=str(exc))
+
+    threading.Thread(target=runner, daemon=True).start()
 
 
 class CallbackTask(Task):
@@ -175,16 +195,25 @@ def download_video_task(
                 stage="download_complete",
             )
 
-            analyze_video_task.apply_async(
-                kwargs={
-                    "task_id": task_id,
-                    "video_path_param": video_path_current,
-                    "source_url": source_url,
-                    "source_type": source_type,
-                    "initial_progress": 20,
-                },
-                queue="analysis",
-            )
+            next_task_kwargs = {
+                "task_id": task_id,
+                "video_path_param": video_path_current,
+                "source_url": source_url,
+                "source_type": source_type,
+                "initial_progress": 20,
+            }
+            try:
+                analyze_video_task.apply_async(
+                    kwargs=next_task_kwargs,
+                    queue="analysis",
+                )
+            except Exception as exc:
+                logger.warning(
+                    "analysis_enqueue_failed_falling_back_to_inline",
+                    task_id=task_id,
+                    error=str(exc),
+                )
+                _run_task_inline(analyze_video_task, next_task_kwargs)
 
             logger.info(
                 "download_completed",
@@ -264,6 +293,7 @@ def analyze_video_task(
     Returns:
         Analysis results dictionary
     """
+
     async def run_analysis():
         processor = VideoProcessor()
         task_redis = RedisClient()
@@ -283,6 +313,7 @@ def analyze_video_task(
 
             async with AsyncSessionLocal() as db:
                 from sqlalchemy.orm import joinedload
+
                 # Get analysis record with user to check plan
                 result = await db.execute(
                     select(Analysis)
@@ -339,7 +370,9 @@ def analyze_video_task(
                         await persist_progress(progress)
                     except Exception as db_err:
                         # Log but don't fail the whole analysis if just a progress update failed
-                        logger.warning("progress_db_update_failed", error=str(db_err), task_id=task_id)
+                        logger.warning(
+                            "progress_db_update_failed", error=str(db_err), task_id=task_id
+                        )
 
                 # Run video processing
                 await update_progress(25, "Analyzing video", "analyze")
@@ -383,28 +416,26 @@ def analyze_video_task(
 
                 await update_progress(65, "Analyzing audio track", "analyze")
                 # analyze метод AudioAnalyzer - синхронный, выполняем в thread pool
-                audio_result = await asyncio.to_thread(processor.audio_analyzer.analyze, Path(video_path_current))
+                audio_result = await asyncio.to_thread(
+                    processor.audio_analyzer.analyze, Path(video_path_current)
+                )
 
                 await update_progress(80, "Detecting disclosure and CTA", "analyze")
                 # analyze метод DisclosureDetector - теперь асинхронный
                 transcript = audio_result.get("transcript", "")
-                
+
                 # URL fetches happen in the download worker; analysis stays local.
                 description = metadata.get("description", "")
-                
+
                 # Run disclosure detection
                 disclosure_result = await processor.disclosure_detector.analyze(
-                    text=transcript,
-                    description=description,
-                    plan=user_plan
+                    text=transcript, description=description, plan=user_plan
                 )
-                
+
                 # Run link detection for hidden advertising
                 link_detector = LinkDetector()
                 link_result = await asyncio.to_thread(
-                    link_detector.analyze,
-                    text=transcript,
-                    description=description
+                    link_detector.analyze, text=transcript, description=description
                 )
 
                 await update_progress(95, "Generating report", "report")
@@ -424,35 +455,43 @@ def analyze_video_task(
                 )
                 commercial_urls = link_result.get("urls", [])
 
-                # Combine detected brands from visual, OCR, and context discovery
-                all_detected_brands = visual_result.get("detected_brands", [])
-                
-                # Add contextually discovered brands (from text near erid/promo)
-                discovered_brands = disclosure_result.get("discovered_brands", [])
-                for db in discovered_brands:
-                    # Only add if not already detected visually (avoid duplicates)
-                    if not any(v.get("name", "").lower() == db["name"].lower() for v in all_detected_brands):
-                        all_detected_brands.append({
-                            "name": db["name"],
-                            "confidence": db["confidence"],
-                            "source": db["source"],
-                            "is_discovered": True
-                        })
-
-                # Combined confidence score with link detection
-                confidence_score = (
-                    visual_score * 0.25 +
-                    audio_score * 0.25 +
-                    text_score * 0.15 +
-                    disclosure_score * 0.2 +
-                    link_score * 0.15
+                has_disclosure = disclosure_result.get("has_disclosure", False) or bool(
+                    disclosure_markers
                 )
-
-                # Has advertising if any signal is strong
-                has_disclosure = disclosure_result.get("has_disclosure", False) or bool(disclosure_markers)
                 has_cta = disclosure_result.get("has_cta", False)
                 has_link_signals = link_result.get("has_ad_signals", False)
-                has_advertising = confidence_score > 0.4 or has_disclosure or has_cta or has_link_signals
+                text_detected_brands = processor.detect_brands_in_text(
+                    f"{transcript}\n{description}"
+                )
+                discovered_brands = [
+                    {
+                        "name": db["name"],
+                        "confidence": db["confidence"],
+                        "source": db["source"],
+                        "is_discovered": True,
+                    }
+                    for db in disclosure_result.get("discovered_brands", [])
+                ]
+                all_detected_brands = merge_brand_detections(
+                    visual_result.get("detected_brands", []),
+                    text_detected_brands,
+                    discovered_brands,
+                )
+
+                decision = compute_analysis_decision(
+                    visual_score=visual_score,
+                    audio_score=audio_score,
+                    disclosure_score=disclosure_score,
+                    link_score=link_score,
+                    detected_brands=all_detected_brands,
+                    disclosure_markers=disclosure_markers,
+                    detected_keywords=audio_result.get("keywords", []),
+                    has_cta=has_cta,
+                    has_commercial_links=has_link_signals,
+                )
+                text_score = float(decision["text_score"])
+                confidence_score = float(decision["confidence_score"])
+                has_advertising = bool(decision["has_advertising"]) or has_disclosure
 
                 classification = classify_advertising(
                     has_advertising=has_advertising,
@@ -488,7 +527,7 @@ def analyze_video_task(
                 analysis.completed_at = datetime.now(timezone.utc)
 
                 await db.commit()
-                
+
                 # Update Redis
                 await task_redis.set_task_progress(
                     task_id,
@@ -497,14 +536,14 @@ def analyze_video_task(
                     message="Analysis completed",
                     stage="complete",
                 )
-                
+
                 logger.info(
                     "analysis_completed",
                     task_id=task_id,
                     has_advertising=has_advertising,
                     confidence=confidence_score,
                 )
-                
+
                 return {
                     "task_id": task_id,
                     "status": "completed",
@@ -515,7 +554,7 @@ def analyze_video_task(
                     "text_score": text_score,
                     "disclosure_score": disclosure_score,
                     "link_score": link_score,
-                    "detected_brands": visual_result.get("detected_brands", []),
+                    "detected_brands": all_detected_brands,
                     "detected_keywords": audio_result.get("keywords", []),
                     "transcript": audio_result.get("transcript", ""),
                     "disclosure_markers": disclosure_markers,
@@ -524,7 +563,7 @@ def analyze_video_task(
                     "ad_classification": classification["classification"],
                     "ad_reason": classification["reason"],
                 }
-                
+
         except SoftTimeLimitExceeded as e:
             logger.warning("analysis_timed_out", task_id=task_id, error=str(e))
             error_info = {
@@ -544,7 +583,9 @@ def analyze_video_task(
                     path_to_cleanup = Path(video_path_current)
                     if path_to_cleanup.exists():
                         path_to_cleanup.unlink()
-                        logger.info(f"video_file_cleaned - task_id={task_id}, path={path_to_cleanup}")
+                        logger.info(
+                            f"video_file_cleaned - task_id={task_id}, path={path_to_cleanup}"
+                        )
             except Exception as cleanup_error:
                 logger.warning(
                     f"video_file_cleanup_failed - task_id={task_id}, path={video_path_current}, "

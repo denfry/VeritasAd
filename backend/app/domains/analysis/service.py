@@ -4,6 +4,7 @@ from pathlib import Path
 import uuid
 import shutil
 import logging
+import threading
 from fastapi import UploadFile
 from yt_dlp import YoutubeDL
 
@@ -15,11 +16,26 @@ from app.services.link_detector import LinkDetector
 from app.services.video_processor import VideoProcessor
 from app.services.disclosure_detector import DisclosureDetector
 from app.services.video_download_errors import classify_processing_error
-from app.utils.ad_classification import classify_advertising
+from app.utils.ad_classification import (
+    classify_advertising,
+    compute_analysis_decision,
+    merge_brand_detections,
+)
 
 from app.domains.analysis.repository import AnalysisRepository
 
 logger = logging.getLogger(__name__)
+
+
+def _run_task_inline(task_callable: Any, kwargs: Dict[str, Any]) -> None:
+    """Run a Celery task object inline on a daemon thread as an MVP fallback."""
+    def runner() -> None:
+        try:
+            task_callable(**kwargs)
+        except Exception as exc:
+            logger.exception("inline_analysis_task_failed", error=str(exc), task=repr(task_callable))
+
+    threading.Thread(target=runner, daemon=True).start()
 
 
 def _has_video_payload(info: Dict[str, Any]) -> bool:
@@ -85,10 +101,30 @@ class AnalysisService:
         link_result = link_detector.analyze(text=text_content, description=description)
 
         has_disclosure = disclosure.get("has_disclosure", False) or bool(disclosure_markers)
-        has_advertising = has_disclosure or link_result.get("has_ad_signals", False)
-        
-        # Detect brands in text
-        detected_brands = self.processor.detect_brands_in_text(text_content)
+        detected_brands = merge_brand_detections(
+            self.processor.detect_brands_in_text(text_content),
+            [
+                {
+                    "name": brand["name"],
+                    "confidence": brand["confidence"],
+                    "source": brand["source"],
+                    "is_discovered": True,
+                }
+                for brand in disclosure.get("discovered_brands", [])
+            ],
+        )
+        decision = compute_analysis_decision(
+            visual_score=0.0,
+            audio_score=0.0,
+            disclosure_score=disclosure.get("score", 0.0),
+            link_score=link_result.get("link_score", 0.0),
+            detected_brands=detected_brands,
+            disclosure_markers=disclosure_markers,
+            detected_keywords=[],
+            has_cta=link_result.get("has_cta", False),
+            has_commercial_links=link_result.get("has_ad_signals", False),
+        )
+        has_advertising = bool(decision["has_advertising"]) or has_disclosure
 
         classification = classify_advertising(
             has_advertising=has_advertising,
@@ -110,7 +146,7 @@ class AnalysisService:
             "uploader": uploader,
             "view_count": view_count,
             "has_advertising": has_advertising,
-            "confidence_score": disclosure.get("score", 0.0),
+            "confidence_score": decision["confidence_score"],
             "disclosure_score": disclosure.get("score", 0.0),
             "disclosure_markers": disclosure_markers,
             "disclosure_text": disclosure_markers,
@@ -255,20 +291,30 @@ class AnalysisService:
         from app.tasks.video_analysis import analyze_video_task, download_video_task
 
         if source_url:
-            download_video_task.delay(
-                task_id=task_id,
-                video_path_param=str(video_path) if video_path else "",
-                source_url=source_url,
-                source_type=source_type.value,
-            )
+            task_kwargs = {
+                "task_id": task_id,
+                "video_path_param": str(video_path) if video_path else "",
+                "source_url": source_url,
+                "source_type": source_type.value,
+            }
+            try:
+                download_video_task.delay(**task_kwargs)
+            except Exception as exc:
+                logger.warning("celery_enqueue_failed_falling_back_to_inline_download", task_id=task_id, error=str(exc))
+                _run_task_inline(download_video_task, task_kwargs)
         else:
-            analyze_video_task.delay(
-                task_id=task_id,
-                video_path_param=str(video_path) if video_path else "",
-                source_url=source_url,
-                source_type=source_type.value,
-                initial_progress=0,
-            )
+            task_kwargs = {
+                "task_id": task_id,
+                "video_path_param": str(video_path) if video_path else "",
+                "source_url": source_url,
+                "source_type": source_type.value,
+                "initial_progress": 0,
+            }
+            try:
+                analyze_video_task.delay(**task_kwargs)
+            except Exception as exc:
+                logger.warning("celery_enqueue_failed_falling_back_to_inline_analysis", task_id=task_id, error=str(exc))
+                _run_task_inline(analyze_video_task, task_kwargs)
 
         await increment_usage_fn(user, session)
 

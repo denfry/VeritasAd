@@ -8,6 +8,7 @@ import { ArrowRight, Loader2, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 import { SiteShell } from "@/components/SiteShell"
 import { useAuth } from "@/contexts/auth-context"
+import { ThreeScene } from "@/components/three/ThreeScene"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -65,8 +66,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <SiteShell>
-      <section className="container mx-auto grid min-h-[calc(100vh-8rem)] max-w-7xl gap-8 px-4 py-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:py-16">
+    <ThreeScene intensity="light" type="particles">
+      <SiteShell>
+        <section className="container mx-auto grid min-h-[calc(100vh-8rem)] max-w-7xl gap-8 px-4 py-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:py-16">
         <motion.div
           className="surface p-8 lg:p-10"
           initial={{ opacity: 0, y: 18 }}
@@ -197,5 +199,6 @@ export default function RegisterPage() {
         </motion.div>
       </section>
     </SiteShell>
+    </ThreeScene>
   )
 }

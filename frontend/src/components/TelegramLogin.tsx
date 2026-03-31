@@ -43,14 +43,6 @@ declare global {
   }
 }
 
-/**
- * Telegram Login Widget component
- * 
- * Integrates Telegram's official Login Widget for seamless authentication.
- * Requires a Telegram bot to be configured.
- * 
- * @see https://core.telegram.org/widgets/login
- */
 export function TelegramLogin({
   botUsername,
   onAuthSuccess,
@@ -59,9 +51,8 @@ export function TelegramLogin({
 }: TelegramLoginProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const scriptLoaded = useRef(false)
-  const { supabaseConfigured } = useAuth()
+  const { refreshSession } = useAuth()
 
-  // Load Telegram widget script
   useEffect(() => {
     if (scriptLoaded.current) return
 
@@ -74,18 +65,15 @@ export function TelegramLogin({
     document.body.appendChild(script)
 
     return () => {
-      // Cleanup on unmount
       if (document.body.contains(script)) {
         document.body.removeChild(script)
       }
     }
   }, [])
 
-  // Handle Telegram authentication callback
   const handleTelegramAuth = useCallback(
     async (authData: TelegramAuthData) => {
       try {
-        // Send auth data to backend for validation and token exchange
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/telegram/auth`, {
           method: "POST",
           headers: {
@@ -101,9 +89,10 @@ export function TelegramLogin({
 
         const data = await response.json()
 
-        // Store tokens in localStorage (for API access)
         localStorage.setItem("access_token", data.access_token)
         localStorage.setItem("refresh_token", data.refresh_token)
+
+        await refreshSession?.()
 
         toast.success("Logged in via Telegram successfully!")
 
@@ -114,20 +103,17 @@ export function TelegramLogin({
         onAuthError?.(err)
       }
     },
-    [onAuthSuccess, onAuthError]
+    [onAuthSuccess, onAuthError, refreshSession]
   )
 
-  // Initialize widget after script loads
   useEffect(() => {
     if (!scriptLoaded.current || !containerRef.current) return
     if (!window.Telegram || !window.Telegram.Login) return
 
     const container = containerRef.current
 
-    // Clear previous widget
     container.innerHTML = ""
 
-    // Initialize Telegram widget
     window.Telegram.Login.auth(
       {
         "bot-id": botUsername.replace("@", ""),
@@ -145,10 +131,12 @@ export function TelegramLogin({
     )
   }, [botUsername, requestAccess, handleTelegramAuth])
 
-  if (!supabaseConfigured) {
+  const botConfigured = !!botUsername && botUsername !== "your_bot_username"
+
+  if (!botConfigured) {
     return (
       <div className="text-sm text-muted-foreground p-4 text-center">
-        Telegram Login requires Supabase configuration
+        Telegram Login is not configured
       </div>
     )
   }
@@ -166,22 +154,19 @@ export function TelegramLogin({
   )
 }
 
-/**
- * Telegram Login Button - simpler alternative using button element
- */
 export function TelegramLoginButton({
   botUsername,
   size = "large",
 }: TelegramLoginProps) {
-  const { supabaseConfigured } = useAuth()
-
   const sizeMap = {
     small: "small",
     medium: "medium",
     large: "large",
   }
 
-  if (!supabaseConfigured) {
+  const botConfigured = !!botUsername && botUsername !== "your_bot_username"
+
+  if (!botConfigured) {
     return null
   }
 
