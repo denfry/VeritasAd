@@ -408,7 +408,13 @@ class Settings(BaseSettings):
             except json.JSONDecodeError:
                 self.CORS_ORIGINS = [self.CORS_ORIGINS]
         if not self.TRUSTED_HOSTS:
-            self.TRUSTED_HOSTS = ["localhost", "veritasad.ai", "*.veritasad.ai"]
+            self.TRUSTED_HOSTS = [
+                "localhost",
+                "veritasad.ai",
+                "*.veritasad.ai",
+                "*.up.railway.app",
+                "*.railway.internal",
+            ]
         elif isinstance(self.TRUSTED_HOSTS, str):
             try:
                 self.TRUSTED_HOSTS = json.loads(self.TRUSTED_HOSTS)
