@@ -5,8 +5,9 @@ import os
 # Server socket
 bind = os.getenv("GUNICORN_BIND", "0.0.0.0:8000")
 
-# Worker processes: CPU count * 2 + 1 for I/O-bound FastAPI
-workers = int(os.getenv("GUNICORN_WORKERS", multiprocessing.cpu_count() * 2 + 1))
+# Worker processes: CPU count * 2 + 1 for I/O-bound FastAPI, capped at 4 for containers
+_default_workers = min(multiprocessing.cpu_count() * 2 + 1, 4)
+workers = int(os.getenv("GUNICORN_WORKERS", _default_workers))
 worker_class = "uvicorn.workers.UvicornWorker"
 
 # Logging
