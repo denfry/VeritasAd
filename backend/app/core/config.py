@@ -61,9 +61,9 @@ class Settings(BaseSettings):
     CELERY_WORKER_MAX_TASKS_PER_CHILD: int = 50
 
     # ==================== SECURITY ====================
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "https://veritasad.ai"]
+    CORS_ORIGINS: Optional[List[str]] = None
     CORS_ALLOW_CREDENTIALS: bool = True
-    TRUSTED_HOSTS: List[str] = ["localhost", "veritasad.ai", "*.veritasad.ai"]
+    TRUSTED_HOSTS: Optional[List[str]] = None
 
     API_KEY_LENGTH: int = 32
     API_KEY_HEADER: str = "X-API-Key"
@@ -390,6 +390,15 @@ class Settings(BaseSettings):
                 self.TELEGRAM_API_ID = None
         else:
             self.TELEGRAM_API_ID = None
+        return self
+
+    @model_validator(mode="after")
+    def set_default_cors_and_trust(self):
+        """Set safe defaults for CORS and trusted hosts if not configured."""
+        if not self.CORS_ORIGINS:
+            self.CORS_ORIGINS = ["http://localhost:3000", "https://veritasad.ai"]
+        if not self.TRUSTED_HOSTS:
+            self.TRUSTED_HOSTS = ["localhost", "veritasad.ai", "*.veritasad.ai"]
         return self
 
     def create_directories(self) -> None:
