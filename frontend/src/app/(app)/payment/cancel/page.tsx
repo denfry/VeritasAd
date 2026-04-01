@@ -1,13 +1,13 @@
 "use client"
 
-import { AppShell } from "@/components/AppShell"
+
 import { motion } from "framer-motion"
 import { XCircle, ArrowLeft, ArrowRight, Zap } from "lucide-react"
 import Link from "next/link"
 
 export default function PaymentCancelPage() {
   return (
-    <AppShell>
+    
       <section className="container mx-auto max-w-2xl px-4 py-24 lg:py-32">
         <motion.div
           className="surface p-10 text-center space-y-8 relative overflow-hidden"
@@ -88,6 +88,6 @@ export default function PaymentCancelPage() {
           </div>
         </motion.div>
       </section>
-    </AppShell>
+    
   )
 }

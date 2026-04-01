@@ -1,9 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import { Tabs } from "@/components/ui/Tabs"
-import { ThreeScene } from "@/components/three/ThreeScene"
+import { getUserPreferences, updateUserPreferences } from "@/lib/api-client"
+import type { UserPreferences } from "@/lib/api-client"
+import { toast } from "sonner"
+
 import {
   Bell,
   Palette,
@@ -18,6 +21,7 @@ import {
   Shield,
   Database,
   Code,
+  Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -36,6 +40,23 @@ const item = {
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("notifications")
+  const [preferences, setPreferences] = useState<UserPreferences | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getUserPreferences()
+      .then(setPreferences)
+      .catch(() => toast.error("Failed to load preferences"))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const savePreference = useCallback(async (key: string, value: unknown) => {
+    try {
+      await updateUserPreferences({ [key]: value } as Partial<UserPreferences>)
+    } catch {
+      toast.error("Failed to save preference")
+    }
+  }, [])
 
   const tabs = [
     { id: "notifications", label: "Notifications", icon: <Bell className="h-4 w-4" /> },
@@ -43,47 +64,70 @@ export default function SettingsPage() {
     { id: "integrations", label: "Integrations", icon: <Plug className="h-4 w-4" /> },
   ]
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
   return (
-    <ThreeScene type="neural" intensity="light">
-      <motion.div
-        initial="hidden"
-        animate="show"
-        variants={container}
-        className="space-y-6"
-      >
-        <motion.div variants={item}>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground mt-1">Manage your account preferences and integrations.</p>
-        </motion.div>
-
-        <motion.div variants={item}>
-          <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
-        </motion.div>
-
-        <motion.div variants={item}>
-          <div className="rounded-2xl border bg-card/60 backdrop-blur-sm p-6">
-            {activeTab === "notifications" && <NotificationsTab />}
-            {activeTab === "preferences" && <PreferencesTab />}
-            {activeTab === "integrations" && <IntegrationsTab />}
-          </div>
-        </motion.div>
+    <motion.div
+      initial="hidden"
+      animate="show"
+      variants={container}
+      className="space-y-6"
+    >
+      <motion.div variants={item}>
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground mt-1">Manage your account preferences and integrations.</p>
       </motion.div>
-    </ThreeScene>
+
+      <motion.div variants={item}>
+        <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+      </motion.div>
+
+      <motion.div variants={item}>
+        <div className="rounded-2xl border bg-card/60 backdrop-blur-sm p-6">
+          {activeTab === "notifications" && preferences && (
+            <NotificationsTab
+              preferences={preferences}
+              onSave={savePreference}
+            />
+          )}
+          {activeTab === "preferences" && preferences && (
+            <PreferencesTab
+              preferences={preferences}
+              onSave={savePreference}
+            />
+          )}
+          {activeTab === "integrations" && <IntegrationsTab />}
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
-function NotificationsTab() {
-  const [toggles, setToggles] = useState({
-    emailReports: true,
-    emailAlerts: false,
-    pushNotifications: true,
-    weeklyDigest: true,
-    analysisComplete: true,
-    securityAlerts: true,
-  })
+function NotificationsTab({
+  preferences,
+  onSave,
+}: {
+  preferences: UserPreferences
+  onSave: (key: string, value: unknown) => Promise<void>
+}) {
+  const [toggles, setToggles] = useState(preferences.notifications)
 
-  const toggle = (key: keyof typeof toggles) => {
-    setToggles((prev) => ({ ...prev, [key]: !prev[key] }))
+  const toggle = async (key: keyof typeof toggles) => {
+    const prev = { ...toggles }
+    const next = { ...toggles, [key]: !toggles[key] }
+    setToggles(next)
+    try {
+      await onSave("notifications", next)
+    } catch {
+      setToggles(prev)
+      toast.error("Failed to save preference")
+    }
   }
 
   const options = [
@@ -132,9 +176,15 @@ function NotificationsTab() {
   )
 }
 
-function PreferencesTab() {
-  const [theme, setTheme] = useState("system")
-  const [language, setLanguage] = useState("en")
+function PreferencesTab({
+  preferences,
+  onSave,
+}: {
+  preferences: UserPreferences
+  onSave: (key: string, value: unknown) => Promise<void>
+}) {
+  const [theme, setTheme] = useState(preferences.theme)
+  const [language, setLanguage] = useState(preferences.language)
 
   const themes = [
     { id: "light", label: "Light", icon: <Sun className="h-4 w-4" /> },
@@ -148,6 +198,16 @@ function PreferencesTab() {
     { id: "es", label: "Español" },
     { id: "fr", label: "Français" },
   ]
+
+  const handleThemeChange = async (newTheme: string) => {
+    setTheme(newTheme)
+    await onSave("theme", newTheme)
+  }
+
+  const handleLanguageChange = async (newLang: string) => {
+    setLanguage(newLang)
+    await onSave("language", newLang)
+  }
 
   return (
     <div className="space-y-6">
@@ -163,7 +223,7 @@ function PreferencesTab() {
             {themes.map((t) => (
               <button
                 key={t.id}
-                onClick={() => setTheme(t.id)}
+                onClick={() => handleThemeChange(t.id)}
                 className={cn(
                   "flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all",
                   theme === t.id
@@ -184,7 +244,7 @@ function PreferencesTab() {
             {languages.map((l) => (
               <button
                 key={l.id}
-                onClick={() => setLanguage(l.id)}
+                onClick={() => handleLanguageChange(l.id)}
                 className={cn(
                   "flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all",
                   language === l.id
@@ -205,10 +265,10 @@ function PreferencesTab() {
 
 function IntegrationsTab() {
   const integrations = [
-    { name: "Slack", description: "Send analysis reports to Slack channels", icon: <Webhook className="h-6 w-6" />, connected: false },
-    { name: "Discord", description: "Post notifications to Discord servers", icon: <Webhook className="h-6 w-6" />, connected: false },
-    { name: "Google Drive", description: "Save reports directly to Google Drive", icon: <Database className="h-6 w-6" />, connected: true },
-    { name: "Zapier", description: "Automate workflows with Zapier", icon: <Code className="h-6 w-6" />, connected: false },
+    { name: "Slack", description: "Send analysis reports to Slack channels", icon: <Webhook className="h-6 w-6" />, comingSoon: true },
+    { name: "Discord", description: "Post notifications to Discord servers", icon: <Webhook className="h-6 w-6" />, comingSoon: true },
+    { name: "Google Drive", description: "Save reports directly to Google Drive", icon: <Database className="h-6 w-6" />, comingSoon: true },
+    { name: "Zapier", description: "Automate workflows with Zapier", icon: <Code className="h-6 w-6" />, comingSoon: true },
   ]
 
   return (
@@ -221,7 +281,7 @@ function IntegrationsTab() {
         {integrations.map((integration) => (
           <div
             key={integration.name}
-            className="flex items-center justify-between rounded-xl border bg-muted/20 p-4"
+            className="flex items-center justify-between rounded-xl border bg-muted/20 p-4 opacity-60"
           >
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-muted/50 text-muted-foreground">
@@ -232,16 +292,9 @@ function IntegrationsTab() {
                 <p className="text-muted-foreground text-xs">{integration.description}</p>
               </div>
             </div>
-            <button
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                integration.connected
-                  ? "bg-primary/10 text-primary hover:bg-primary/20"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              )}
-            >
-              {integration.connected ? "Connected" : "Connect"}
-            </button>
+            <span className="px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-muted-foreground">
+              Coming soon
+            </span>
           </div>
         ))}
       </div>

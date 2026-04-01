@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { AppShell } from "@/components/AppShell"
+
 import { motion, AnimatePresence } from "framer-motion"
 import {
   CheckCircle2,
@@ -130,18 +130,18 @@ export default function TelegramPage() {
 
   if (loading) {
     return (
-      <AppShell>
+      
         <section className="container mx-auto max-w-3xl px-4 py-12 lg:py-16">
           <div className="flex items-center justify-center py-24">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         </section>
-      </AppShell>
+      
     )
   }
 
   return (
-    <AppShell>
+    
       <section className="container mx-auto max-w-3xl px-4 py-12 lg:py-16 space-y-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -410,6 +410,6 @@ export default function TelegramPage() {
           )}
         </AnimatePresence>
       </section>
-    </AppShell>
+    
   )
 }

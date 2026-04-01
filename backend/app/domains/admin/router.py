@@ -7,7 +7,8 @@ Features:
 - Bulk operations support
 - Export capabilities
 """
-from datetime import datetime, timezone
+
+from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Literal
 from pathlib import Path
 import asyncio
@@ -52,7 +53,9 @@ async def list_users(
     db: AsyncSession = Depends(get_db),
     # Pagination
     limit: int = Query(20, ge=1, le=100, description="Number of items per page"),
-    cursor: Optional[str] = Query(None, description="Cursor for pagination (base64 encoded user ID)"),
+    cursor: Optional[str] = Query(
+        None, description="Cursor for pagination (base64 encoded user ID)"
+    ),
     # Sorting
     sort_by: str = Query("created_at", description="Field to sort by"),
     sort_order: Literal["asc", "desc"] = Query("desc", description="Sort order"),
@@ -65,9 +68,9 @@ async def list_users(
 ):
     """
     List users with advanced filtering, sorting, and cursor-based pagination.
-    
+
     BigTech Standard API - similar to GitHub Users API, Stripe Customers API.
-    
+
     Query Parameters:
     - **limit**: Number of results per page (1-100)
     - **cursor**: Pagination cursor (from previous response's next_cursor)
@@ -78,7 +81,7 @@ async def list_users(
     - **role**: Filter by role (user, admin)
     - **is_active**: Filter by active status
     - **is_banned**: Filter by banned status
-    
+
     Returns:
     - **data**: List of users
     - **next_cursor**: Cursor for next page (null if last page)
@@ -87,39 +90,41 @@ async def list_users(
     """
     # Build base query
     query = select(User)
-    
+
     # Apply filters
     if search:
         # Search by email or ID
         if search.isdigit():
-            query = query.where(or_(
-                User.email.ilike(f"%{search}%"),
-                User.id == int(search),
-            ))
+            query = query.where(
+                or_(
+                    User.email.ilike(f"%{search}%"),
+                    User.id == int(search),
+                )
+            )
         else:
             query = query.where(User.email.ilike(f"%{search}%"))
-    
+
     if plan:
         valid_plans = [p.value for p in UserPlan]
         if plan in valid_plans:
             query = query.where(User.plan == plan)
-    
+
     if role:
         valid_roles = [r.value for r in UserRole]
         if role in valid_roles:
             query = query.where(User.role == role)
-    
+
     if is_active is not None:
         query = query.where(User.is_active == is_active)
-    
+
     if is_banned is not None:
         query = query.where(User.is_banned == is_banned)
-    
+
     # Get total count
     count_query = select(func.count()).select_from(query.subquery())
     total_result = await db.execute(count_query)
     total_count = total_result.scalar() or 0
-    
+
     # Apply sorting
     valid_sort_fields = {
         "id": User.id,
@@ -128,16 +133,17 @@ async def list_users(
         "total_analyses": User.total_analyses,
         "daily_used": User.daily_used,
     }
-    
+
     sort_field = valid_sort_fields.get(sort_by, User.created_at)
     if sort_order == "desc":
         query = query.order_by(desc(sort_field))
     else:
         query = query.order_by(asc(sort_field))
-    
+
     # Apply cursor-based pagination
     if cursor:
         import base64
+
         try:
             cursor_id = int(base64.b64decode(cursor).decode())
             # Get the value at the cursor position for proper pagination
@@ -150,25 +156,26 @@ async def list_users(
                     query = query.where(sort_field > cursor_value)
         except (ValueError, Exception):
             pass  # Invalid cursor, ignore
-    
+
     # Apply limit (+1 to detect if there are more results)
     query = query.limit(limit + 1)
-    
+
     # Execute query
     result = await db.execute(query)
     users = list(result.scalars().all())
-    
+
     # Determine if there are more results
     has_more = len(users) > limit
     if has_more:
         users = users[:limit]  # Remove the extra item
-    
+
     # Generate next cursor
     next_cursor = None
     if has_more and users:
         import base64
+
         next_cursor = base64.b64encode(str(users[-1].id).encode()).decode()
-    
+
     # Log admin access to user list
     audit_logger = AuditLogger(db, request)
     await audit_logger.log(
@@ -205,7 +212,7 @@ async def get_user(
 ):
     """
     Get user details by ID (admin only).
-    
+
     Logs audit trail for compliance.
     """
     result = await db.execute(select(User).where(User.id == user_id))
@@ -221,7 +228,7 @@ async def get_user(
             status="failure",
             error_message="User not found",
         )
-        
+
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
@@ -337,7 +344,7 @@ async def delete_user(
 ):
     """
     Delete user (admin only).
-    
+
     Soft delete recommended for compliance. Hard delete requires superadmin.
     """
     result = await db.execute(select(User).where(User.id == user_id))
@@ -378,26 +385,26 @@ async def bulk_update_users(
 ):
     """
     Bulk update multiple users at once.
-    
+
     Useful for:
     - Banning multiple users
     - Changing plan for a group
     - Activating/deactivating accounts
-    
+
     Returns updated users list.
     """
     # Get all users
     result = await db.execute(select(User).where(User.id.in_(user_ids)))
     users = list(result.scalars().all())
-    
+
     if len(users) != len(user_ids):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Some users not found",
         )
-    
+
     updated_users = []
-    
+
     # Update each user
     for user in users:
         if updates.role is not None:
@@ -410,15 +417,15 @@ async def bulk_update_users(
             user.is_banned = updates.is_banned
         if updates.daily_limit is not None:
             user.daily_limit = updates.daily_limit
-        
+
         updated_users.append(user)
-    
+
     await db.commit()
-    
+
     # Refresh to get updated values
     for user in updated_users:
         await db.refresh(user)
-    
+
     # Log bulk action
     audit_logger = AuditLogger(db, request)
     await audit_logger.log(
@@ -430,7 +437,7 @@ async def bulk_update_users(
             "updates": updates.model_dump(exclude_unset=True),
         },
     )
-    
+
     return updated_users
 
 
@@ -443,17 +450,17 @@ async def bulk_delete_users(
 ):
     """
     Bulk delete multiple users at once.
-    
+
     Use with caution - this is a destructive operation.
     """
     # Get all users for logging
     result = await db.execute(select(User).where(User.id.in_(user_ids)))
     users = list(result.scalars().all())
-    
+
     # Delete
     await db.execute(User.__table__.delete().where(User.id.in_(user_ids)))
     await db.commit()
-    
+
     # Log bulk deletion
     audit_logger = AuditLogger(db, request)
     await audit_logger.log(
@@ -465,7 +472,7 @@ async def bulk_delete_users(
             "deleted_user_ids": user_ids,
         },
     )
-    
+
     return None
 
 
@@ -532,6 +539,30 @@ async def get_analytics(
         for row in top_users_result.all()
     ]
 
+    # Plan distribution
+    plan_dist_result = await db.execute(select(User.plan, func.count(User.id)).group_by(User.plan))
+    plan_distribution = [
+        {"name": row.plan.capitalize(), "value": row.count} for row in plan_dist_result.all()
+    ]
+
+    # Chart data - last 24 hours of analysis volume
+    from datetime import timedelta
+
+    hour_ago = now - timedelta(hours=24)
+    chart_result = await db.execute(
+        select(
+            func.strftime("%H:00", Analysis.created_at).label("hour"),
+            func.count(Analysis.id).label("count"),
+        )
+        .where(Analysis.created_at >= hour_ago)
+        .group_by(func.strftime("%H:00", Analysis.created_at))
+        .order_by(func.strftime("%H:00", Analysis.created_at))
+    )
+    chart_data = [
+        {"time": row.hour, "analyses": row.count, "latency": 0, "load": 0}
+        for row in chart_result.all()
+    ]
+
     # Log analytics access
     audit_logger = AuditLogger(db, request)
     await audit_logger.log(
@@ -551,6 +582,8 @@ async def get_analytics(
         avg_confidence_score=round(float(avg_confidence), 2),
         failed_analyses=failed_analyses,
         top_users=top_users,
+        plan_distribution=plan_distribution,
+        chart_data=chart_data,
     )
 
 
@@ -574,7 +607,7 @@ async def list_audit_logs(
 ):
     """
     List audit logs with filtering.
-    
+
     Query Parameters:
     - **event_type**: Filter by specific event type
     - **event_category**: Filter by category (auth, user, admin, security, data, system)
@@ -585,39 +618,40 @@ async def list_audit_logs(
     - **end_date**: Filter by end date
     """
     query = select(AuditLog)
-    
+
     # Apply filters
     if event_type:
         query = query.where(AuditLog.event_type == event_type)
-    
+
     if event_category:
         query = query.where(AuditLog.event_category == event_category)
-    
+
     if actor_email:
         query = query.where(AuditLog.actor_email.ilike(f"%{actor_email}%"))
-    
+
     if target_email:
         query = query.where(AuditLog.target_email.ilike(f"%{target_email}%"))
-    
+
     if status:
         query = query.where(AuditLog.status == status)
-    
+
     if start_date:
         query = query.where(AuditLog.created_at >= start_date)
-    
+
     if end_date:
         query = query.where(AuditLog.created_at <= end_date)
-    
+
     # Get total count
     count_query = select(func.count()).select_from(query.subquery())
     total_result = await db.execute(count_query)
     total_count = total_result.scalar() or 0
-    
+
     # Apply sorting and pagination
     query = query.order_by(desc(AuditLog.created_at)).limit(limit + 1)
-    
+
     if cursor:
         import base64
+
         try:
             cursor_id = int(base64.b64decode(cursor).decode())
             cursor_item = await db.get(AuditLog, cursor_id)
@@ -625,19 +659,20 @@ async def list_audit_logs(
                 query = query.where(AuditLog.created_at < cursor_item.created_at)
         except (ValueError, Exception):
             pass
-    
+
     result = await db.execute(query)
     logs = list(result.scalars().all())
-    
+
     has_more = len(logs) > limit
     if has_more:
         logs = logs[:limit]
-    
+
     next_cursor = None
     if has_more and logs:
         import base64
+
         next_cursor = base64.b64encode(str(logs[-1].id).encode()).decode()
-    
+
     return CursorPaginationResponse(
         data=logs,
         next_cursor=next_cursor,
@@ -655,7 +690,7 @@ async def get_audit_stats(
 ):
     """
     Get audit log statistics for the specified period.
-    
+
     Returns:
     - Total events count
     - Events by category
@@ -664,77 +699,62 @@ async def get_audit_stats(
     - Top event types
     """
     from datetime import timedelta
-    
+
     start_date = datetime.now(timezone.utc) - timedelta(days=days)
-    
+
     # Total events
-    total_query = select(func.count(AuditLog.id)).where(
-        AuditLog.created_at >= start_date
-    )
+    total_query = select(func.count(AuditLog.id)).where(AuditLog.created_at >= start_date)
     total_result = await db.execute(total_query)
     total_events = total_result.scalar() or 0
-    
+
     # Events by category
-    category_query = select(
-        AuditLog.event_category,
-        func.count(AuditLog.id).label("count")
-    ).where(
-        AuditLog.created_at >= start_date
-    ).group_by(AuditLog.event_category)
-    
+    category_query = (
+        select(AuditLog.event_category, func.count(AuditLog.id).label("count"))
+        .where(AuditLog.created_at >= start_date)
+        .group_by(AuditLog.event_category)
+    )
+
     category_result = await db.execute(category_query)
     events_by_category = [
-        {"category": row.event_category, "count": row.count}
-        for row in category_result.all()
+        {"category": row.event_category, "count": row.count} for row in category_result.all()
     ]
-    
+
     # Events by status
-    status_query = select(
-        AuditLog.status,
-        func.count(AuditLog.id).label("count")
-    ).where(
-        AuditLog.created_at >= start_date
-    ).group_by(AuditLog.status)
-    
+    status_query = (
+        select(AuditLog.status, func.count(AuditLog.id).label("count"))
+        .where(AuditLog.created_at >= start_date)
+        .group_by(AuditLog.status)
+    )
+
     status_result = await db.execute(status_query)
-    events_by_status = [
-        {"status": row.status, "count": row.count}
-        for row in status_result.all()
-    ]
-    
+    events_by_status = [{"status": row.status, "count": row.count} for row in status_result.all()]
+
     # Top actors
-    actors_query = select(
-        AuditLog.actor_email,
-        func.count(AuditLog.id).label("count")
-    ).where(
-        AuditLog.created_at >= start_date,
-        AuditLog.actor_email.isnot(None)
-    ).group_by(AuditLog.actor_email).order_by(
-        desc(func.count(AuditLog.id))
-    ).limit(10)
-    
+    actors_query = (
+        select(AuditLog.actor_email, func.count(AuditLog.id).label("count"))
+        .where(AuditLog.created_at >= start_date, AuditLog.actor_email.isnot(None))
+        .group_by(AuditLog.actor_email)
+        .order_by(desc(func.count(AuditLog.id)))
+        .limit(10)
+    )
+
     actors_result = await db.execute(actors_query)
-    top_actors = [
-        {"email": row.actor_email, "count": row.count}
-        for row in actors_result.all()
-    ]
-    
+    top_actors = [{"email": row.actor_email, "count": row.count} for row in actors_result.all()]
+
     # Top event types
-    event_types_query = select(
-        AuditLog.event_type,
-        func.count(AuditLog.id).label("count")
-    ).where(
-        AuditLog.created_at >= start_date
-    ).group_by(AuditLog.event_type).order_by(
-        desc(func.count(AuditLog.id))
-    ).limit(10)
-    
+    event_types_query = (
+        select(AuditLog.event_type, func.count(AuditLog.id).label("count"))
+        .where(AuditLog.created_at >= start_date)
+        .group_by(AuditLog.event_type)
+        .order_by(desc(func.count(AuditLog.id)))
+        .limit(10)
+    )
+
     event_types_result = await db.execute(event_types_query)
     top_event_types = [
-        {"event_type": row.event_type, "count": row.count}
-        for row in event_types_result.all()
+        {"event_type": row.event_type, "count": row.count} for row in event_types_result.all()
     ]
-    
+
     return {
         "total_events": total_events,
         "period_days": days,
@@ -757,7 +777,7 @@ async def get_advanced_analytics(
 ):
     """
     Get advanced analytics with time series data.
-    
+
     Returns:
     - Summary stats
     - User growth time series
@@ -766,12 +786,12 @@ async def get_advanced_analytics(
     - Funnel data
     """
     from app.services.analytics_service import AnalyticsService
-    
+
     now = datetime.now(timezone.utc)
     start_date = now - timedelta(days=days)
-    
+
     service = AnalyticsService(db)
-    
+
     # Get all data in parallel
     summary_task = service.get_summary_stats(start_date, now)
     user_growth_task = service.get_time_series("users", start_date, now, "day")
@@ -779,7 +799,7 @@ async def get_advanced_analytics(
     top_users_task = service.get_top_items("users", limit=10, start_date=start_date)
     top_brands_task = service.get_top_items("brands", limit=10, start_date=start_date)
     funnel_task = service.get_funnel_data("analysis")
-    
+
     summary, user_growth, analysis_volume, top_users, top_brands, funnel = await asyncio.gather(
         summary_task,
         user_growth_task,
@@ -788,7 +808,7 @@ async def get_advanced_analytics(
         top_brands_task,
         funnel_task,
     )
-    
+
     # Log access
     audit_logger = AuditLogger(db, request)
     await audit_logger.log(
@@ -798,7 +818,7 @@ async def get_advanced_analytics(
         description="Advanced analytics viewed",
         metadata={"days": days},
     )
-    
+
     return {
         "summary": summary,
         "user_growth": user_growth,
@@ -834,6 +854,129 @@ async def get_cohort_analytics(
     }
 
 
+# ==================== ANALYTICS TRENDS ====================
+
+
+@router.get("/analytics/trend")
+async def get_analytics_trends(
+    request: Request,
+    admin: User = Depends(get_current_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get analytics trends comparing current period vs previous period.
+
+    Returns percentage change for key metrics.
+    """
+    from datetime import timedelta
+
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    yesterday_start = today_start - timedelta(days=1)
+    day_before_start = yesterday_start - timedelta(days=1)
+
+    # Analyses today vs yesterday
+    analyses_today = await db.execute(
+        select(func.count(Analysis.id)).where(Analysis.created_at >= today_start)
+    )
+    analyses_today_count = analyses_today.scalar() or 0
+
+    analyses_yesterday = await db.execute(
+        select(func.count(Analysis.id)).where(
+            Analysis.created_at >= yesterday_start,
+            Analysis.created_at < today_start,
+        )
+    )
+    analyses_yesterday_count = analyses_yesterday.scalar() or 0
+
+    # Active users today vs yesterday
+    active_today = await db.execute(
+        select(func.count(func.distinct(Analysis.user_id))).where(
+            Analysis.created_at >= today_start
+        )
+    )
+    active_today_count = active_today.scalar() or 0
+
+    active_yesterday = await db.execute(
+        select(func.count(func.distinct(Analysis.user_id))).where(
+            Analysis.created_at >= yesterday_start,
+            Analysis.created_at < today_start,
+        )
+    )
+    active_yesterday_count = active_yesterday.scalar() or 0
+
+    # Avg confidence today vs yesterday
+    avg_conf_today = await db.execute(
+        select(func.avg(Analysis.confidence_score)).where(
+            Analysis.status == AnalysisStatus.COMPLETED,
+            Analysis.created_at >= today_start,
+        )
+    )
+    avg_conf_today_val = avg_conf_today.scalar() or 0.0
+
+    avg_conf_yesterday = await db.execute(
+        select(func.avg(Analysis.confidence_score)).where(
+            Analysis.status == AnalysisStatus.COMPLETED,
+            Analysis.created_at >= yesterday_start,
+            Analysis.created_at < today_start,
+        )
+    )
+    avg_conf_yesterday_val = avg_conf_yesterday.scalar() or 0.0
+
+    # Failed analyses today vs yesterday
+    failed_today = await db.execute(
+        select(func.count(Analysis.id)).where(
+            Analysis.status == AnalysisStatus.FAILED,
+            Analysis.created_at >= today_start,
+        )
+    )
+    failed_today_count = failed_today.scalar() or 0
+
+    failed_yesterday = await db.execute(
+        select(func.count(Analysis.id)).where(
+            Analysis.status == AnalysisStatus.FAILED,
+            Analysis.created_at >= yesterday_start,
+            Analysis.created_at < today_start,
+        )
+    )
+    failed_yesterday_count = failed_yesterday.scalar() or 0
+
+    # Avg processing time today (completed_at - created_at)
+    avg_time_today = await db.execute(
+        select(func.avg(Analysis.completed_at - Analysis.created_at)).where(
+            Analysis.status == AnalysisStatus.COMPLETED,
+            Analysis.created_at >= today_start,
+            Analysis.completed_at.isnot(None),
+        )
+    )
+    avg_time_val = avg_time_today.scalar()
+    avg_time_seconds = avg_time_val.total_seconds() if avg_time_val else None
+
+    def calc_trend(current, previous):
+        if previous == 0:
+            return {"value": 0, "up": current >= 0}
+        pct = ((current - previous) / previous) * 100
+        return {"value": round(pct, 1), "up": pct >= 0}
+
+    # Log access
+    audit_logger = AuditLogger(db, request)
+    await audit_logger.log(
+        event_type=AuditEventType.ADMIN_ANALYTICS_VIEW,
+        actor=admin,
+        metadata={"endpoint": "trend"},
+    )
+
+    return {
+        "analyses_today": calc_trend(analyses_today_count, analyses_yesterday_count),
+        "active_users": calc_trend(active_today_count, active_yesterday_count),
+        "avg_confidence": calc_trend(
+            round(float(avg_conf_today_val) * 100, 1) if avg_conf_today_val else 0,
+            round(float(avg_conf_yesterday_val) * 100, 1) if avg_conf_yesterday_val else 0,
+        ),
+        "failed_analyses": calc_trend(failed_today_count, failed_yesterday_count),
+        "avg_processing_time_seconds": avg_time_seconds,
+    }
+
+
 # ==================== DATA EXPORT ====================
 
 
@@ -849,16 +992,16 @@ async def create_export(
 ):
     """
     Create data export job.
-    
+
     Supported types: users, analyses, audit_logs, payments
     Supported formats: csv, json, xlsx
-    
+
     Returns export job ID for status checking.
     """
     from app.services.export_service import get_export_service, ExportJob
-    
+
     export_service = get_export_service(db)
-    
+
     # Create job
     job = await export_service.create_export_job(
         export_type=export_type,  # type: ignore
@@ -867,10 +1010,10 @@ async def create_export(
         filters=filters,
         columns=columns,
     )
-    
+
     # Process asynchronously (in production, use Celery)
     asyncio.create_task(export_service.process_export(job))
-    
+
     # Log
     audit_logger = AuditLogger(db, request)
     await audit_logger.log(
@@ -880,7 +1023,7 @@ async def create_export(
         description=f"Export created: {export_type}",
         metadata={"format": format},
     )
-    
+
     return job.to_dict()
 
 
@@ -891,16 +1034,16 @@ async def get_export_status(
 ):
     """Get export job status."""
     from app.services.export_service import get_export_service
-    
+
     export_service = get_export_service(admin)
     job = export_service.get_job(export_id)
-    
+
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Export job not found",
         )
-    
+
     return job.to_dict()
 
 
@@ -914,25 +1057,25 @@ async def download_export(
 
     export_service = get_export_service(admin)
     job = export_service.get_job(export_id)
-    
+
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Export job not found",
         )
-    
+
     if job.status != "completed":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Export not completed yet",
         )
-    
+
     if not job.file_path or not Path(job.file_path).exists():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Export file not found",
         )
-    
+
     return FileResponse(
         path=job.file_path,
         filename=f"{job.export_type}_{export_id}.{job.format}",
@@ -947,10 +1090,10 @@ async def list_exports(
 ):
     """List export jobs for current user."""
     from app.services.export_service import get_export_service
-    
+
     export_service = get_export_service(admin)
     jobs = export_service.list_jobs(admin.id, limit)
-    
+
     return {
         "exports": [job.to_dict() for job in jobs],
         "total": len(jobs),

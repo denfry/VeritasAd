@@ -20,15 +20,12 @@ import {
   UploadCloud,
   MessageSquare,
 } from "lucide-react"
-import { AppShell } from "@/components/AppShell"
-import { ApiConnectionStatus } from "@/components/ApiConnectionStatus"
 import { ProgressBar } from "@/components/ProgressBar"
 import { VideoTimeline } from "@/components/VideoTimeline"
 import { useAuth } from "@/contexts/auth-context"
 import { analyzeVideo, analyzePost, fetchAnalysisResult, streamAnalysisProgress, downloadPdfReport, ApiError } from "@/lib/api-client"
 import type { AnalysisResult } from "@/types/api"
 import { getPlatformIcon } from "@/lib/platforms"
-import { ThreeScene } from "@/components/three/ThreeScene"
 
 export default function AnalyzePage() {
   const router = useRouter()
@@ -249,9 +246,7 @@ export default function AnalyzePage() {
   }
 
   return (
-    <ThreeScene intensity="light" type="particles">
-      <AppShell>
-        <section className="container mx-auto max-w-7xl px-4 py-12 lg:py-16">
+    <section className="container mx-auto max-w-7xl px-4 py-12 lg:py-16">
           {/* Header */}
           <motion.div
             className="mx-auto mb-12 max-w-3xl text-center"
@@ -285,11 +280,6 @@ export default function AnalyzePage() {
               Get instant insights about sponsored content and brand mentions.
             </motion.p>
           </motion.div>
-
-          <div className="mx-auto mb-8 max-w-5xl">
-            <ApiConnectionStatus />
-          </div>
-
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
             {/* Left Column - Form */}
@@ -650,7 +640,7 @@ export default function AnalyzePage() {
                                   // eslint-disable-next-line @next/next/no-img-element
                                   <img src={brand.logo_url} alt={brand.name} className="h-7 w-7 object-contain" />
                                 ) : (
-                                  <span className="text-sm font-semibold text-primary/50">{brand.name[0]}</span>
+                                  <span className="text-sm font-semibold text-primary/50">{brand.name[0] || "?"}</span>
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
@@ -750,8 +740,7 @@ export default function AnalyzePage() {
           </motion.div>
         </div>
       </section>
-    </AppShell>
-    </ThreeScene>
+    
   )
 }
 

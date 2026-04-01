@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback, type ReactNode, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
-import { AppShell } from "@/components/AppShell"
 import { useAuth } from "@/contexts/auth-context"
 import { 
   getCurrentUserProfile, 
@@ -28,7 +27,6 @@ import Link from "next/link"
 import { format, formatDistanceToNow } from "date-fns"
 import { motion, AnimatePresence } from "framer-motion"
 import { Skeleton } from "@/components/ui/Skeleton"
-import { ThreeScene } from "@/components/three/ThreeScene"
 
 type AccountTab = "overview" | "profile" | "security" | "billing"
 
@@ -76,28 +74,7 @@ export default function AccountPage() {
       }
     } catch (error: unknown) {
       console.warn("Failed to load account data:", error)
-      // Fallback for dev mode
-      if (process.env.NODE_ENV === 'development') {
-         setProfile({
-           id: 1,
-           email: user?.email || "dev@example.com",
-           role: user?.role || "admin",
-           plan: user?.plan || "pro",
-           daily_limit: 50,
-           daily_used: 12,
-           total_analyses: 156,
-           is_active: true,
-           created_at: new Date().toISOString()
-         })
-         setCredits({
-           credits: 250,
-           total_purchased: 500,
-           total_used: 250,
-           expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-         })
-      } else {
-        setLoadError(error instanceof Error ? error.message : "Failed to load account data")
-      }
+      setLoadError(error instanceof Error ? error.message : "Failed to load account data")
     } finally {
       setLoading(false)
     }
@@ -157,7 +134,7 @@ export default function AccountPage() {
   }
 
   const getUsagePercentage = () => {
-    if (!profile) return 0
+    if (!profile || profile.daily_limit <= 0) return 0
     return Math.min((profile.daily_used / profile.daily_limit) * 100, 100)
   }
 
@@ -174,8 +151,8 @@ export default function AccountPage() {
 
   if (authLoading || loading) {
     return (
-      <ThreeScene intensity="light" type="particles">
-        <AppShell>
+      
+        
           <section className="container mx-auto max-w-7xl px-4 py-12 space-y-10 lg:py-16">
           {/* Profile Header skeleton */}
           <div className="surface p-8">
@@ -204,15 +181,15 @@ export default function AccountPage() {
             </div>
           </div>
         </section>
-      </AppShell>
-      </ThreeScene>
+      
+      
     )
   }
 
   if (loadError && !profile) {
     return (
-      <ThreeScene intensity="light" type="particles">
-        <AppShell>
+      
+        
           <section className="container mx-auto max-w-7xl px-4 py-12">
             <div className="surface p-8 space-y-4">
               <h1 className="text-2xl font-semibold">Account unavailable</h1>
@@ -222,16 +199,16 @@ export default function AccountPage() {
               </button>
             </div>
           </section>
-        </AppShell>
-      </ThreeScene>
+        
+      
     )
   }
 
   if (!profile) return null
 
   return (
-    <ThreeScene intensity="light" type="particles">
-      <AppShell>
+    
+      
       <section className="container mx-auto max-w-7xl px-4 py-12 space-y-10 lg:py-16">
         {/* Profile Header Card */}
         <motion.div 
@@ -624,8 +601,8 @@ export default function AccountPage() {
           )}
         </AnimatePresence>
       </section>
-    </AppShell>
-    </ThreeScene>
+    
+    
   )
 }
 

@@ -28,13 +28,13 @@ type AuthContextType = {
 const DEFAULT_MOCK_USER: User = {
   id: '0',
   email: 'dev-mode@veritasad.ai',
-  role: 'admin',
-  plan: 'enterprise',
+  role: 'user',
+  plan: 'free',
   created_at: new Date().toISOString(),
-  api_key: 'veritasad_dev_mock_key',
-  daily_used: 12,
-  daily_limit: 100,
-  total_analyses: 156,
+  api_key: '',
+  daily_used: 0,
+  daily_limit: 0,
+  total_analyses: 0,
 }
 
 const DEFAULT_MOCK_SESSION: Session = {

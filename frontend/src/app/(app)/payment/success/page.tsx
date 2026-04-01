@@ -1,6 +1,6 @@
 "use client"
 
-import { AppShell } from "@/components/AppShell"
+
 import { motion } from "framer-motion"
 import { CheckCircle2, ArrowRight, LayoutDashboard, Search, Sparkles } from "lucide-react"
 import Link from "next/link"
@@ -14,7 +14,7 @@ function PaymentSuccessContent() {
   const transactionId = searchParams.get("transaction_id")
 
   return (
-    <AppShell>
+    
       <section className="container mx-auto max-w-2xl px-4 py-24 lg:py-32">
         <motion.div
           className="surface p-10 text-center space-y-8 relative overflow-hidden"
@@ -109,18 +109,18 @@ function PaymentSuccessContent() {
           </div>
         </motion.div>
       </section>
-    </AppShell>
+    
   )
 }
 
 export default function PaymentSuccessPage() {
   return (
     <Suspense fallback={
-      <AppShell>
+      
         <div className="container mx-auto max-w-2xl px-4 py-24 lg:py-32">
           <div className="surface p-10 text-center">Loading...</div>
         </div>
-      </AppShell>
+      
     }>
       <PaymentSuccessContent />
     </Suspense>

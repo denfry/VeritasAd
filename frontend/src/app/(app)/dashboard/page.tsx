@@ -95,7 +95,6 @@ export default function DashboardPage() {
       total: history.length,
       avgScore: Number(finalAvgScore.toFixed(2)),
       activeTasks: history.filter(h => h.status === 'processing' || h.status === 'queued').length,
-      avgTime: "45s",
       dailyUsed,
       dailyLimit,
       dailyPercentage,

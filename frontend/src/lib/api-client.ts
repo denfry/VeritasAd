@@ -154,8 +154,8 @@ export async function streamAnalysisProgress(params: {
 
   // WebSocket first, SSE fallback.
   return new Promise((resolve, reject) => {
-    let connectionTimeout: NodeJS.Timeout | null = null
-    let heartbeatTimeout: NodeJS.Timeout | null = null
+    let connectionTimeout: ReturnType<typeof setTimeout> | null = null
+    let heartbeatTimeout: ReturnType<typeof setTimeout> | null = null
     let settled = false
     const websocket = new WebSocket(wsUrl)
     let eventSource: EventSource | null = null
@@ -659,6 +659,115 @@ export async function revokeUserSession(sessionId: string): Promise<{ status: st
 
 export async function getTwoFactorStatus(): Promise<{ enabled: boolean }> {
   return request("/api/v1/security/2fa/status", {
+    method: "GET",
+  })
+}
+
+// ==================== SYSTEM METRICS ====================
+
+export type SystemMetrics = {
+  cpu_percent: number
+  memory_total_mb: number
+  memory_used_mb: number
+  memory_percent: number
+  disk_total_gb: number
+  disk_used_gb: number
+  disk_percent: number
+  process_memory_mb: number
+  process_threads: number
+  uptime_seconds: number
+  python_version: string
+  platform: string
+}
+
+export async function getSystemMetrics(): Promise<SystemMetrics> {
+  return request<SystemMetrics>("/api/v1/health/system-metrics", {
+    method: "GET",
+  })
+}
+
+export type PipelineStatus = {
+  name: string
+  description: string
+  status: string
+}
+
+export async function getPipelineStatus(): Promise<{ pipelines: PipelineStatus[]; timestamp: string }> {
+  return request("/api/v1/health/pipeline-status", {
+    method: "GET",
+  })
+}
+
+// ==================== ANALYTICS TRENDS ====================
+
+export type TrendData = {
+  value: number
+  up: boolean
+}
+
+export async function getAnalyticsTrends(): Promise<{
+  analyses_today: TrendData
+  active_users: TrendData
+  avg_confidence: TrendData
+  failed_analyses: TrendData
+  avg_processing_time_seconds: number | null
+}> {
+  return request("/api/v1/admin/analytics/trend", {
+    method: "GET",
+  })
+}
+
+// ==================== USER PREFERENCES ====================
+
+export type UserPreferences = {
+  notifications: {
+    emailReports: boolean
+    emailAlerts: boolean
+    pushNotifications: boolean
+    weeklyDigest: boolean
+    analysisComplete: boolean
+    securityAlerts: boolean
+  }
+  theme: string
+  language: string
+}
+
+export async function getUserPreferences(): Promise<UserPreferences> {
+  return request<UserPreferences>("/api/v1/users/me/preferences", {
+    method: "GET",
+  })
+}
+
+export async function updateUserPreferences(prefs: Partial<UserPreferences>): Promise<{ status: string }> {
+  return request("/api/v1/users/me/preferences", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(prefs),
+  })
+}
+
+// ==================== API KEY MANAGEMENT ====================
+
+export async function getApiKey(): Promise<{ has_key: boolean }> {
+  return request("/api/v1/users/me/api-key", {
+    method: "GET",
+  })
+}
+
+export async function regenerateApiKey(): Promise<{ api_key: string; message: string }> {
+  return request("/api/v1/users/me/api-key/regenerate", {
+    method: "POST",
+  })
+}
+
+export async function getApiKeyStats(): Promise<{
+  total_requests: number
+  successful_requests: number
+  daily_limit: number
+  daily_used: number
+  daily_remaining: number
+}> {
+  return request("/api/v1/users/me/api-key/stats", {
     method: "GET",
   })
 }

@@ -4,19 +4,21 @@ import { ReactNode, useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { 
-  LayoutDashboard, 
-  Search, 
-  History, 
-  User, 
-  ShieldCheck, 
-  Menu, 
-  X, 
+import {
+  LayoutDashboard,
+  Search,
+  History,
+  User,
+  ShieldCheck,
+  Menu,
+  X,
   LogOut,
   Zap,
   Crown,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Activity,
+  Shield,
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { ThemeToggle } from "./ThemeToggle"
@@ -24,17 +26,20 @@ import { CurrencySelectorCompact } from "./SiteHeader"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
-interface AppShellProps {
+interface UnifiedLayoutProps {
   children: ReactNode
 }
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/analyze", label: "Analyze", icon: Search },
   { href: "/history", label: "History", icon: History },
+  { href: "/dashboard/monitor", label: "Monitor", icon: Activity },
   { href: "/pricing", label: "Pricing", icon: Zap },
   { href: "/account", label: "Account", icon: User },
 ]
+
+const adminNavItem = { href: "/admin", label: "Admin", icon: Shield }
 
 const planConfig = {
   free: { label: "Free", icon: User, color: "text-muted-foreground" },
@@ -44,7 +49,7 @@ const planConfig = {
   enterprise: { label: "Enterprise", icon: Crown, color: "text-purple-500" },
 }
 
-export function AppShell({ children }: AppShellProps) {
+export function UnifiedLayout({ children }: UnifiedLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, signOut } = useAuth()
@@ -53,7 +58,7 @@ export function AppShell({ children }: AppShellProps) {
   const [isSigningOut, setIsSigningOut] = useState(false)
 
   useEffect(() => {
-    const saved = localStorage.getItem("app-sidebar-collapsed")
+    const saved = localStorage.getItem("unified-sidebar-collapsed")
     if (saved) {
       setIsCollapsed(saved === "true")
     }
@@ -62,7 +67,7 @@ export function AppShell({ children }: AppShellProps) {
   const toggleSidebar = () => {
     const newState = !isCollapsed
     setIsCollapsed(newState)
-    localStorage.setItem("app-sidebar-collapsed", String(newState))
+    localStorage.setItem("unified-sidebar-collapsed", String(newState))
   }
 
   const handleSignOut = async () => {
@@ -89,9 +94,9 @@ export function AppShell({ children }: AppShellProps) {
         <div className="absolute -right-24 bottom-[-180px] h-[520px] w-[520px] rounded-full bg-cyan-500/10 blur-3xl" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.08)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.08)_1px,transparent_1px)] bg-[size:44px_44px]" />
       </div>
-      
+
       {/* Sidebar - Desktop */}
-      <motion.aside 
+      <motion.aside
         initial={false}
         animate={{ width: isCollapsed ? 80 : 256 }}
         className="hidden md:flex flex-col border-r border-border/50 bg-card/55 backdrop-blur-2xl sticky top-0 h-screen transition-all duration-300 overflow-visible z-30"
@@ -99,13 +104,13 @@ export function AppShell({ children }: AppShellProps) {
         <div className="p-4 flex items-center justify-between border-b border-border/20">
           <Link href="/" className="flex items-center gap-3 font-bold text-xl group px-2 overflow-hidden whitespace-nowrap">
             <motion.div
-            className="h-8 w-8 shrink-0 items-center justify-center rounded-full gradient-premium text-primary-foreground shadow-lg shadow-primary/20 flex"
+              className="h-8 w-8 shrink-0 items-center justify-center rounded-full gradient-premium text-primary-foreground shadow-lg shadow-primary/20 flex"
               whileHover={{ scale: 1.05, rotate: 5 }}
             >
               <ShieldCheck className="h-4 w-4" />
             </motion.div>
             {!isCollapsed && (
-              <motion.span 
+              <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="gradient-text tracking-tight text-lg"
@@ -114,8 +119,8 @@ export function AppShell({ children }: AppShellProps) {
               </motion.span>
             )}
           </Link>
-          
-          <button 
+
+          <button
             onClick={toggleSidebar}
             className="absolute -right-3 top-16 flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-md hover:bg-accent z-40"
           >
@@ -125,7 +130,7 @@ export function AppShell({ children }: AppShellProps) {
 
         <nav className="flex-1 px-3 py-4 space-y-1 mt-2">
           {navItems.map((item) => {
-            const isActive = pathname === item.href
+            const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))
             return (
               <Link
                 key={item.href}
@@ -133,15 +138,15 @@ export function AppShell({ children }: AppShellProps) {
                 title={isCollapsed ? item.label : ""}
                 className={cn(
                   "flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all duration-200 group relative",
-                  isActive 
-                    ? "bg-primary/10 text-primary font-semibold" 
+                  isActive
+                    ? "bg-primary/10 text-primary font-semibold"
                     : "hover:bg-muted text-muted-foreground hover:text-foreground",
                   isCollapsed && "justify-center px-0"
                 )}
               >
-                <item.icon className={cn("h-4.5 w-4.5 shrink-0", isActive ? "text-primary" : "group-hover:scale-110 transition-transform")} />
+                <item.icon className={cn("h-5 w-5 shrink-0", isActive ? "text-primary" : "group-hover:scale-110 transition-transform")} />
                 {!isCollapsed && (
-                  <motion.span 
+                  <motion.span
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="text-sm truncate"
@@ -150,7 +155,7 @@ export function AppShell({ children }: AppShellProps) {
                   </motion.span>
                 )}
                 {isActive && !isCollapsed && (
-                  <motion.div 
+                  <motion.div
                     layoutId="activeTabIndicator"
                     className="absolute left-0 w-1 h-5 bg-primary rounded-r-full"
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -159,6 +164,37 @@ export function AppShell({ children }: AppShellProps) {
               </Link>
             )
           })}
+          {user?.role === "admin" && (
+            <Link
+              href={adminNavItem.href}
+              title={isCollapsed ? adminNavItem.label : ""}
+              className={cn(
+                "flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all duration-200 group relative",
+                pathname === adminNavItem.href
+                  ? "bg-primary/10 text-primary font-semibold"
+                  : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                isCollapsed && "justify-center px-0"
+              )}
+            >
+              <adminNavItem.icon className={cn("h-5 w-5 shrink-0", pathname === adminNavItem.href ? "text-primary" : "group-hover:scale-110 transition-transform")} />
+              {!isCollapsed && (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-sm truncate"
+                >
+                  {adminNavItem.label}
+                </motion.span>
+              )}
+              {pathname === adminNavItem.href && !isCollapsed && (
+                <motion.div
+                  layoutId="activeTabIndicator"
+                  className="absolute left-0 w-1 h-5 bg-primary rounded-r-full"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+            </Link>
+          )}
         </nav>
 
         {/* User Profile Section */}
@@ -170,7 +206,7 @@ export function AppShell({ children }: AppShellProps) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-medium">
-                  {user.email?.split('@')[0] || "User"}
+                  {user.email?.split("@")[0] || "User"}
                 </p>
                 <div className="flex items-center gap-1">
                   <planInfo.icon className={cn("h-3 w-3", planInfo.color)} />
@@ -192,13 +228,13 @@ export function AppShell({ children }: AppShellProps) {
             {!isCollapsed && <div className="h-4 w-px bg-border/50" />}
             <CurrencySelectorCompact />
           </div>
-          
-          <button 
+
+          <button
             onClick={handleSignOut}
             disabled={isSigningOut}
             title={isCollapsed ? "Sign out" : ""}
             className={cn(
-                  "flex items-center gap-3 w-full px-4 py-2.5 rounded-2xl text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-all group disabled:opacity-50",
+              "flex items-center gap-3 w-full px-4 py-2.5 rounded-2xl text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-all group disabled:opacity-50",
               isCollapsed && "justify-center px-0"
             )}
           >
@@ -216,7 +252,7 @@ export function AppShell({ children }: AppShellProps) {
             <ShieldCheck className="h-5 w-5 text-primary" />
             <span>VeritasAd</span>
           </Link>
-          <button 
+          <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 rounded-lg bg-muted text-foreground"
           >
@@ -240,7 +276,7 @@ export function AppShell({ children }: AppShellProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="truncate text-sm font-medium">
-                      {user.email?.split('@')[0] || "User"}
+                      {user.email?.split("@")[0] || "User"}
                     </p>
                     <div className="flex items-center gap-1">
                       <planInfo.icon className={cn("h-3 w-3", planInfo.color)} />
@@ -264,7 +300,19 @@ export function AppShell({ children }: AppShellProps) {
                   <span>{item.label}</span>
                 </Link>
               ))}
-              
+              {user?.role === "admin" && (
+                <Link
+                  href={adminNavItem.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                    pathname === adminNavItem.href ? "bg-primary text-primary-foreground font-semibold" : "hover:bg-muted"
+                  }`}
+                >
+                  <adminNavItem.icon className="h-5 w-5" />
+                  <span>{adminNavItem.label}</span>
+                </Link>
+              )}
+
               <div className="border-t pt-2 mt-2">
                 <button
                   onClick={() => {
@@ -285,7 +333,7 @@ export function AppShell({ children }: AppShellProps) {
         <main className="flex-1 pb-20 md:pb-0">
           {children}
         </main>
-        
+
         {/* Mobile Bottom Navigation */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-md border-t border-border/50 z-50 px-2 py-2">
           <div className="flex justify-around items-center">

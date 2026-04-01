@@ -4,13 +4,13 @@ import { Check, Zap, TrendingUp, Building, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
-import { AppShell } from "@/components/AppShell"
+
 import { useAuth } from "@/contexts/auth-context"
 import { createSubscription, purchaseCreditPackage } from "@/lib/api-client"
 import { CurrencySelector } from "@/components/CurrencySelector"
 import { useCurrency, Price, PricePerMonth, SavingsBadge } from "@/contexts/currency-context"
 import { ThreeCardEffect } from "@/components/three/ThreeCardEffect"
-import { ThreeScene } from "@/components/three/ThreeScene"
+
 import { motion } from "framer-motion"
 
 // Base prices in RUB
@@ -156,7 +156,7 @@ export default function PricingPage() {
     try {
       const payment = await createSubscription({
         plan: plan as "starter" | "pro" | "business" | "enterprise",
-        returnUrl: `${window.location.origin}/payment/success`,
+        returnUrl: `${typeof window !== "undefined" ? window.location.origin : ""}/payment/success`,
       })
       window.location.href = payment.checkout_url
     } catch {
@@ -174,7 +174,7 @@ export default function PricingPage() {
     try {
       const payment = await purchaseCreditPackage({
         package: packageType as "micro" | "standard" | "pro" | "business",
-        returnUrl: `${window.location.origin}/payment/success`,
+        returnUrl: `${typeof window !== "undefined" ? window.location.origin : ""}/payment/success`,
       })
       window.location.href = payment.checkout_url
     } catch {
@@ -184,8 +184,7 @@ export default function PricingPage() {
   }
 
   return (
-    <ThreeScene intensity="light" type="particles">
-      <AppShell>
+    <>
         {/* Header */}
         <section className="container mx-auto max-w-6xl px-4 pt-12 pb-8">
           <motion.div
@@ -320,7 +319,7 @@ export default function PricingPage() {
                     >
                       {pkg.highlight && (
                         <SavingsBadge
-                          originalPrice={pkg.priceRub * (1 / 0.67)}
+                          originalPrice={pkg.priceRub / (1 - (parseFloat(pkg.savingsPct ?? "0") / 100))}
                           salePrice={pkg.priceRub}
                           className="absolute -top-3 right-5"
                         />
@@ -372,7 +371,6 @@ export default function PricingPage() {
             </div>
           </div>
         </section>
-      </AppShell>
-    </ThreeScene>
+    </>
   )
 }

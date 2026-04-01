@@ -1,11 +1,10 @@
 "use client"
 
 import { useCallback, useEffect, useState, useMemo } from "react"
-import { 
-  Download, Filter, RefreshCw, Search, 
+import {
+  Download, Filter, RefreshCw, Search,
   FileText, CheckCircle2, AlertCircle, Clock, ChevronRight, FilterX
 } from "lucide-react"
-import { AppShell } from "@/components/AppShell"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -13,7 +12,6 @@ import { fetchAnalysisHistory, ApiError } from "@/lib/api-client"
 import type { AnalysisHistoryItem } from "@/types/api"
 import { motion, AnimatePresence } from "framer-motion"
 import { formatDistanceToNow } from "date-fns"
-import { ThreeScene } from "@/components/three/ThreeScene"
 
 const PLATFORMS = [
   { id: "youtube", label: "YouTube" },
@@ -99,8 +97,8 @@ export default function HistoryPage() {
   const filteredHistory = useMemo(() => {
     return history.filter(item => {
       const matchesSearch = item.task_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.source_type.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesPlatform = !platformFilter || item.source_type.toLowerCase() === platformFilter.toLowerCase()
+                          (item.source_type ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesPlatform = !platformFilter || (item.source_type ?? "").toLowerCase() === platformFilter.toLowerCase()
       const matchesStatus = !statusFilter || item.status.toLowerCase() === statusFilter.toLowerCase()
       
       return matchesSearch && matchesPlatform && matchesStatus
@@ -114,9 +112,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <ThreeScene intensity="light" type="particles">
-      <AppShell>
-      <section className="container mx-auto max-w-6xl px-4 py-12 space-y-10">
+    <section className="container mx-auto max-w-6xl px-4 py-12 space-y-10">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
@@ -151,7 +147,7 @@ export default function HistoryPage() {
                 
                 const csvContent = [
                   headers.join(","),
-                  ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+                  ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
                 ].join("\n")
                 
                 const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
@@ -433,7 +429,5 @@ export default function HistoryPage() {
         </div>
         )}
       </section>
-    </AppShell>
-    </ThreeScene>
   )
 }
