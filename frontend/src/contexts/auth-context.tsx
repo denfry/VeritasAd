@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase"
+import { supabase, isMockAuth } from "@/lib/supabase"
 import type { MockUser, MockSession } from "@/lib/mock-auth"
 
 // Unified types that work with both Supabase and Mock
@@ -58,7 +58,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (authDisabled) {
-      // Режим без авторизации - сразу устанавливаем mock-пользователя
       setSession(DEFAULT_MOCK_SESSION)
       setUser(DEFAULT_MOCK_USER)
       setLoading(false)
@@ -67,19 +66,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+      setSession(session as unknown as Session | null)
+      setUser((session?.user ?? null) as unknown as User | null)
       setLoading(false)
     })
 
-    // Listen for auth changes
+    // Listen for auth changes and keep cookies in sync
     const authStateChangeResult = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
+      setSession(session as unknown as Session | null)
+      setUser((session?.user ?? null) as unknown as User | null)
       setLoading(false)
     }) as AuthStateChangeResult
 
-    // Поддержка обоих форматов: { data: { subscription } } (Supabase) и { subscription } (Mock)
     const subscription = 'data' in authStateChangeResult
       ? authStateChangeResult.data.subscription
       : authStateChangeResult.subscription
@@ -189,7 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     loading,
     supabaseConfigured: isRealSupabase,
-    isMock: !isRealSupabase && !authDisabled,
+    isMock: isMockAuth,
     authDisabled,
     signIn,
     signUp,

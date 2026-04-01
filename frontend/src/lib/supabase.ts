@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js"
+import { createClient as createBrowserClient } from "./supabase-browser"
 import { createMockClient, type MockSupabaseClient } from "./mock-auth"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -19,7 +19,7 @@ if (isProduction && !authDisabled && (!supabaseUrl || !supabaseAnonKey)) {
 }
 
 export const supabase = !shouldUseMockAuth
-  ? (createClient(supabaseUrl, supabaseAnonKey) as unknown as MockSupabaseClient)
+  ? (createBrowserClient() as unknown as MockSupabaseClient)
   : createMockClient()
 
 export const isMockAuth = shouldUseMockAuth
