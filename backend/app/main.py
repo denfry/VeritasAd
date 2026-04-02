@@ -27,6 +27,7 @@ from app.middleware.security import (
     RequestIDMiddleware,
     LoggingMiddleware,
 )
+from app.middleware.cors import CORSMiddlewareRegex
 from app.middleware.rate_limit import limiter
 from app.models.database import init_db, close_db, engine
 from app.core.redis import redis_client
@@ -97,19 +98,29 @@ def create_app() -> FastAPI:
     )
 
     # Middleware (order matters)
-    cors_kwargs = {
-        "allow_origins": settings.CORS_ORIGINS,
-        "allow_credentials": settings.CORS_ALLOW_CREDENTIALS,
-        "allow_methods": ["*"],
-        "allow_headers": ["*"],
-        "expose_headers": ["X-Request-ID", "X-Process-Time"],
-    }
-    # Use regex for wildcard Railway domains (CORSMiddleware doesn't support wildcards in allow_origins)
+    # Use custom CORS middleware with regex support for Railway domains
     cors_origins = settings.CORS_ORIGINS or []
-    if any("*" in origin for origin in cors_origins):
-        cors_kwargs["allow_origin_regex"] = r"https://.*\.up\.railway\.app"
-        cors_kwargs["allow_origins"] = [o for o in cors_origins if "*" not in o]
-    app.add_middleware(CORSMiddleware, **cors_kwargs)
+    has_wildcard = any("*" in origin for origin in cors_origins)
+
+    if has_wildcard:
+        app.add_middleware(
+            CORSMiddlewareRegex,
+            allow_origins=[o for o in cors_origins if "*" not in o],
+            allow_origin_regex=r"https://.*\.up\.railway\.app",
+            allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+            allow_methods=["*"],
+            allow_headers=["*"],
+            expose_headers=["X-Request-ID", "X-Process-Time"],
+        )
+    else:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=cors_origins,
+            allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+            allow_methods=["*"],
+            allow_headers=["*"],
+            expose_headers=["X-Request-ID", "X-Process-Time"],
+        )
 
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
