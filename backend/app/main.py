@@ -1,4 +1,5 @@
 """VeritasAd API - Application factory and entry point."""
+
 from contextlib import asynccontextmanager
 from typing import cast
 
@@ -96,18 +97,22 @@ def create_app() -> FastAPI:
     )
 
     # Middleware (order matters)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.CORS_ORIGINS,
-        allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        expose_headers=["X-Request-ID", "X-Process-Time"],
-    )
-
+    cors_kwargs = {
+        "allow_origins": settings.CORS_ORIGINS,
+        "allow_credentials": settings.CORS_ALLOW_CREDENTIALS,
+        "allow_methods": ["*"],
+        "allow_headers": ["*"],
+        "expose_headers": ["X-Request-ID", "X-Process-Time"],
+    }
+    # Use regex for wildcard Railway domains (CORSMiddleware doesn't support wildcards in allow_origins)
+    cors_origins = settings.CORS_ORIGINS or []
+    if any("*" in origin for origin in cors_origins):
+        cors_kwargs["allow_origin_regex"] = r"https://.*\.up\.railway\.app"
+        cors_kwargs["allow_origins"] = [o for o in cors_origins if "*" not in o]
+    app.add_middleware(CORSMiddleware, **cors_kwargs)
 
     app.add_middleware(GZipMiddleware, minimum_size=1000)
-    
+
     # CSRF Protection - enabled in production (if available)
     # Note: FastAPI/Starlette may not have CSRF middleware built-in
     # For production, consider using custom CSRF protection or API tokens
@@ -117,7 +122,7 @@ def create_app() -> FastAPI:
     #         app.add_middleware(CSRFProtectMiddleware)
     #     except ImportError:
     #         logger.warning("CSRF middleware not available, using token-based protection")
-    
+
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RequestIDMiddleware)
     app.add_middleware(LoggingMiddleware)
@@ -143,9 +148,7 @@ def create_app() -> FastAPI:
             headers={"Retry-After": str(retry_after)},
         )
 
-    async def veritasad_exception_handler(
-        request: Request, exc: Exception
-    ) -> JSONResponse:
+    async def veritasad_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         exc = cast(VeritasAdException, exc)
         status_code = getattr(exc, "status_code", 422)
         message = getattr(exc, "message", str(exc))
@@ -155,9 +158,7 @@ def create_app() -> FastAPI:
             content["detail"] = detail
         return JSONResponse(status_code=status_code, content=content)
 
-    async def validation_exception_handler(
-        request: Request, exc: Exception
-    ) -> JSONResponse:
+    async def validation_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         if not isinstance(exc, RequestValidationError):
             return JSONResponse(
                 status_code=500,

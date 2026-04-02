@@ -401,7 +401,11 @@ class Settings(BaseSettings):
     def set_default_cors_and_trust(self):
         """Set safe defaults for CORS and trusted hosts if not configured."""
         if not self.CORS_ORIGINS:
-            self.CORS_ORIGINS = ["http://localhost:3000", "https://veritasad.ai"]
+            self.CORS_ORIGINS = [
+                "http://localhost:3000",
+                "https://veritasad.ai",
+                "https://*.up.railway.app",
+            ]
         elif isinstance(self.CORS_ORIGINS, str):
             try:
                 self.CORS_ORIGINS = json.loads(self.CORS_ORIGINS)
