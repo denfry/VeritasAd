@@ -1,7 +1,14 @@
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(
-  /\/+$/,
-  ""
-)
+export const API_BASE_URL = (() => {
+  let url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+  url = url.replace(/\/+$/, "")
+
+  // Add https:// protocol if missing (production URLs)
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = `https://${url}`
+  }
+
+  return url
+})()
 
 export const FRONTEND_AUTH_DISABLED = process.env.NEXT_PUBLIC_DISABLE_AUTH === "true"
 
