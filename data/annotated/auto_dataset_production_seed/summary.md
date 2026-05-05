@@ -44,11 +44,11 @@
 ## Ad-Boost Iteration
 - Added dataset: `data/annotated/auto_dataset_ad_boost/reviewed_bootstrap.jsonl`
 - Combined reviewed dataset: `reviewed_bootstrap_plus_adboost.jsonl`
-- Total combined records: 92
-- Completed ad-boost records included: 4
+- Total combined records: 99
+- Completed ad-boost records included: 11
 - Failed ad-boost records excluded: 1
-- Combined labels: `no_ad` 52, `mention` 29, `hidden_ad` 6, `official` 5
+- Combined labels: `no_ad` 52, `mention` 29, `hidden_ad` 12, `official` 6
 - Model artifact: `models/ad-classifier/hybrid-ad-model-production-seed-adboost.json`
-- Validation accuracy: 0.42857142857142855
-- Test accuracy: 0.42857142857142855
-- Decision: not enabled by default. Official examples improved from 1 to 5, but the dataset is still too small and class-imbalanced for production runtime.
+- Validation accuracy: 0.5333333333333333
+- Test accuracy: 0.7333333333333333
+- Decision: not enabled by default. Official examples improved from 1 to 6, but the deterministic source-safe validation/test split has no `official` support yet.

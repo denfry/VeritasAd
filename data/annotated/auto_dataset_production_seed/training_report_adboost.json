@@ -3,75 +3,75 @@
     "dataset":  "data/annotated/auto_dataset_production_seed/reviewed_bootstrap_plus_adboost.jsonl",
     "ad_boost_dataset":  "data/annotated/auto_dataset_ad_boost/reviewed_bootstrap.jsonl",
     "model_artifact":  "models/ad-classifier/hybrid-ad-model-production-seed-adboost.json",
-    "total_records":  92,
+    "total_records":  99,
     "label_counts":  {
                          "mention":  29,
-                         "hidden_ad":  6,
+                         "hidden_ad":  12,
                          "no_ad":  52,
-                         "official":  5
+                         "official":  6
                      },
     "split_counts":  {
-                         "train":  64,
-                         "val":  14,
-                         "test":  14
+                         "train":  69,
+                         "val":  15,
+                         "test":  15
                      },
     "validation":  {
-                       "total":  14,
-                       "accuracy":  0.42857142857142855,
+                       "total":  15,
+                       "accuracy":  0.5333333333333333,
                        "per_class":  {
                                          "no_ad":  {
                                                        "precision":  0.75,
-                                                       "recall":  0.3333333333333333,
-                                                       "f1":  0.46153846153846156,
+                                                       "recall":  0.6666666666666666,
+                                                       "f1":  0.7058823529411765,
                                                        "support":  9.0
                                                    },
                                          "mention":  {
-                                                         "precision":  0.25,
-                                                         "recall":  0.6666666666666666,
-                                                         "f1":  0.36363636363636365,
-                                                         "support":  3.0
+                                                         "precision":  0.4,
+                                                         "recall":  0.5,
+                                                         "f1":  0.4444444444444445,
+                                                         "support":  4.0
                                                      },
                                          "official":  {
                                                           "precision":  0.0,
                                                           "recall":  0.0,
                                                           "f1":  0.0,
-                                                          "support":  1.0
+                                                          "support":  0.0
                                                       },
                                          "hidden_ad":  {
-                                                           "precision":  0.5,
-                                                           "recall":  1.0,
-                                                           "f1":  0.6666666666666666,
-                                                           "support":  1.0
+                                                           "precision":  0.0,
+                                                           "recall":  0.0,
+                                                           "f1":  0.0,
+                                                           "support":  2.0
                                                        }
                                      }
                    },
     "test":  {
-                 "total":  14,
-                 "accuracy":  0.42857142857142855,
+                 "total":  15,
+                 "accuracy":  0.7333333333333333,
                  "per_class":  {
                                    "no_ad":  {
-                                                 "precision":  1.0,
-                                                 "recall":  0.4,
-                                                 "f1":  0.5714285714285715,
-                                                 "support":  10.0
+                                                 "precision":  0.8571428571428571,
+                                                 "recall":  0.8571428571428571,
+                                                 "f1":  0.8571428571428571,
+                                                 "support":  7.0
                                              },
                                    "mention":  {
-                                                   "precision":  0.14285714285714285,
-                                                   "recall":  1.0,
-                                                   "f1":  0.25,
-                                                   "support":  1.0
+                                                   "precision":  0.8,
+                                                   "recall":  0.8,
+                                                   "f1":  0.8000000000000002,
+                                                   "support":  5.0
                                                },
                                    "official":  {
                                                     "precision":  0.0,
                                                     "recall":  0.0,
                                                     "f1":  0.0,
-                                                    "support":  2.0
+                                                    "support":  0.0
                                                 },
                                    "hidden_ad":  {
-                                                     "precision":  0.3333333333333333,
-                                                     "recall":  1.0,
+                                                     "precision":  1.0,
+                                                     "recall":  0.3333333333333333,
                                                      "f1":  0.5,
-                                                     "support":  1.0
+                                                     "support":  3.0
                                                  }
                                }
              },
@@ -79,8 +79,8 @@
     "limitations":  [
                         "bootstrap labels generated from conservative heuristic, not legal/product gold labels",
                         "dataset remains small and class-imbalanced",
-                        "official examples improved from 1 to 5 but remain too sparse for reliable evaluation",
+                        "official examples improved from 1 to 6 but have no validation/test support in the deterministic source-safe split",
                         "one failed YouTube download was excluded because ffmpeg is unavailable for m3u8 streams",
-                        "holdout accuracy dropped versus the previous seed artifact, so this artifact is retained for iteration only"
+                        "artifact is retained for iteration only until manual review and broader class coverage are available"
                     ]
 }
