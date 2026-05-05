@@ -250,9 +250,9 @@ export default function DashboardPage() {
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
-          <Link href="/analyze" className="btn btn-primary px-4 rounded-full gap-2">
+          <Link href="/analyze" className="btn btn-primary btn-premium px-5 rounded-full gap-2 shadow-[0_4px_20px_hsl(var(--primary)/0.25)]">
             <BarChart3 className="h-4 w-4" />
-            New Analysis
+            <span className="font-medium">New Analysis</span>
           </Link>
         </motion.div>
       </div>
@@ -293,7 +293,7 @@ export default function DashboardPage() {
 
       {/* Pipeline Status */}
       <motion.div
-        className="grid grid-cols-2 md:grid-cols-4 gap-3"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
@@ -384,15 +384,18 @@ export default function DashboardPage() {
               )}
             </>
           ) : (
-            <div className="p-12 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-4">
-                <FileVideo className="h-8 w-8 text-muted-foreground/50" />
+            <div className="flex flex-col items-center justify-center p-16 text-center">
+              <div className="relative flex h-24 w-24 items-center justify-center mb-6">
+                <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-pulse-slow" />
+                <div className="relative flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-gradient-to-br from-card/80 to-card border border-border/60 shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+                  <FileVideo className="h-7 w-7 text-primary/80" />
+                </div>
               </div>
-              <h3 className="font-semibold mb-1">No analyses yet</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Start by analyzing your first video or post.
+              <h3 className="text-lg font-bold tracking-tight mb-2">No analyses yet</h3>
+              <p className="max-w-sm text-sm text-muted-foreground mb-6">
+                Start by analyzing your first video or social post. The intelligent pipeline will extract deep compliance insights.
               </p>
-              <Link href="/analyze" className="btn btn-primary text-sm">
+              <Link href="/analyze" className="btn btn-primary btn-premium px-8">
                 Start Analysis
               </Link>
             </div>
@@ -486,15 +489,25 @@ function PipelineCard({
   }
 
   return (
-    <div className="card p-4 flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium">{label}</p>
-        <div className={`h-2 w-2 rounded-full ${colors[status]} ${status === 'active' ? 'animate-pulse' : ''}`} />
+    <div className="card p-5 mt-2 flex flex-col gap-3 relative overflow-hidden group hover:border-primary/20 transition-all duration-300 hover:shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:-translate-y-[2px]">
+      <div className={`absolute top-0 right-0 w-24 h-24 -mt-12 -mr-12 rounded-full blur-2xl opacity-20 ${colors[status]} pointer-events-none group-hover:opacity-40 transition-opacity duration-500`} />
+      <div className="relative flex justify-between items-start gap-4">
+        <div>
+          <p className="font-semibold text-[15px] tracking-tight">{label}</p>
+          <p className="text-[12px] text-muted-foreground mt-0.5">{description}</p>
+        </div>
+        <div className="relative flex h-3 w-3 shrink-0 mt-1">
+          {status === 'active' && (
+            <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${colors[status]}`}></span>
+          )}
+          <span className={`relative inline-flex h-3 w-3 rounded-full shadow-[0_0_8px_currentColor] ${colors[status]}`}></span>
+        </div>
       </div>
-      <p className="text-xs text-muted-foreground">{description}</p>
-      <p className={`text-[10px] font-medium ${colors[status].replace('bg-', 'text-')}`}>
-        {labels[status]}
-      </p>
+      <div className="mt-auto pt-2">
+        <span className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-black/5 dark:bg-white/5 ${colors[status].replace('bg-', 'text-')}`}>
+          {labels[status]}
+        </span>
+      </div>
     </div>
   )
 }

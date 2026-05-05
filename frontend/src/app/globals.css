@@ -3,52 +3,52 @@
 
 @layer base {
   :root {
-    --background: 210 45% 98%;
-    --foreground: 225 45% 10%;
+    --background: 210 20% 98%;
+    --foreground: 220 30% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 225 45% 10%;
+    --card-foreground: 220 30% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 225 45% 10%;
-    --primary: 197 92% 47%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 28% 94%;
-    --secondary-foreground: 225 45% 10%;
-    --muted: 210 28% 94%;
-    --muted-foreground: 220 12% 46%;
-    --accent: 210 28% 94%;
-    --accent-foreground: 225 45% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --popover-foreground: 220 30% 10%;
+    --primary: 200 95% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 20% 94%;
+    --secondary-foreground: 220 30% 10%;
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 15% 45%;
+    --accent: 210 20% 94%;
+    --accent-foreground: 220 30% 10%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 100%;
     --border: 214 20% 88%;
     --input: 214 20% 88%;
-    --ring: 197 92% 47%;
-    --radius: 1.15rem;
-    --primary-glow: 197 92% 47% / 0.24;
-    --accent-glow: 210 28% 94% / 0.34;
+    --ring: 200 95% 45%;
+    --radius: 1.25rem;
+    --primary-glow: 200 95% 45% / 0.3;
+    --accent-glow: 210 20% 94% / 0.4;
   }
 
   .dark {
-    --background: 222 42% 6%;
-    --foreground: 210 40% 96%;
-    --card: 222 34% 9%;
-    --card-foreground: 210 40% 96%;
-    --popover: 222 34% 9%;
-    --popover-foreground: 210 40% 96%;
-    --primary: 188 92% 56%;
-    --primary-foreground: 224 45% 8%;
-    --secondary: 223 24% 13%;
-    --secondary-foreground: 210 40% 96%;
-    --muted: 223 24% 14%;
-    --muted-foreground: 217 18% 62%;
-    --accent: 223 24% 14%;
-    --accent-foreground: 210 40% 96%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 221 18% 20%;
-    --input: 221 18% 20%;
-    --ring: 188 92% 56%;
-    --primary-glow: 188 92% 56% / 0.28;
-    --accent-glow: 223 24% 14% / 0.38;
+    --background: 230 25% 4%;
+    --foreground: 210 20% 98%;
+    --card: 230 20% 6%;
+    --card-foreground: 210 20% 98%;
+    --popover: 230 20% 6%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 200 100% 60%;
+    --primary-foreground: 230 25% 4%;
+    --secondary: 230 20% 12%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 230 20% 12%;
+    --muted-foreground: 215 15% 65%;
+    --accent: 230 20% 14%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 20% 16%;
+    --input: 230 20% 16%;
+    --ring: 200 100% 60%;
+    --primary-glow: 200 100% 60% / 0.35;
+    --accent-glow: 230 20% 14% / 0.45;
   }
 }
 
@@ -103,11 +103,11 @@
 @layer components {
   /* ─── Surfaces ─── */
   .card {
-    @apply rounded-[1.45rem] border border-border/70 bg-card text-card-foreground shadow-[0_1px_0_rgba(255,255,255,0.03),0_4px_6px_rgba(0,0,0,0.04),0_12px_36px_rgba(0,0,0,0.06)];
+    @apply rounded-[1.45rem] border border-border/40 bg-card/60 backdrop-blur-3xl text-card-foreground shadow-[0_1px_0_rgba(255,255,255,0.02),0_4px_12px_rgba(0,0,0,0.08),0_24px_48px_rgba(0,0,0,0.12)];
   }
 
   .surface {
-    @apply rounded-[1.45rem] border border-border/70 bg-card/70 backdrop-blur-xl shadow-[0_2px_4px_rgba(0,0,0,0.04),0_20px_60px_rgba(0,0,0,0.10)];
+    @apply rounded-[1.45rem] border border-border/50 bg-card/45 backdrop-blur-2xl shadow-[0_4px_12px_rgba(0,0,0,0.06),0_24px_60px_rgba(0,0,0,0.15)];
   }
 
   /* ─── Buttons ─── */
@@ -316,16 +316,17 @@
 
   /* ─── Section shell ─── */
   .section-shell {
-    @apply relative overflow-hidden rounded-[2rem] border border-border/60 bg-background/68 backdrop-blur-2xl;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 20px 60px rgba(0,0,0,0.08);
+    @apply relative overflow-hidden rounded-[2rem] border border-border/40 bg-background/50 backdrop-blur-[32px];
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 32px 80px rgba(0,0,0,0.12);
   }
 
   .section-shell::after {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.07), transparent 40%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 50%);
     pointer-events: none;
+    border-radius: inherit;
   }
 
   /* ─── Focus ring ─── */

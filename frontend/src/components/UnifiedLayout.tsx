@@ -90,16 +90,16 @@ export function UnifiedLayout({ children }: UnifiedLayoutProps) {
   return (
     <div className="relative flex min-h-screen overflow-hidden text-foreground">
       <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="absolute -left-24 top-[-180px] h-[460px] w-[460px] rounded-full bg-sky-500/10 blur-3xl" />
-        <div className="absolute -right-24 bottom-[-180px] h-[520px] w-[520px] rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.08)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.08)_1px,transparent_1px)] bg-[size:44px_44px]" />
+        <div className="absolute -left-[10%] top-[-10%] h-[600px] w-[600px] rounded-full bg-primary/15 blur-[120px] will-change-transform mix-blend-screen" />
+        <div className="absolute right-[-5%] bottom-[-5%] h-[500px] w-[500px] rounded-full bg-primary/10 blur-[100px] will-change-transform mix-blend-screen" />
+        <div className="absolute inset-0 bg-grid opacity-[0.4]" />
       </div>
 
       {/* Sidebar - Desktop */}
       <motion.aside
         initial={false}
         animate={{ width: isCollapsed ? 80 : 256 }}
-        className="hidden md:flex flex-col border-r border-border/50 bg-card/55 backdrop-blur-2xl sticky top-0 h-screen transition-all duration-300 overflow-visible z-30"
+        className="hidden md:flex flex-col border-r border-border/30 bg-background/60 backdrop-blur-[40px] shadow-[1px_0_40px_rgba(0,0,0,0.05)] sticky top-0 h-screen transition-all duration-300 overflow-visible z-30"
       >
         <div className="p-4 flex items-center justify-between border-b border-border/20">
           <Link href="/" className="flex items-center gap-3 font-bold text-xl group px-2 overflow-hidden whitespace-nowrap">
@@ -139,8 +139,8 @@ export function UnifiedLayout({ children }: UnifiedLayoutProps) {
                 className={cn(
                   "flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all duration-200 group relative",
                   isActive
-                    ? "bg-primary/10 text-primary font-semibold"
-                    : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                    ? "bg-primary/15 text-primary shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_0_15px_hsl(var(--primary)/0.2)] font-medium"
+                    : "hover:bg-muted/80 text-muted-foreground/80 hover:text-foreground",
                   isCollapsed && "justify-center px-0"
                 )}
               >
@@ -171,8 +171,8 @@ export function UnifiedLayout({ children }: UnifiedLayoutProps) {
               className={cn(
                 "flex items-center gap-3 px-4 py-2.5 rounded-2xl transition-all duration-200 group relative",
                 pathname === adminNavItem.href
-                  ? "bg-primary/10 text-primary font-semibold"
-                  : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                  ? "bg-primary/15 text-primary shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_0_15px_hsl(var(--primary)/0.2)] font-medium"
+                  : "hover:bg-muted/80 text-muted-foreground/80 hover:text-foreground",
                 isCollapsed && "justify-center px-0"
               )}
             >
@@ -199,9 +199,9 @@ export function UnifiedLayout({ children }: UnifiedLayoutProps) {
 
         {/* User Profile Section */}
         {!isCollapsed && user && (
-          <div className="px-3 py-3 border-t border-border/20">
-            <div className="flex items-center gap-3 rounded-xl bg-muted/50 p-2">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+          <div className="px-4 py-4 border-t border-border/20">
+            <div className="flex items-center gap-3 rounded-[1rem] bg-card/50 shadow-sm border border-border/50 backdrop-blur-md p-2.5 transition-all hover:bg-card/80">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 shadow-[0_0_10px_hsl(var(--primary)/0.2)]">
                 <User className="h-4 w-4 text-primary" />
               </div>
               <div className="min-w-0 flex-1">

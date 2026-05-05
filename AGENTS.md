@@ -1,117 +1,132 @@
-# AGENTS.md — VeritasAd
+# AGENTS.md - VeritasAd Repository Operating System
 
-Neural network-based advertising detection system. FastAPI backend + Next.js 15 frontend.
+VeritasAd is a neural network-based advertising detection platform (FastAPI backend + Next.js frontend) with async video processing, compliance evidence extraction, and report generation.
+
+## Mandatory Governance Contract
+
+These files are mandatory operating rules for every future task in this repository:
+
+1. `AGENTS.md` (this file)
+2. `docs/engineering-laws.md`
+3. `docs/architecture-evolution.md`
+4. `docs/structure-governance.md`
+5. `docs/release-governance.md`
+6. `docs/tech-debt-system.md`
+7. `docs/ai-learning-loop.md`
+8. `docs/execution-checklists.md`
+9. `.ai/workflows/*.md`
+
+If any instruction conflicts, apply the most restrictive rule that preserves behavior, safety, and compatibility.
+
+## Product Direction (Inferred)
+
+- Primary product: ad/compliance intelligence for video and social content.
+- Core value: detect promotional signals (visual/audio/disclosure/link), produce explainable verdicts, and export evidence-ready reports.
+- Commercial direction: self-hosted + SaaS hybrid, with subscriptions, pay-as-you-go credits, and API usage.
+- Growth vectors: enterprise compliance workflows, partner ingestion pipelines, and scalable asynchronous processing.
+
+## Non-Negotiable Engineering Rules
+
+- Preserve current behavior unless a task explicitly requests behavior change.
+- Prefer move-before-rewrite for structural changes.
+- Keep public API contracts backward compatible unless versioned.
+- Never blend unrelated refactors with feature work.
+- Every risky change must include rollback instructions.
+- Every code change must update linked docs when behavior/contracts/config change.
+- No speculative rewrites of business logic.
+
+## Deterministic Change Policy
+
+- Define scope, touched modules, and compatibility expectations before editing.
+- Minimize blast radius: smallest working change first.
+- Add or update tests for changed behavior.
+- Include observability touchpoints for critical path changes.
+- Record architectural decisions in `docs/decision-log.md`.
+
+## Branch, Commit, and PR Discipline
+
+- Branch prefixes: `feature/*`, `fix/*`, `refactor/*`, `hotfix/*`, `release/*`, `docs/*`.
+- Commit format: `type(scope): short description`.
+- PR must include:
+  - purpose and impact area
+  - migration/rollback notes (if applicable)
+  - test evidence
+  - documentation delta
+
+## Compatibility Guarantees
+
+- Keep endpoints, payload fields, and env vars stable by default.
+- Database migrations must be additive-first and reversible when feasible.
+- Preserve report formats and downstream integrations unless explicitly versioned.
+- Preserve queue task contracts and progress events consumed by frontend.
 
 ## Commands
 
 ### Frontend (`frontend/`)
 
 ```bash
-npm run dev          # Dev server on 0.0.0.0:3000
-npm run build        # Production build
-npm run start        # Start production server
-npm run lint         # ESLint (next lint)
-npm run type-check   # TypeScript check (next build --no-lint)
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm run type-check
 ```
 
-No test runner is configured for the frontend.
+No frontend test runner is configured.
 
 ### Backend (`backend/`)
 
 ```bash
-uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000  # Dev server
-alembic revision --autogenerate -m "desc"                         # New migration
-alembic upgrade head                                              # Apply migrations
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+alembic revision --autogenerate -m "desc"
+alembic upgrade head
+uv run pytest
+uv run pytest tests/unit/
+uv run pytest tests/integration/
+uv run pytest --cov=app
 ```
 
-### Backend Tests
+### Formatting and Linting
 
 ```bash
-uv run pytest                          # Run all tests
-uv run pytest tests/test_api.py        # Run single test file
-uv run pytest tests/unit/              # Run unit tests only
-uv run pytest tests/integration/       # Run integration tests only
-uv run pytest -k "test_something"      # Run test by name substring
-uv run pytest tests/test_api.py::test_function_name  # Run single test
-uv run pytest --cov=app                # Run with coverage
-```
-
-Tests use pytest + pytest-asyncio (auto mode), in-memory SQLite. Fixtures in `tests/conftest.py`.
-
-### Linting & Formatting
-
-```bash
-# Backend
 uv run black backend/
 uv run ruff check backend/
 uv run ruff check --fix backend/
 uv run mypy backend/app/
-
-# Frontend
 cd frontend && npm run lint
-
-# Pre-commit (runs all hooks)
 pre-commit run --all-files
 ```
 
-## Code Style
+## Architecture and Ownership Snapshot
 
-### TypeScript / React (Frontend)
+- Backend domains (`backend/app/domains/*`) are the primary business boundaries.
+- Async analysis pipeline (`backend/app/tasks/video_analysis.py`) is release critical.
+- API client contract (`frontend/src/lib/api-client.ts`) is frontend-backend contract-critical.
+- Config and limits (`backend/app/core/config.py`) are high-change and high-risk.
 
-- **Strict TypeScript** (`strict: true`, ES2022 target, `noEmit: true`)
-- **Path alias**: `@/*` maps to `./src/*`
-- **Components**: PascalCase (`UploadPanel.tsx`), placed in `src/components/`
-- **Hooks**: camelCase, prefixed with `use` (`useAnalysis.ts`)
-- **Pages**: Next.js App Router in `src/app/`, kebab-case route segments
-- **Imports**: Absolute paths via `@/` alias. Group: React/next, third-party, internal
-- **Styling**: Tailwind CSS v4 with `clsx` + `tailwind-merge` via `cn()` utility
-- **Dark mode**: `class` strategy via `next-themes`
-- **State**: TanStack React Query for server state, React state for UI state
-- **ESLint**: `next/core-web-vitals` + `next/typescript`
+## Document and Git Synchronization Rules
 
-### Python (Backend)
+For every code change, validate related artifacts:
 
-- **Line length**: 100 (Black + Ruff)
-- **Formatting**: Black (auto-formatted), Ruff for linting
-- **Ruff rules**: `E, F, I, N, W, UP` (auto-import sorting via `I`)
-- **Naming**: `snake_case` for functions/variables, `PascalCase` for classes
-- **Type hints**: Required on function signatures. `disallow_untyped_defs = false` but `check_untyped_defs = true`
-- **Imports**: Standard lib, third-party, local — separated by blank lines (Ruff `I` handles this)
-- **Database**: SQLAlchemy 2.0 async, models in `backend/app/models/`
-- **Schemas**: Pydantic v2 in `backend/app/schemas/`
-- **Routes**: FastAPI routers in `backend/app/api/`
-- **Business logic**: Domain-driven in `backend/app/domains/`
-- **Error handling**: Custom exceptions in `core/exceptions.py`, HTTPException for API errors
-- **Logging**: `structlog` for structured logging
-- **Async**: Use `async def` for I/O-bound handlers; pytest-asyncio `auto` mode
+- `README` and setup docs
+- architecture docs (`docs/current-architecture-map.md`, `docs/target-architecture.md`)
+- release docs (`docs/changelog.md`, `docs/release-notes.md`, migration/rollback docs)
+- API/user-facing docs if routes/contracts changed
 
-## Project Structure
+For every document change, validate referenced commands, paths, and compatibility claims.
 
-```
-backend/app/          # FastAPI app
-  api/                # Route definitions
-  core/               # Config, exceptions, security
-  domains/            # Business logic
-  models/             # SQLAlchemy models
-  schemas/            # Pydantic schemas
-  services/           # Service layer
-  tasks/              # Celery background tasks
+## Release Safety Defaults
 
-frontend/src/
-  app/                # Next.js App Router pages
-  components/         # React components
-  contexts/           # React contexts
-  hooks/              # Custom hooks
-  lib/                # Utilities
-  types/              # TypeScript types
-```
+- Feature flags for risky/large behavior changes.
+- Canary or phased rollout for critical path changes.
+- Rollback path must exist before release approval.
+- Post-incident updates must feed back into rules and checklists.
 
-## Key Notes
+## Tech Stack Notes
 
-- Package manager: **uv** for backend (uses `uv.lock`), **npm** for frontend
-- Python 3.12 required (`>=3.12,<3.13`)
-- Auth via Supabase (frontend) + python-jose/PyJWT (backend)
-- Celery + Redis for background tasks
-- ML stack: PyTorch, Transformers, faster-whisper, librosa, OpenCV
+- Backend package manager: `uv`
+- Frontend package manager: `npm`
+- Python: `>=3.12,<3.13`
+- Auth: Supabase + JWT flows
+- Background processing: Celery + Redis
 - Observability: OpenTelemetry + Sentry + structlog
-- All modules (admin, analytics, billing, bot) are placeholders
