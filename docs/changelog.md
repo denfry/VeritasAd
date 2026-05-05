@@ -10,6 +10,7 @@
 - Optional hybrid ad model scorer with rule-based fallback.
 - ML workflow documentation in `docs/ml-ad-detection.md`.
 - Targeted ad-boost seed dataset and disabled iteration model artifact for official advertising examples.
+- Balanced ad-training batch planner for class-focused collection and manual review queue preparation.
 
 ## Changed
 

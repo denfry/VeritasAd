@@ -26,6 +26,31 @@ VeritasAd now has a first production-oriented ML foundation for ad classificatio
    python scripts/ml_pipeline.py split ../data/annotated/<dataset>/reviewed.jsonl ../data/annotated/<dataset>/splits
    ```
 
+## Balanced Batch Collection
+
+Use `backend/scripts/collect_ad_training_batch.py` to prepare balanced collection batches for the five review labels. By default it creates class-focused profiles for `official`, `hidden_ad`, `unofficial`, `mention`, and `no_ad`.
+
+Dry-run planning writes a manifest and review guide without network collection:
+
+```bash
+cd backend
+python scripts/collect_ad_training_batch.py --output-dir ../data/annotated/balanced_ad_training_batch --videos-per-profile 10 --posts-per-profile 10
+```
+
+Run collection for all profiles:
+
+```bash
+python scripts/collect_ad_training_batch.py --output-dir ../data/annotated/balanced_ad_training_batch --videos-per-profile 10 --posts-per-profile 10 --run
+```
+
+If profile folders already exist, rebuild the combined dataset and review queue only:
+
+```bash
+python scripts/collect_ad_training_batch.py --output-dir ../data/annotated/balanced_ad_training_batch --consolidate-only
+```
+
+The generated `review_queue.jsonl` includes `expected_review_label` as a reviewer hint only. Human reviewers must still fill `review_label`; do not treat profile targets as gold labels.
+
 ## Training and Evaluation
 
 Train a model artifact:
