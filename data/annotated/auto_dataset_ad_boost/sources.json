@@ -1,0 +1,131 @@
+{
+  "output_dir": "D:\\Projects\\VeritasAd\\data\\annotated\\auto_dataset_ad_boost",
+  "target_videos": 12,
+  "target_posts": 0,
+  "video_queries": [
+    "#ad sponsored review promo code",
+    "paid promotion coupon code review",
+    "sponsored by use code discount",
+    "VPN coupon code sponsored"
+  ],
+  "telegram_channels": [
+    "banksta",
+    "meduzalive",
+    "rozetked",
+    "vcnews",
+    "tproger",
+    "thevillage",
+    "durov"
+  ],
+  "queued_sources": [
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=va0BpnX7oUs",
+      "source_key": "https://www.youtube.com/watch?v=va0BpnX7oUs",
+      "title": "Tax Slayer: PROMO CODE 50% OFF #ad",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=QnCOfBd4thk",
+      "source_key": "https://www.youtube.com/watch?v=QnCOfBd4thk",
+      "title": "Titus + Wixwell + Pelops Testing in Hydra - Free account reviews, just ask.",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=DOGCzWGbaTQ",
+      "source_key": "https://www.youtube.com/watch?v=DOGCzWGbaTQ",
+      "title": "REMILIA GREEN GODDESS SHAMPOO: Worth Buying or Skip? #ad. PROMO CODE*",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=UQDFTwgN8wY",
+      "source_key": "https://www.youtube.com/watch?v=UQDFTwgN8wY",
+      "title": "HelloFresh presents Factor75 Use code FACTORSE1718 for $120 off #ad #sponsored #jmg #jonathanbj1977",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=HoY5Hc2baH8",
+      "source_key": "https://www.youtube.com/watch?v=HoY5Hc2baH8",
+      "title": "#AD Emma Mattress Review and Special Discount Code",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=aeukiuIkHdk",
+      "source_key": "https://www.youtube.com/watch?v=aeukiuIkHdk",
+      "title": "Dermstore x Subscription Sisters Edit + Coupon Code | ONLY $75 FOR 7 ITEMS!!",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=figWQgSItV0",
+      "source_key": "https://www.youtube.com/watch?v=figWQgSItV0",
+      "title": "💸 “Helium 10 Coupon Code 2026 🔥 Don’t Pay Full Price Again!”",
+      "origin": "youtube_search",
+      "query": "paid promotion coupon code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=s7m3GXqJ5uU",
+      "source_key": "https://www.youtube.com/watch?v=s7m3GXqJ5uU",
+      "title": "Hostinger Coupon Code | Hidden Deal: 85% OFF + 20% Extra",
+      "origin": "youtube_search",
+      "query": "paid promotion coupon code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=p-8dru6h5X0",
+      "source_key": "https://www.youtube.com/watch?v=p-8dru6h5X0",
+      "title": "FunderPro Coupon Code - Best FunderPro REVIEW & Discount Codes (2026)",
+      "origin": "youtube_search",
+      "query": "paid promotion coupon code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=dvOO_efYyfM",
+      "source_key": "https://www.youtube.com/watch?v=dvOO_efYyfM",
+      "title": "(( 🛑 TODAY COUPON )) Helium 10 Coupon Code 2026 🔥| Best Coupon code for helium 10 | Helium 10",
+      "origin": "youtube_search",
+      "query": "paid promotion coupon code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=uMm4jXEJ5Uk",
+      "source_key": "https://www.youtube.com/watch?v=uMm4jXEJ5Uk",
+      "title": "Funding Pips Discount Code - Best Funding Pips REVIEW & Coupon Codes (2026)",
+      "origin": "youtube_search",
+      "query": "paid promotion coupon code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=-twk--q7sU8",
+      "source_key": "https://www.youtube.com/watch?v=-twk--q7sU8",
+      "title": "Hostinger Review 2026 | Hostinger Coupon Code 2026 95% Off + Free Domain",
+      "origin": "youtube_search",
+      "query": "paid promotion coupon code review"
+    }
+  ],
+  "resume": false
+}

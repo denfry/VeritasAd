@@ -9,6 +9,7 @@
 - Reviewed-dataset ML utilities for validation, review queue export/import, source-safe splits, training, and evaluation.
 - Optional hybrid ad model scorer with rule-based fallback.
 - ML workflow documentation in `docs/ml-ad-detection.md`.
+- Targeted ad-boost seed dataset and disabled iteration model artifact for official advertising examples.
 
 ## Changed
 

@@ -40,3 +40,15 @@
 
 ## Note
 - Labels are model-generated and should be reviewed where confidence is low.
+
+## Ad-Boost Iteration
+- Added dataset: `data/annotated/auto_dataset_ad_boost/reviewed_bootstrap.jsonl`
+- Combined reviewed dataset: `reviewed_bootstrap_plus_adboost.jsonl`
+- Total combined records: 92
+- Completed ad-boost records included: 4
+- Failed ad-boost records excluded: 1
+- Combined labels: `no_ad` 52, `mention` 29, `hidden_ad` 6, `official` 5
+- Model artifact: `models/ad-classifier/hybrid-ad-model-production-seed-adboost.json`
+- Validation accuracy: 0.42857142857142855
+- Test accuracy: 0.42857142857142855
+- Decision: not enabled by default. Official examples improved from 1 to 5, but the dataset is still too small and class-imbalanced for production runtime.

@@ -43,6 +43,15 @@ python scripts/ml_pipeline.py evaluate ../models/ad-classifier/hybrid-ad-model.j
 
 The first production target is 1k-3k reviewed examples. The golden test split must be manually reviewed before metrics are accepted.
 
+## Seed Artifacts
+
+Current checked-in seed artifacts are intentionally disabled by default:
+
+- `models/ad-classifier/hybrid-ad-model-production-seed.json` was trained from 88 bootstrap-reviewed records.
+- `models/ad-classifier/hybrid-ad-model-production-seed-adboost.json` adds 4 successful targeted YouTube advertising examples and excludes 1 failed m3u8 download.
+
+The ad-boost artifact uses 92 records total with labels: `no_ad` 52, `mention` 29, `hidden_ad` 6, `official` 5. Its validation and test accuracy are both 0.42857142857142855, so it is retained only as an iteration artifact and must not be enabled as the default production model.
+
 ## Runtime Enablement
 
 The model scorer is disabled by default. Enable it with:
