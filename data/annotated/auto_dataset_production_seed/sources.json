@@ -1,0 +1,64 @@
+{
+  "output_dir": "D:\\Projects\\VeritasAd\\data\\annotated\\auto_dataset_production_seed",
+  "target_videos": 8,
+  "target_posts": 0,
+  "video_queries": [
+    "sponsor promo code discount review",
+    "vpn coupon code sponsored review",
+    "affiliate link discount code review"
+  ],
+  "telegram_channels": [
+    "banksta",
+    "meduzalive",
+    "rozetked",
+    "vcnews",
+    "tproger",
+    "thevillage",
+    "durov"
+  ],
+  "queued_sources": [
+    {
+      "content_type": "video",
+      "source_type": "file",
+      "source_key": "D:\\Projects\\VeritasAd\\data\\uploads\\20260505_180321_30b6a2f5.mp4",
+      "source_file": "D:\\Projects\\VeritasAd\\data\\uploads\\20260505_180321_30b6a2f5.mp4",
+      "title": "20260505_180321_30b6a2f5",
+      "origin": "local_directory"
+    },
+    {
+      "content_type": "video",
+      "source_type": "file",
+      "source_key": "D:\\Projects\\VeritasAd\\data\\uploads\\20260505_180543_2ee83401.mp4",
+      "source_file": "D:\\Projects\\VeritasAd\\data\\uploads\\20260505_180543_2ee83401.mp4",
+      "title": "20260505_180543_2ee83401",
+      "origin": "local_directory"
+    },
+    {
+      "content_type": "video",
+      "source_type": "file",
+      "source_key": "D:\\Projects\\VeritasAd\\data\\uploads\\20260505_180828_4f94863f.mp4",
+      "source_file": "D:\\Projects\\VeritasAd\\data\\uploads\\20260505_180828_4f94863f.mp4",
+      "title": "20260505_180828_4f94863f",
+      "origin": "local_directory"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=GIdZ1w1w_Wc",
+      "source_key": "https://www.youtube.com/watch?v=GIdZ1w1w_Wc",
+      "title": "NordVPN Coupon Code 💥 | Get an EXCLUSIVE NordVPN Discount!",
+      "origin": "youtube_search",
+      "query": "sponsor promo code discount review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=lO6x0yQI1bA",
+      "source_key": "https://www.youtube.com/watch?v=lO6x0yQI1bA",
+      "title": "Hostinger Coupon Code | Full Hostinger Review | Biggest Deal + Free Domain",
+      "origin": "youtube_search",
+      "query": "sponsor promo code discount review"
+    }
+  ],
+  "resume": true
+}
