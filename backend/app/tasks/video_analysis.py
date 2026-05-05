@@ -22,6 +22,7 @@ from app.core.redis import RedisClient
 from app.core.config import settings
 from app.services.video_processor import VideoProcessor
 from app.services.link_detector import LinkDetector
+from app.services.ad_model_scorer import AdModelScorer
 from app.services.report_generator import ReportGenerator
 from app.services.video_download_errors import classify_processing_error
 from app.models.database import AsyncSessionLocal, Analysis, AnalysisStatus
@@ -502,6 +503,35 @@ def analyze_video_task(
                     has_commercial_links=has_link_signals,
                     commercial_urls=link_result.get("urls", []),
                 )
+                task_payload = {
+                    "title": metadata.get("title", ""),
+                    "description": description,
+                    "transcript": audio_result.get("transcript", ""),
+                    "has_advertising": has_advertising,
+                    "confidence_score": confidence_score,
+                    "visual_score": visual_score,
+                    "audio_score": audio_score,
+                    "text_score": text_score,
+                    "disclosure_score": disclosure_score,
+                    "link_score": link_score,
+                    "detected_brands": all_detected_brands,
+                    "detected_keywords": audio_result.get("keywords", []),
+                    "disclosure_text": disclosure_markers,
+                    "cta_matches": cta_matches,
+                    "commercial_urls": commercial_urls,
+                    "ad_classification": classification["classification"],
+                }
+                model_score = AdModelScorer(
+                    artifact_path=settings.AD_MODEL_ARTIFACT_PATH,
+                    enabled=settings.AD_MODEL_ENABLED,
+                ).score(task_payload)
+                if model_score:
+                    has_advertising = bool(model_score["has_advertising"])
+                    confidence_score = float(model_score["model_confidence"])
+                    classification = {
+                        "classification": str(model_score["ad_classification"]),
+                        "reason": f"Model {model_score['model_version']} prediction.",
+                    }
 
                 # Update analysis record
                 analysis.has_advertising = has_advertising

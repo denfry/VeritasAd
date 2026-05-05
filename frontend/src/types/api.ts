@@ -37,6 +37,9 @@ export type AnalysisCheckResponse = {
   commercial_urls?: string[]
   ad_classification?: string
   ad_reason?: string
+  model_version?: string
+  model_confidence?: number
+  model_class_probabilities?: Record<string, number>
   detected_brands?: BrandDetection[]
   detected_keywords?: string[]
   transcript?: string
@@ -65,6 +68,9 @@ export type AnalysisHistoryItem = {
   commercial_urls?: string[]
   ad_classification: string | null
   ad_reason: string | null
+  model_version?: string | null
+  model_confidence?: number | null
+  model_class_probabilities?: Record<string, number> | null
   duration: number | null
   progress: number
   error_message: string | null

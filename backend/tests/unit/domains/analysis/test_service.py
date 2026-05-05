@@ -80,3 +80,48 @@ class TestAnalysisService:
             processor=mock_processor,
             disclosure_detector=mock_disclosure,
         )
+
+    @pytest.mark.asyncio
+    async def test_build_post_response_applies_enabled_model_scorer(self, service, mock_processor, mock_disclosure):
+        mock_disclosure.analyze = AsyncMock(
+            return_value={
+                "markers": [],
+                "score": 0.1,
+                "has_disclosure": False,
+                "discovered_brands": [],
+            }
+        )
+        mock_processor.detect_brands_in_text.return_value = []
+        service.ad_model_scorer = MagicMock()
+        service.ad_model_scorer.score.return_value = {
+            "model_version": "unit-model",
+            "model_confidence": 0.91,
+            "model_class_probabilities": {"hidden_ad": 0.91, "no_ad": 0.09},
+            "ad_classification": "hidden_ad",
+            "has_advertising": True,
+        }
+
+        with patch("app.domains.analysis.service.LinkDetector") as link_detector_cls:
+            link_detector_cls.return_value.analyze.return_value = {
+                "link_score": 0.8,
+                "has_cta": True,
+                "has_ad_signals": True,
+                "cta_matches": ["buy"],
+                "urls": ["https://example.test/deal"],
+            }
+
+            response = await service._build_post_response(
+                "https://example.test/post",
+                {
+                    "id": "post-1",
+                    "title": "Discount",
+                    "description": "buy with promo",
+                    "uploader": "creator",
+                },
+                SourceType.URL,
+            )
+
+        assert response["ad_classification"] == "hidden_ad"
+        assert response["has_advertising"] is True
+        assert response["model_version"] == "unit-model"
+        assert response["model_confidence"] == pytest.approx(0.91)

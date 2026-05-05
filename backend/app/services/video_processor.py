@@ -20,6 +20,7 @@ from app.services.disclosure_detector import DisclosureDetector
 from app.services.brand_ocr import BrandOCR
 from app.services.cloud_brand_detector import CloudBrandDetector
 from app.services.link_detector import LinkDetector
+from app.services.ad_model_scorer import AdModelScorer
 from app.core.config import settings
 from app.utils.ad_classification import (
     classify_advertising,
@@ -208,6 +209,10 @@ class VideoProcessor:
         self.disclosure_detector = DisclosureDetector(use_llm=use_llm)
         self.brand_ocr = BrandOCR(known_brands=self.brands) if settings.ENABLE_BRAND_OCR else None
         self.cloud_brand_detector = CloudBrandDetector()
+        self.ad_model_scorer = AdModelScorer(
+            artifact_path=settings.AD_MODEL_ARTIFACT_PATH,
+            enabled=settings.AD_MODEL_ENABLED,
+        )
 
         # Detection settings from config
         self.detection_threshold = settings.BRAND_DETECTION_THRESHOLD
@@ -1185,6 +1190,11 @@ class VideoProcessor:
                 "processing_time": processing_time,
                 "file_path": str(video_path)
             }
+            model_score = self.ad_model_scorer.score(result)
+            if model_score:
+                result.update(model_score)
+                has_advertising = bool(result["has_advertising"])
+                confidence_score = float(result.get("model_confidence", confidence_score))
 
             logger.info(f"Analysis complete. Result: {has_advertising}, Score: {confidence_score:.2f}")
             return result

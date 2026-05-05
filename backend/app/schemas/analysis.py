@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime
 
 
@@ -39,6 +39,9 @@ class AnalysisResult(BaseModel):
     ad_classification: Optional[str] = None
     ad_reason: Optional[str] = None
     method: Optional[str] = Field(None, description="Detection method (e.g. rule-based, llm-pro)")
+    model_version: Optional[str] = None
+    model_confidence: Optional[float] = None
+    model_class_probabilities: Optional[Dict[str, float]] = None
 
     # Metadata
     status: str
@@ -74,6 +77,9 @@ class AnalysisUpdate(BaseModel):
     ad_classification: Optional[str] = None
     ad_reason: Optional[str] = None
     method: Optional[str] = None
+    model_version: Optional[str] = None
+    model_confidence: Optional[float] = None
+    model_class_probabilities: Optional[Dict[str, float]] = None
     processing_time: Optional[float] = None
     error_message: Optional[str] = None
     report_path: Optional[str] = None

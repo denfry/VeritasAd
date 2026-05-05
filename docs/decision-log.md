@@ -6,3 +6,10 @@
 - Chose modular monolith evolution over immediate service decomposition.
 - Prioritized behavior preservation and rollback-first release safety.
 - Adopted recurring-issue to rule/workflow/checklist conversion model.
+
+## 2026-05-05 - Hybrid Reviewed-Dataset Classifier
+
+- Chose a hybrid text + evidence-feature classifier for the first production ML version.
+- Kept the current rule-based classifier as the default runtime path and fallback.
+- Deferred full multimodal fine-tuning until a larger reviewed dataset and locked golden test set exist.
+- Avoided a database migration in v1; model metadata is returned on immediate responses where available.

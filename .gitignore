@@ -88,6 +88,11 @@ models/cache/*
 
 # Testing
 .pytest_cache/
+backend/.pytest-tmp/
+backend/.test-data/
+backend/.test-models/
+backend/.test-temp/
+backend/tests/.tmp/
 .coverage
 htmlcov/
 .tox/

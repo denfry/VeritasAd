@@ -15,6 +15,7 @@ from app.models.database import Analysis, SourceType, User
 from app.services.link_detector import LinkDetector
 from app.services.video_processor import VideoProcessor
 from app.services.disclosure_detector import DisclosureDetector
+from app.services.ad_model_scorer import AdModelScorer
 from app.services.video_download_errors import classify_processing_error
 from app.utils.ad_classification import (
     classify_advertising,
@@ -83,6 +84,10 @@ class AnalysisService:
         self.repository = repository
         self.processor = processor
         self.disclosure_detector = disclosure_detector
+        self.ad_model_scorer = AdModelScorer(
+            artifact_path=settings.AD_MODEL_ARTIFACT_PATH,
+            enabled=settings.AD_MODEL_ENABLED,
+        )
 
     async def _build_post_response(
         self, url: str, info: Dict[str, Any], source_type: SourceType
@@ -136,7 +141,7 @@ class AnalysisService:
             commercial_urls=link_result.get("urls", []),
         )
 
-        return {
+        response = {
             "analysis_type": "post",
             "status": "completed",
             "video_id": info.get("id") or "post",
@@ -159,6 +164,10 @@ class AnalysisService:
             "cta_matches": link_result.get("cta_matches", []),
             "commercial_urls": link_result.get("urls", []),
         }
+        model_score = self.ad_model_scorer.score(response)
+        if model_score:
+            response.update(model_score)
+        return response
 
     async def start_video_analysis(
         self,

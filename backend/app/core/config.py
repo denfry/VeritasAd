@@ -153,6 +153,11 @@ class Settings(BaseSettings):
     LOCAL_LLM_MAX_NEW_TOKENS: int = 256
     LOCAL_LLM_TEMPERATURE: float = 0.1
 
+    # Optional reviewed-dataset classifier. Disabled by default; when enabled
+    # and the artifact is missing or invalid, analysis falls back to rules.
+    AD_MODEL_ENABLED: bool = False
+    AD_MODEL_ARTIFACT_PATH: Optional[str] = None
+
     # Tiered Models (Power levels)
     # FREE: basic local model or cheap API
     FREE_LLM_MODEL: str = "gpt-4o-mini"
