@@ -222,17 +222,6 @@ export function SiteHeader() {
   )
 }
 
-export function LanguageSelectorCompact() {
-  const { language, setLanguage } = useLanguage()
-
-  return (
-    <LanguageSelector
-      selectedLanguage={language}
-      onLanguageChange={setLanguage}
-    />
-  )
-}
-
 export function CurrencySelectorCompact() {
   const { selectedCurrency, setSelectedCurrency } = useCurrency()
 
@@ -240,6 +229,17 @@ export function CurrencySelectorCompact() {
     <CurrencySelector
       selectedCurrency={selectedCurrency}
       onCurrencyChange={setSelectedCurrency}
+    />
+  )
+}
+
+export function LanguageSelectorCompact() {
+  const { language, setLanguage } = useLanguage()
+
+  return (
+    <LanguageSelector
+      selectedLanguage={language}
+      onLanguageChange={setLanguage}
     />
   )
 }
