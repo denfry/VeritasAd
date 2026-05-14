@@ -25,7 +25,6 @@ export function SiteHeader() {
   const [isOpen, setIsOpen] = useState(false)
   const { user } = useAuth()
   const pathname = usePathname()
-  const { language, setLanguage } = useLanguage()
 
   return (
     <motion.header
