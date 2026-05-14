@@ -110,6 +110,18 @@ export const ALL_LANGUAGES: Language[] = [
   { code: 'xh', name: 'Xhosa', nativeName: 'isiXhosa', flag: '🇿🇦' },
   { code: 'yo', name: 'Yoruba', nativeName: 'Yorùbá', flag: '🇳🇬' },
   { code: 'zu', name: 'Zulu', nativeName: 'isiZulu', flag: '🇿🇦' },
+  { code: 'bi', name: 'Bislama', nativeName: 'Bislama', flag: '🇻🇺' },
+  { code: 'dz', name: 'Dzongkha', nativeName: 'རྫོང་ཁ', flag: '🇧🇹' },
+  { code: 'fo', name: 'Faroese', nativeName: 'Føroyskt', flag: '🇫🇴' },
+  { code: 'ha', name: 'Hausa', nativeName: 'Hausa', flag: '🇳🇬' },
+  { code: 'ig', name: 'Igbo', nativeName: 'Igbo', flag: '🇳🇬' },
+  { code: 'mfe', name: 'Mauritian Creole', nativeName: 'Kreol Morisien', flag: '🇲🇺' },
+  { code: 'ny', name: 'Chichewa', nativeName: 'Chichewa', flag: '🇲🇼' },
+  { code: 'rn', name: 'Kirundi', nativeName: 'Ikirundi', flag: '🇧🇮' },
+  { code: 'ss', name: 'Siswati', nativeName: 'SiSwati', flag: '🇸🇿' },
+  { code: 'st', name: 'Sesotho', nativeName: 'Sesotho', flag: '🇱🇸' },
+  { code: 'tl', name: 'Filipino', nativeName: 'Filipino', flag: '🇵🇭' },
+  { code: 'tpi', name: 'Tok Pisin', nativeName: 'Tok Pisin', flag: '🇵🇬' },
 ]
 
 /**
@@ -142,6 +154,9 @@ export function getFlagUrl(languageCode: string): string {
     'fa': 'ir', 'ku': 'tr', 'he': 'il', 'el': 'gr', 'ca': 'es',
     'eu': 'es', 'gl': 'es', 'sw': 'tz', 'yo': 'ng', 'ht': 'ht',
     'lb': 'lu', 'mn': 'mn',
+    'bi': 'vu', 'fo': 'fo', 'ha': 'ng', 'ig': 'ng',
+    'mfe': 'mu', 'ny': 'mw', 'rn': 'bi', 'ss': 'sz',
+    'st': 'ls', 'tl': 'ph', 'tpi': 'pg',
   }
   const country = mapping[languageCode] || languageCode
   return `https://purecatamphetamine.github.io/country-flag-icons/3x2/${country.toUpperCase()}.svg`
