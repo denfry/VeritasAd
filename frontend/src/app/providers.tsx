@@ -7,6 +7,7 @@ import { useState } from "react"
 import { AuthProvider } from "@/contexts/auth-context"
 import { CurrencyProvider } from "@/contexts/currency-context"
 import { CookieConsent } from "@/components/CookieConsent"
+import { LanguageProvider } from "@/contexts/language-context"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -21,6 +22,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <LanguageProvider>
         <CurrencyProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             {children}
@@ -28,6 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <CookieConsent />
           </ThemeProvider>
         </CurrencyProvider>
+        </LanguageProvider>
       </AuthProvider>
     </QueryClientProvider>
   )
