@@ -8,8 +8,10 @@ import { Menu, ShieldCheck, Sparkles, X, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "./ThemeToggle"
 import { CurrencySelector } from "./CurrencySelector"
+import { LanguageSelector } from "./LanguageSelector"
 import { useAuth } from "@/contexts/auth-context"
 import { useCurrency } from "@/contexts/currency-context"
+import { useLanguage } from "@/contexts/language-context"
 
 const navLinks = [
   { href: "/dashboard", label: "Dashboard" },
@@ -23,6 +25,7 @@ export function SiteHeader() {
   const [isOpen, setIsOpen] = useState(false)
   const { user } = useAuth()
   const pathname = usePathname()
+  const { language, setLanguage } = useLanguage()
 
   return (
     <motion.header
@@ -65,6 +68,11 @@ export function SiteHeader() {
 
         {/* Actions */}
         <div className="flex items-center gap-2 text-sm">
+          {/* Language Selector - Desktop */}
+          <div className="hidden lg:block">
+            <LanguageSelectorCompact />
+          </div>
+
           {/* Currency Selector - Desktop */}
           <div className="hidden lg:block">
             <CurrencySelectorCompact />
@@ -211,6 +219,17 @@ export function SiteHeader() {
         )}
       </AnimatePresence>
     </motion.header>
+  )
+}
+
+export function LanguageSelectorCompact() {
+  const { language, setLanguage } = useLanguage()
+
+  return (
+    <LanguageSelector
+      selectedLanguage={language}
+      onLanguageChange={setLanguage}
+    />
   )
 }
 
