@@ -24,6 +24,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ALL_LANGUAGES } from "@/lib/languages"
 
 const container = {
   hidden: { opacity: 0 },
@@ -192,12 +193,7 @@ function PreferencesTab({
     { id: "system", label: "System", icon: <Monitor className="h-4 w-4" /> },
   ]
 
-  const languages = [
-    { id: "en", label: "English" },
-    { id: "zh", label: "中文" },
-    { id: "es", label: "Español" },
-    { id: "fr", label: "Français" },
-  ]
+  const languages = ALL_LANGUAGES.map(l => ({ id: l.code, label: l.nativeName, name: l.name }))
 
   const handleThemeChange = async (newTheme: string) => {
     setTheme(newTheme)
@@ -246,14 +242,15 @@ function PreferencesTab({
                 key={l.id}
                 onClick={() => handleLanguageChange(l.id)}
                 className={cn(
-                  "flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all",
+                  "flex flex-col items-center justify-center gap-1 rounded-xl border px-4 py-3 text-sm font-medium transition-all",
                   language === l.id
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border bg-transparent text-muted-foreground hover:bg-muted/50"
                 )}
               >
                 <Globe className="h-4 w-4" />
-                {l.label}
+                <span>{l.label}</span>
+                <span className="text-[10px] text-muted-foreground/50">{l.name}</span>
               </button>
             ))}
           </div>
