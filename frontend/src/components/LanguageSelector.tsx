@@ -60,6 +60,7 @@ export function LanguageSelector({ selectedLanguage, onLanguageChange }: Languag
         aria-expanded={isOpen}
       >
         <div className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={getFlagUrl(selectedLanguage)}
             alt=""
@@ -118,6 +119,7 @@ export function LanguageSelector({ selectedLanguage, onLanguageChange }: Languag
                         lang.code === selectedLanguage ? 'bg-primary/10 text-primary' : 'text-foreground/80'
                       }`}
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={getFlagUrl(lang.code)} alt="" className="w-5 h-3.5 rounded-[1px] object-cover" />
                       <span className="text-xs font-bold">{lang.code.toUpperCase()}</span>
                     </button>
@@ -172,6 +174,7 @@ function LanguageItem({ language, isSelected, onSelect }: LanguageItemProps) {
       }`}
     >
       <div className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={getFlagUrl(language.code)}
           alt=""
