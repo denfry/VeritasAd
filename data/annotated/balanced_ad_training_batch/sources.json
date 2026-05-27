@@ -1,0 +1,15 @@
+{
+  "output_dir": "data\\annotated\\balanced_ad_training_batch",
+  "profiles": [
+    "official",
+    "hidden_ad",
+    "unofficial",
+    "mention",
+    "no_ad"
+  ],
+  "videos_per_profile": 40,
+  "posts_per_profile": 40,
+  "total_target_videos": 200,
+  "total_target_posts": 200,
+  "review_threshold": 0.78
+}

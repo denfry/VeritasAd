@@ -22,6 +22,7 @@ import {
 import { ApiConnectionStatus } from "@/components/ApiConnectionStatus"
 import { SectionReveal } from "@/components/SectionReveal"
 import { SiteShell } from "@/components/SiteShell"
+import { JsonLd } from "@/components/seo/JsonLd"
 import { CountUp } from "@/components/ui/CountUp"
 import { ThreeScene } from "@/components/three/ThreeScene"
 
@@ -98,6 +99,44 @@ const signalTiles = [
   { label: "Disclosure gaps", value: "4", icon: ShieldCheck },
 ]
 
+const homeSchema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "VeritasAd",
+    url: "https://veritasad.ai",
+    logo: "https://veritasad.ai/favicon.svg",
+    contactPoint: {
+      "@type": "ContactPoint",
+      email: "privacy@veritasad.ai",
+      contactType: "customer support",
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "VeritasAd",
+    url: "https://veritasad.ai",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://veritasad.ai/docs?query={search_term_string}",
+      "query-input": "required name=search_term_string",
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "VeritasAd",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+  },
+]
+
 export default function HomePage() {
   const reduceMotion = useReducedMotion()
   const { scrollYProgress } = useScroll()
@@ -106,6 +145,7 @@ export default function HomePage() {
 
   return (
     <ThreeScene intensity="medium" type="neural">
+      <JsonLd data={homeSchema} />
       <SiteShell>
 
         {/* ── Hero ── */}

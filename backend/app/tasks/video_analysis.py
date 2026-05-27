@@ -10,7 +10,7 @@ except ImportError:  # pragma: no cover - optional dependency for worker runtime
         pass
 
 
-from typing import Dict, Any
+from typing import Dict, Any, Awaitable, Callable
 from datetime import datetime, timezone
 import structlog
 from pathlib import Path
@@ -88,6 +88,39 @@ def _dispose_db_connections() -> None:
     from app.models.database import engine as _db_engine
 
     _db_engine.sync_engine.dispose(close=False)
+
+
+def _build_threadsafe_progress_callback(
+    loop: asyncio.AbstractEventLoop,
+    update_progress: Callable[[int, str, str], Awaitable[None]],
+    *,
+    task_id: str,
+) -> Callable[[int, str], None]:
+    def progress_callback(progress: int, message: str) -> None:
+        try:
+            running_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            running_loop = None
+
+        if running_loop is loop:
+            loop.create_task(update_progress(progress, message, "download"))
+            return
+
+        future = asyncio.run_coroutine_threadsafe(
+            update_progress(progress, message, "download"),
+            loop,
+        )
+        try:
+            future.result()
+        except Exception as progress_error:
+            logger.warning(
+                "download_progress_update_failed",
+                error=str(progress_error),
+                task_id=task_id,
+                progress=progress,
+            )
+
+    return progress_callback
 
 
 @celery_app.task(
@@ -169,11 +202,18 @@ def download_video_task(
                         task_id=task_id,
                     )
 
+            download_loop = asyncio.get_running_loop()
+            download_progress_callback = _build_threadsafe_progress_callback(
+                download_loop,
+                update_progress,
+                task_id=task_id,
+            )
+
             await update_progress(5, "Downloading source video", "download")
             downloaded_path = await asyncio.to_thread(
                 processor.download_video,
                 source_url,
-                progress_callback=update_progress,
+                progress_callback=download_progress_callback,
             )
             if not downloaded_path:
                 raise RuntimeError(f"Video download returned no file for URL: {source_url}")
@@ -379,6 +419,10 @@ def analyze_video_task(
                 await update_progress(25, "Analyzing video", "analyze")
                 metadata = await processor.get_video_metadata(Path(video_path_current))
                 analysis.duration = metadata.get("duration")
+                analysis.author = metadata.get("uploader")
+                analysis.channel = metadata.get("channel")
+                analysis.published_at = metadata.get("upload_date")
+                analysis.categories = metadata.get("categories")
                 await db.commit()
 
                 await update_progress(45, "Detecting brands", "brand_detection")
@@ -552,6 +596,24 @@ def analyze_video_task(
                 analysis.ad_classification = classification["classification"]
                 analysis.ad_reason = disclosure_result.get("ad_reason") or classification["reason"]
                 analysis.method = disclosure_result.get("method")
+                
+                # Populate new metadata
+                analysis.author_name = metadata.get("uploader")
+                analysis.author_username = metadata.get("uploader") # Best effort
+                analysis.channel_title = metadata.get("channel")
+                analysis.published_at = metadata.get("upload_date")
+                analysis.tonality = disclosure_result.get("tonality") # from LLM
+                analysis.categories = metadata.get("categories") or disclosure_result.get("categories")
+                analysis.detected_links = commercial_urls
+                analysis.topics = disclosure_result.get("topics") # from LLM
+                analysis.sentiment_score = disclosure_result.get("sentiment_score") # from LLM
+                analysis.content_description = metadata.get("description")
+                analysis.engagement_metrics = {"view_count": metadata.get("view_count"), "like_count": metadata.get("like_count")}
+                analysis.risk_factors = disclosure_result.get("risk_factors") # from LLM
+                analysis.compliance_flags = disclosure_result.get("compliance_flags") # from LLM
+                analysis.recommendation = disclosure_result.get("recommendation") # from LLM
+                analysis.recommendation_confidence = disclosure_result.get("recommendation_confidence") # from LLM
+
                 analysis.status = AnalysisStatus.COMPLETED
                 analysis.progress = 100
                 analysis.completed_at = datetime.now(timezone.utc)

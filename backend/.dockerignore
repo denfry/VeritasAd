@@ -41,6 +41,12 @@ env/
 
 # Testing
 .pytest_cache/
+.pytest-tmp/
+.test-data/
+.test-models/
+.test-reports/
+.test-temp/
+.test-uploads/
 .coverage
 htmlcov/
 .tox/

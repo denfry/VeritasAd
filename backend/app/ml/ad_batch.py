@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import json
+import csv
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
+from collections import Counter
 
 
 @dataclass(frozen=True)
 class BatchProfile:
     name: str
+    language: str  # ISO 639-1 language code
     expected_label: str
     video_queries: tuple[str, ...]
     telegram_channels: tuple[str, ...] = ()
@@ -56,10 +60,23 @@ class BatchPlan:
     def review_guide_path(self) -> Path:
         return self.output_dir / "review_guide.md"
 
+    @property
+    def dataset_csv_path(self) -> Path:
+        return self.output_dir / "dataset.csv"
+
+    @property
+    def sources_path(self) -> Path:
+        return self.output_dir / "sources.json"
+
+    @property
+    def summary_path(self) -> Path:
+        return self.output_dir / "summary.md"
+
 
 DEFAULT_BATCH_PROFILES: dict[str, BatchProfile] = {
     "official": BatchProfile(
         name="official",
+        language="ru",
         expected_label="official",
         video_queries=(
             "#ad sponsored review promo code",
@@ -70,6 +87,7 @@ DEFAULT_BATCH_PROFILES: dict[str, BatchProfile] = {
     ),
     "hidden_ad": BatchProfile(
         name="hidden_ad",
+        language="ru",
         expected_label="hidden_ad",
         video_queries=(
             "affiliate link discount code review",
@@ -80,6 +98,7 @@ DEFAULT_BATCH_PROFILES: dict[str, BatchProfile] = {
     ),
     "unofficial": BatchProfile(
         name="unofficial",
+        language="ru",
         expected_label="unofficial",
         video_queries=(
             "brand integration review without sponsor disclosure",
@@ -90,6 +109,7 @@ DEFAULT_BATCH_PROFILES: dict[str, BatchProfile] = {
     ),
     "mention": BatchProfile(
         name="mention",
+        language="ru",
         expected_label="mention",
         video_queries=(
             "tech review unboxing comparison",
@@ -100,6 +120,7 @@ DEFAULT_BATCH_PROFILES: dict[str, BatchProfile] = {
     ),
     "no_ad": BatchProfile(
         name="no_ad",
+        language="ru",
         expected_label="no_ad",
         video_queries=(
             "tutorial how to build project",
@@ -141,7 +162,7 @@ def build_auto_annotate_commands(plan: BatchPlan) -> list[list[str]]:
     for profile in plan.profiles:
         profile_output = plan.output_dir / profile.name
         command = [
-            "python",
+            sys.executable,
             "scripts/auto_annotate.py",
             "--target-videos",
             str(plan.videos_per_profile),
@@ -224,6 +245,7 @@ def combine_profile_records(profile: BatchProfile, records: Iterable[dict[str, o
             continue
         row = dict(record)
         row["batch_profile"] = profile.name
+        row["language"] = profile.language
         row["expected_review_label"] = profile.expected_label
         row["needs_review"] = True
         combined.append(row)
@@ -280,16 +302,118 @@ def _write_jsonl(path: Path, rows: Iterable[dict[str, object]]) -> int:
     return count
 
 
+def _flatten_record(record: dict[str, object]) -> dict[str, object]:
+    return {
+        "record_id": record.get("record_id", ""),
+        "status": record.get("status", ""),
+        "content_type": record.get("content_type", ""),
+        "source_type": record.get("source_type", ""),
+        "source_key": record.get("source_key", ""),
+        "source_url": record.get("source_url", ""),
+        "source_file": record.get("source_file", ""),
+        "title": record.get("title", ""),
+        "uploader": record.get("uploader", ""),
+        "ad_classification": record.get("ad_classification", ""),
+        "confidence_score": record.get("confidence_score", 0.0),
+        "needs_review": record.get("needs_review", False),
+        "review_reason": record.get("review_reason", ""),
+        "error": record.get("error", ""),
+    }
+
+
+def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    flattened = [_flatten_record(row) for row in rows]
+    fieldnames = list(flattened[0].keys()) if flattened else list(_flatten_record({}).keys())
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(flattened)
+
+
+def _build_sources_manifest(plan: BatchPlan) -> dict[str, object]:
+    return {
+        "output_dir": str(plan.output_dir),
+        "profiles": [profile.name for profile in plan.profiles],
+        "videos_per_profile": plan.videos_per_profile,
+        "posts_per_profile": plan.posts_per_profile,
+        "total_target_videos": plan.total_target_videos,
+        "total_target_posts": plan.total_target_posts,
+        "review_threshold": plan.review_threshold,
+    }
+
+
+def _render_summary(records: list[dict[str, object]]) -> str:
+    total = len(records)
+    by_status = Counter(str(record.get("status", "unknown")) for record in records)
+    by_label = Counter(str(record.get("ad_classification", "")) for record in records if record.get("ad_classification"))
+    by_source = Counter(str(record.get("source_type", "unknown")) for record in records)
+    by_content = Counter(str(record.get("content_type", "unknown")) for record in records)
+
+    lines = [
+        "# Balanced Ad Training Batch",
+        "",
+        "## Totals",
+        f"- Total records: {total}",
+        f"- Completed: {by_status.get('completed', 0)}",
+        f"- Failed: {total - by_status.get('completed', 0)}",
+        f"- Needs review: {sum(1 for record in records if bool(record.get('needs_review')))}",
+        "",
+        "## Distribution by Label",
+    ]
+    for label, count in sorted(by_label.items()):
+        lines.append(f"- {label}: {count}")
+    if not by_label:
+        lines.append("- none")
+
+    lines.extend(["", "## Distribution by Source Type"])
+    for source_type, count in sorted(by_source.items()):
+        lines.append(f"- {source_type}: {count}")
+
+    lines.extend(["", "## Distribution by Content Type"])
+    for content_type, count in sorted(by_content.items()):
+        lines.append(f"- {content_type}: {count}")
+
+    lines.extend(["", "## Status Breakdown"])
+    for status, count in sorted(by_status.items()):
+        lines.append(f"- {status}: {count}")
+
+    return "\n".join(lines) + "\n"
+
+
 def consolidate_profile_outputs(plan: BatchPlan) -> dict[str, int]:
     combined: list[dict[str, object]] = []
+    seen_sources: set[str] = set()
     for profile in plan.profiles:
         records = _load_jsonl(plan.output_dir / profile.name / "dataset.jsonl")
-        combined.extend(combine_profile_records(profile, records))
+        for row in combine_profile_records(profile, records):
+            source_key = str(
+                row.get("source_key")
+                or row.get("source_url")
+                or row.get("source_file")
+                or row.get("record_id")
+                or ""
+            ).strip()
+            if source_key in seen_sources:
+                continue
+            seen_sources.add(source_key)
+            combined.append(row)
 
     review_rows = build_review_queue_rows(combined)
     dataset_count = _write_jsonl(plan.dataset_path, combined)
     queue_count = _write_jsonl(plan.review_queue_path, review_rows)
-    return {"dataset_records": dataset_count, "review_queue_records": queue_count}
+    _write_csv(plan.dataset_csv_path, combined)
+    plan.sources_path.write_text(
+        json.dumps(_build_sources_manifest(plan), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    plan.summary_path.write_text(_render_summary(combined), encoding="utf-8")
+    failed_count = sum(1 for row in combined if str(row.get("status", "")) != "completed")
+    return {
+        "dataset_records": dataset_count,
+        "review_queue_records": queue_count,
+        "failed_records": failed_count,
+    }
 
 
 def write_batch_plan(plan: BatchPlan, commands: Iterable[Sequence[str]]) -> None:

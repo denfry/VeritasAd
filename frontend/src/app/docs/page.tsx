@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { ApiConnectionStatus } from "@/components/ApiConnectionStatus"
+import { JsonLd } from "@/components/seo/JsonLd"
 import { SiteShell } from "@/components/SiteShell"
 import { BookOpen, CheckCircle2, Cloud, Code2, LockOpen, Rocket, Server, TerminalSquare } from "lucide-react"
 
@@ -35,9 +36,22 @@ const checklist = [
   "Analyze page opens without Supabase when mock auth is enabled",
 ]
 
+const docsSchema = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "How to self-host VeritasAd",
+  description: "Set up backend, connect frontend API URL, and validate MVP mode without auth.",
+  step: [
+    { "@type": "HowToStep", name: "Run backend", text: "Start FastAPI and verify /health responds." },
+    { "@type": "HowToStep", name: "Set frontend API URL", text: "Configure NEXT_PUBLIC_API_URL for your deployment." },
+    { "@type": "HowToStep", name: "Enable demo auth bypass", text: "Use NEXT_PUBLIC_DISABLE_AUTH and DISABLE_AUTH for MVP demos." },
+  ],
+}
+
 export default function DocsPage() {
   return (
     <SiteShell>
+      <JsonLd data={docsSchema} />
       <section className="container mx-auto max-w-7xl px-4 py-16">
         <motion.div
           className="mx-auto max-w-3xl text-center"

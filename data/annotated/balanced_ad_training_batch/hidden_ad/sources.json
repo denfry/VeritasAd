@@ -1,0 +1,702 @@
+{
+  "output_dir": "D:\\Projects\\VeritasAd\\data\\annotated\\balanced_ad_training_batch\\hidden_ad",
+  "target_videos": 40,
+  "target_posts": 40,
+  "video_queries": [
+    "affiliate link discount code review",
+    "coupon code link in description review",
+    "promo code exclusive discount no sponsored disclosure"
+  ],
+  "telegram_channels": [
+    "banksta",
+    "meduzalive",
+    "rozetked",
+    "vcnews",
+    "tproger",
+    "thevillage",
+    "durov"
+  ],
+  "queued_sources": [
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=p5hTQpqcfvI",
+      "source_key": "https://www.youtube.com/watch?v=p5hTQpqcfvI",
+      "title": "Tapfiliate Promo Code & Discount | Easy Affiliate Marketing Software – Save Up to 70% Now!",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=7BishNpmY90",
+      "source_key": "https://www.youtube.com/watch?v=7BishNpmY90",
+      "title": "AI Software Affiliate Quick DEMO & Review | Free Discount Code",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=S1O0fH2dLjc",
+      "source_key": "https://www.youtube.com/watch?v=S1O0fH2dLjc",
+      "title": "AI Hosting Affiliate Review | Quick DEMO, $4 Discount Code",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=UCCvwYLZGUU",
+      "source_key": "https://www.youtube.com/watch?v=UCCvwYLZGUU",
+      "title": "Hostinger Coupon Code 2026 | 95% OFF + EXTRA 20% (100% Working TODAY!)",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=n4OevAffOgI",
+      "source_key": "https://www.youtube.com/watch?v=n4OevAffOgI",
+      "title": "Best Hostinger Shared Hosting Deal USA 💰 Best Hostinger Discount Code for Beginners 📌100% Working",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=RY_hjy-_TfQ",
+      "source_key": "https://www.youtube.com/watch?v=RY_hjy-_TfQ",
+      "title": "Hostinger Coupon Code 2026 | 95% OFF + EXTRA 20% (100% Working TODAY May 9, 2026)",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=CWG-aY5lTDg",
+      "source_key": "https://www.youtube.com/watch?v=CWG-aY5lTDg",
+      "title": "Larken Affiliate Link and Discount Code Announcement",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=30Zyy9uDfWE",
+      "source_key": "https://www.youtube.com/watch?v=30Zyy9uDfWE",
+      "title": "🛑 WORKING COUPON - Hostinger Coupon Code 2026 🔥| Coupon code hostinger | Hostinger Coupon ",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=tBCTTzk3dbs",
+      "source_key": "https://www.youtube.com/watch?v=tBCTTzk3dbs",
+      "title": "Ultimate Affiliate AI Review Ultimate Affiliate AI Webinar Bundle + Discount Code + Coupon Code",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=3V5I8h3vj4A",
+      "source_key": "https://www.youtube.com/watch?v=3V5I8h3vj4A",
+      "title": "Hostinger Coupon Code 2026 Best Hostinger Coupon for First Time Users  100% Tested and Working Code",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=9FG53lTJ7y0",
+      "source_key": "https://www.youtube.com/watch?v=9FG53lTJ7y0",
+      "title": "Hostinger Discount Code TODAY 🔥95% OFF + FREE Domain (TODAY ONLY!) 100% Working Promo Code",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=1GsE3h16n1c",
+      "source_key": "https://www.youtube.com/watch?v=1GsE3h16n1c",
+      "title": "Base44 Coupon Code",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=O43LbJuYlLo",
+      "source_key": "https://www.youtube.com/watch?v=O43LbJuYlLo",
+      "title": "Samsung One UI 8.5 Official Launch is Here! - Everything You Need To Know",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=uZhevouKxkA",
+      "source_key": "https://www.youtube.com/watch?v=uZhevouKxkA",
+      "title": "Momcozy Affiliate Link & Discount Code",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=rtQlbItK2-U",
+      "source_key": "https://www.youtube.com/watch?v=rtQlbItK2-U",
+      "title": "Hostinger Coupon Code 2026 | Honest Hostinger Review | Unlock Biggest Savings",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=cJuhQD-zO3E",
+      "source_key": "https://www.youtube.com/watch?v=cJuhQD-zO3E",
+      "title": "🛑 NEW COUPON - Hostinger coupon code 2026 🔥 | Coupon code for hostinger | Hostinger coupon code",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=CwBIiz9VbE8",
+      "source_key": "https://www.youtube.com/watch?v=CwBIiz9VbE8",
+      "title": "Best Hostinger Coupon for First Time Users | Hostinger Promo Code USA 2026 🎯Today April 29, 2026",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=C28GVG5yKgc",
+      "source_key": "https://www.youtube.com/watch?v=C28GVG5yKgc",
+      "title": "Mylio Photos Working Discount Code   Mylio Photos Affiliate Discount Deal",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=Jx6NhyhZ7iM",
+      "source_key": "https://www.youtube.com/watch?v=Jx6NhyhZ7iM",
+      "title": "Hostinger Coupon Code Best Hostinger Coupon Code 90% OFF 100% Working Code 🚨LIMITED TIME!",
+      "origin": "youtube_search",
+      "query": "affiliate link discount code review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=r8TqKE58e9s",
+      "source_key": "https://www.youtube.com/watch?v=r8TqKE58e9s",
+      "title": "The ONLY NordVPN Coupon Code You need! 💸",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=1_ngXPZnojw",
+      "source_key": "https://www.youtube.com/watch?v=1_ngXPZnojw",
+      "title": "Hostinger Coupon Code 2026 | Hostinger Website Builder | Hostinger Review 🔥 Unlock Maximum Savings",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=JWQAWLLPfSY",
+      "source_key": "https://www.youtube.com/watch?v=JWQAWLLPfSY",
+      "title": "BIGGEST Surfshark Coupon Code you can get in 2026!",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=FXX89qJZUZ8",
+      "source_key": "https://www.youtube.com/watch?v=FXX89qJZUZ8",
+      "title": "ExpressVPN Coupon Code 2026 | Honest ExpressVPN Review | Best VPN Deal in 2026",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=QC_vnYfm08U",
+      "source_key": "https://www.youtube.com/watch?v=QC_vnYfm08U",
+      "title": "The5ers Discount Code : Enjoy 15% Discount On Trading Fees | The5ers Coupon Code",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=nAcxI-3YehA",
+      "source_key": "https://www.youtube.com/watch?v=nAcxI-3YehA",
+      "title": "Surfshark Coupon Code | Get 89% + FREE Months | Surfshark Review 2026",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=lh9DKVldW9E",
+      "source_key": "https://www.youtube.com/watch?v=lh9DKVldW9E",
+      "title": "NordVPN Coupon Code 2026 🛡️ Get 76% OFF + 4 Months FREE (Tested!)",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=8ZA3DXzQ148",
+      "source_key": "https://www.youtube.com/watch?v=8ZA3DXzQ148",
+      "title": "🛑 WORKING COUPON - Helium 10 coupon code 2026 🔥 | Coupon code for helium 10 | Helium 10 coupon ",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=Kt9MWsEINBY",
+      "source_key": "https://www.youtube.com/watch?v=Kt9MWsEINBY",
+      "title": "Hostinger Coupon Code 💥 | The BEST Hostinger deal in 2026!",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=lO6x0yQI1bA",
+      "source_key": "https://www.youtube.com/watch?v=lO6x0yQI1bA",
+      "title": "Hostinger Coupon Code | Full Hostinger Review | Biggest Deal + Free Domain",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=7tf_31uj6aM",
+      "source_key": "https://www.youtube.com/watch?v=7tf_31uj6aM",
+      "title": "Hostinger Coupon Code (2026) – Get Up To 95% OFF + Free Domain (Best Deal Method!)",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=qcdJMGM-XLM",
+      "source_key": "https://www.youtube.com/watch?v=qcdJMGM-XLM",
+      "title": "Surfshark Coupon Code 2026: Get the Best Surfshark Discount Code Here!",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=eqB3XNgAYbY",
+      "source_key": "https://www.youtube.com/watch?v=eqB3XNgAYbY",
+      "title": "Bluechew Review & Unboxing - (Coupon Code Link in the description)",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=9AN07lSLZK0",
+      "source_key": "https://www.youtube.com/watch?v=9AN07lSLZK0",
+      "title": "Hostinger Coupon Code | Honest Hostinger Review + Best Hosting Discount (2026)",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=tmvb2RrkLas",
+      "source_key": "https://www.youtube.com/watch?v=tmvb2RrkLas",
+      "title": "NordVPN Coupon Code  Best Nord VPN Discount  NordVPN Review",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=yRWQMZQgtmo",
+      "source_key": "https://www.youtube.com/watch?v=yRWQMZQgtmo",
+      "title": "🛑 WORKING COUPON - Nordvpn Coupon code 2026 🔥 | Coupon code nordvpn | nordvpn coupon code | nordvpn",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=mMqv7hiY9jU",
+      "source_key": "https://www.youtube.com/watch?v=mMqv7hiY9jU",
+      "title": "Hostinger Coupon Code 2026 | Hostinger Review Breakdown | Best Web Hosting & Website Builder",
+      "origin": "youtube_search",
+      "query": "coupon code link in description review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=d2P5LnOXKek",
+      "source_key": "https://www.youtube.com/watch?v=d2P5LnOXKek",
+      "title": "HostGator Coupon Code 2026 🔥 | Up To 76% Off + Free Domain",
+      "origin": "youtube_search",
+      "query": "promo code exclusive discount no sponsored disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=nTRuDdteDCA",
+      "source_key": "https://www.youtube.com/watch?v=nTRuDdteDCA",
+      "title": "69% OFF WordPress.com Coupon Code (2026 Verified)",
+      "origin": "youtube_search",
+      "query": "promo code exclusive discount no sponsored disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=3esVi23uME0",
+      "source_key": "https://www.youtube.com/watch?v=3esVi23uME0",
+      "title": "Coursera Plus Coupon Code 2026 (100% Working) – Real Method Revealed",
+      "origin": "youtube_search",
+      "query": "promo code exclusive discount no sponsored disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=j_g__9ipKfs",
+      "source_key": "https://www.youtube.com/watch?v=j_g__9ipKfs",
+      "title": "Coursera Promo Code 2026 – Latest Discount Guide (40% OFF Working)",
+      "origin": "youtube_search",
+      "query": "promo code exclusive discount no sponsored disclosure"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93774",
+      "source_key": "https://t.me/banksta/93774",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93775",
+      "source_key": "https://t.me/banksta/93775",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93776",
+      "source_key": "https://t.me/banksta/93776",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93777",
+      "source_key": "https://t.me/banksta/93777",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93778",
+      "source_key": "https://t.me/banksta/93778",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93779",
+      "source_key": "https://t.me/banksta/93779",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93780",
+      "source_key": "https://t.me/banksta/93780",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93781",
+      "source_key": "https://t.me/banksta/93781",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93782",
+      "source_key": "https://t.me/banksta/93782",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93783",
+      "source_key": "https://t.me/banksta/93783",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93784",
+      "source_key": "https://t.me/banksta/93784",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93785",
+      "source_key": "https://t.me/banksta/93785",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93786",
+      "source_key": "https://t.me/banksta/93786",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93787",
+      "source_key": "https://t.me/banksta/93787",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93788",
+      "source_key": "https://t.me/banksta/93788",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93789",
+      "source_key": "https://t.me/banksta/93789",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93790",
+      "source_key": "https://t.me/banksta/93790",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93791",
+      "source_key": "https://t.me/banksta/93791",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93792",
+      "source_key": "https://t.me/banksta/93792",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93793",
+      "source_key": "https://t.me/banksta/93793",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142288",
+      "source_key": "https://t.me/meduzalive/142288",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142294",
+      "source_key": "https://t.me/meduzalive/142294",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142295",
+      "source_key": "https://t.me/meduzalive/142295",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142296",
+      "source_key": "https://t.me/meduzalive/142296",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142297",
+      "source_key": "https://t.me/meduzalive/142297",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142298",
+      "source_key": "https://t.me/meduzalive/142298",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142299",
+      "source_key": "https://t.me/meduzalive/142299",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142300",
+      "source_key": "https://t.me/meduzalive/142300",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142301",
+      "source_key": "https://t.me/meduzalive/142301",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142302",
+      "source_key": "https://t.me/meduzalive/142302",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142303",
+      "source_key": "https://t.me/meduzalive/142303",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142304",
+      "source_key": "https://t.me/meduzalive/142304",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142306",
+      "source_key": "https://t.me/meduzalive/142306",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142307",
+      "source_key": "https://t.me/meduzalive/142307",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142308",
+      "source_key": "https://t.me/meduzalive/142308",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142309",
+      "source_key": "https://t.me/meduzalive/142309",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142268",
+      "source_key": "https://t.me/meduzalive/142268",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142269",
+      "source_key": "https://t.me/meduzalive/142269",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142270",
+      "source_key": "https://t.me/meduzalive/142270",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142271",
+      "source_key": "https://t.me/meduzalive/142271",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    }
+  ],
+  "resume": false
+}

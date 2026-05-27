@@ -33,7 +33,14 @@ docs/
 # Tests
 **/coverage/
 **/.pytest_cache/
+**/.pytest-tmp/
+**/.test-data/
+**/.test-models/
+**/.test-reports/
+**/.test-temp/
+**/.test-uploads/
 **/htmlcov/
+pytest-cache-files-*/
 
 # Logs
 **/*.log

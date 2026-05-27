@@ -1,18 +1,21 @@
-import { Metadata } from "next"
-import Link from "next/link"
+﻿import Link from "next/link"
 import { ArrowLeft, Cookie, Settings, Globe, Table, Mail } from "lucide-react"
 import { SiteShell } from "@/components/SiteShell"
+import { JsonLd } from "@/components/seo/JsonLd"
 
-export const metadata: Metadata = {
-  title: "Cookie Policy | VeritasAd",
-  description: "Cookie Policy for VeritasAd - Information about cookies used on our platform",
+
+const webPageSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "Cookie Policy",
+  url: "https://veritasad.ai/legal/cookies",
 }
-
 export default function CookiesPage() {
   const lastUpdated = "March 31, 2026"
 
   return (
     <SiteShell>
+      <JsonLd data={webPageSchema} />
       <div className="container mx-auto max-w-3xl px-4 py-12">
         <div className="mb-10">
           <h1 className="text-4xl font-extrabold tracking-tight">Cookie Policy</h1>
@@ -187,3 +190,7 @@ export default function CookiesPage() {
     </SiteShell>
   )
 }
+
+
+
+

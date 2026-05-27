@@ -145,6 +145,117 @@ async def fetch_instagram_post(url: str) -> Optional[Dict[str, Any]]:
         logger.error(f"Error fetching Instagram post: {e}")
         return None
 
+async def fetch_tiktok_post(url: str) -> Optional[Dict[str, Any]]:
+    """Fetch TikTok post metadata using basic scraping."""
+    try:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept-Language": "en-US,en;q=0.9"
+            }
+            response = await client.get(url, headers=headers)
+            
+            if response.status_code != 200:
+                return None
+            
+            soup = _parse_html(response.text)
+            if soup is None:
+                return None
+            
+            # TikTok meta tags
+            og_desc = soup.find('meta', property='og:description')
+            og_title = soup.find('meta', property='og:title')
+            
+            desc_text = og_desc['content'] if og_desc and 'content' in og_desc.attrs else ""
+            title_text = og_title['content'] if og_title and 'content' in og_title.attrs else "TikTok Video"
+            
+            # Author can sometimes be found in og:title
+            author = "TikTok User"
+            if " | TikTok" in title_text:
+                author = title_text.split(" | TikTok")[0]
+            
+            return {
+                "id": "tt_post",
+                "title": title_text,
+                "description": desc_text,
+                "uploader": author,
+                "view_count": None
+            }
+    except Exception as e:
+        logger.error(f"Error fetching TikTok post: {e}")
+        return None
+
+async def fetch_twitter_post(url: str) -> Optional[Dict[str, Any]]:
+    """Fetch Twitter/X post metadata using basic scraping."""
+    try:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            }
+            response = await client.get(url, headers=headers)
+            
+            if response.status_code != 200:
+                return None
+            
+            soup = _parse_html(response.text)
+            if soup is None:
+                return None
+            
+            # Twitter/X meta tags
+            og_desc = soup.find('meta', property='og:description')
+            og_title = soup.find('meta', property='og:title')
+            
+            desc_text = og_desc['content'] if og_desc and 'content' in og_desc.attrs else ""
+            title_text = og_title['content'] if og_title and 'content' in og_title.attrs else "X/Twitter Post"
+            
+            author = "X User"
+            if " on X" in title_text:
+                author = title_text.split(" on X")[0]
+            
+            return {
+                "id": "x_post",
+                "title": title_text,
+                "description": desc_text,
+                "uploader": author,
+                "view_count": None
+            }
+    except Exception as e:
+        logger.error(f"Error fetching X/Twitter post: {e}")
+        return None
+
+async def fetch_reddit_post(url: str) -> Optional[Dict[str, Any]]:
+    """Fetch Reddit post metadata using JSON API."""
+    try:
+        # Append .json to get the data
+        json_url = url.split('?')[0].rstrip('/') + ".json"
+        
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            headers = {
+                "User-Agent": "VeritasAd/1.0 (Research Project)"
+            }
+            response = await client.get(json_url, headers=headers)
+            
+            if response.status_code != 200:
+                return None
+            
+            data = response.json()
+            # Reddit JSON format for a post is a list of two objects
+            if not isinstance(data, list) or not data:
+                return None
+                
+            post_data = data[0]['data']['children'][0]['data']
+            
+            return {
+                "id": post_data.get('id'),
+                "title": post_data.get('title'),
+                "description": post_data.get('selftext'),
+                "uploader": post_data.get('author'),
+                "view_count": post_data.get('ups')
+            }
+    except Exception as e:
+        logger.error(f"Error fetching Reddit post: {e}")
+        return None
+
 from urllib.parse import urlparse
 
 async def extract_social_post(url: str) -> Optional[Dict[str, Any]]:
@@ -161,5 +272,11 @@ async def extract_social_post(url: str) -> Optional[Dict[str, Any]]:
         return await fetch_vk_post(url)
     elif hostname.endswith("instagram.com") or hostname == "instagram.com" or hostname.endswith("instagr.am") or hostname == "instagr.am":
         return await fetch_instagram_post(url)
+    elif hostname.endswith("tiktok.com") or hostname == "tiktok.com":
+        return await fetch_tiktok_post(url)
+    elif hostname.endswith("twitter.com") or hostname == "twitter.com" or hostname.endswith("x.com") or hostname == "x.com":
+        return await fetch_twitter_post(url)
+    elif hostname.endswith("reddit.com") or hostname == "reddit.com":
+        return await fetch_reddit_post(url)
         
     return None

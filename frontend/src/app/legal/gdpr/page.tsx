@@ -1,18 +1,21 @@
-import { Metadata } from "next"
-import Link from "next/link"
+﻿import Link from "next/link"
 import { ArrowLeft, User, FileText, Trash2, Download, Ban, Scale } from "lucide-react"
 import { SiteShell } from "@/components/SiteShell"
+import { JsonLd } from "@/components/seo/JsonLd"
 
-export const metadata: Metadata = {
-  title: "GDPR Rights | VeritasAd",
-  description: "Your rights under GDPR and how to exercise them with VeritasAd",
+
+const webPageSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "GDPR Rights",
+  url: "https://veritasad.ai/legal/gdpr",
 }
-
 export default function GDPRPage() {
   const lastUpdated = "March 31, 2026"
 
   return (
     <SiteShell>
+      <JsonLd data={webPageSchema} />
       <div className="container mx-auto max-w-3xl px-4 py-12">
         <div className="mb-10">
           <h1 className="text-4xl font-extrabold tracking-tight">Your GDPR Rights</h1>
@@ -160,3 +163,7 @@ export default function GDPRPage() {
     </SiteShell>
   )
 }
+
+
+
+

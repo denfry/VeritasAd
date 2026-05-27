@@ -49,6 +49,16 @@ def test_has_video_payload_detects_expected_shapes(info, expected):
     ("raw_error", "expected_code", "expected_message_part"),
     [
         (
+            "ffmpeg could not be found. Please install ffmpeg",
+            ErrorCode.VIDEO_DOWNLOAD_FAILED,
+            "ffmpeg is not installed",
+        ),
+        (
+            "cookies from browser failed to decrypt key with DPAPI",
+            ErrorCode.VIDEO_DOWNLOAD_FAILED,
+            "decrypting browser cookies",
+        ),
+        (
             "YouTube said: sign in to confirm you're not a bot in yt-dlp",
             ErrorCode.VIDEO_DOWNLOAD_FAILED,
             "platform protection",

@@ -1,18 +1,21 @@
-import { Metadata } from "next"
-import Link from "next/link"
+﻿import Link from "next/link"
 import { ArrowLeft, AlertTriangle, FileText, Info, ExternalLink, UserCheck, Mail } from "lucide-react"
 import { SiteShell } from "@/components/SiteShell"
+import { JsonLd } from "@/components/seo/JsonLd"
 
-export const metadata: Metadata = {
-  title: "Disclaimer | VeritasAd",
-  description: "Disclaimer and limitations of liability for VeritasAd service",
+
+const webPageSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "Disclaimer",
+  url: "https://veritasad.ai/legal/disclaimer",
 }
-
 export default function DisclaimerPage() {
   const lastUpdated = "March 31, 2026"
 
   return (
     <SiteShell>
+      <JsonLd data={webPageSchema} />
       <div className="container mx-auto max-w-3xl px-4 py-12">
         <div className="mb-10">
           <div className="flex items-center gap-3">
@@ -180,3 +183,7 @@ export default function DisclaimerPage() {
     </SiteShell>
   )
 }
+
+
+
+

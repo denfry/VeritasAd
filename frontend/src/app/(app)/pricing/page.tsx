@@ -10,6 +10,7 @@ import { createSubscription, purchaseCreditPackage } from "@/lib/api-client"
 import { CurrencySelector } from "@/components/CurrencySelector"
 import { useCurrency, Price, PricePerMonth, SavingsBadge } from "@/contexts/currency-context"
 import { ThreeCardEffect } from "@/components/three/ThreeCardEffect"
+import { JsonLd } from "@/components/seo/JsonLd"
 
 import { motion } from "framer-motion"
 
@@ -140,6 +141,23 @@ const CREDIT_PACKAGES = [
   },
 ]
 
+const pricingSchema = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: "VeritasAd Pricing",
+  description: "Subscription plans and credit packages for AI ad intelligence analysis.",
+  brand: {
+    "@type": "Brand",
+    name: "VeritasAd",
+  },
+  offers: [
+    { "@type": "Offer", name: "Starter", price: "2900", priceCurrency: "RUB", availability: "https://schema.org/InStock" },
+    { "@type": "Offer", name: "Pro", price: "7900", priceCurrency: "RUB", availability: "https://schema.org/InStock" },
+    { "@type": "Offer", name: "Business", price: "19900", priceCurrency: "RUB", availability: "https://schema.org/InStock" },
+    { "@type": "Offer", name: "Enterprise", price: "49900", priceCurrency: "RUB", availability: "https://schema.org/InStock" },
+  ],
+}
+
 export default function PricingPage() {
   const router = useRouter()
   const { user } = useAuth()
@@ -185,6 +203,7 @@ export default function PricingPage() {
 
   return (
     <>
+      <JsonLd data={pricingSchema} />
         {/* Header */}
         <section className="container mx-auto max-w-6xl px-4 pt-12 pb-8">
           <motion.div

@@ -40,6 +40,24 @@ class AnalysisResult(BaseModel):
     ad_reason: Optional[str] = None
     method: Optional[str] = Field(None, description="Detection method (e.g. rule-based, llm-pro)")
     model_version: Optional[str] = None
+    
+    # New metadata fields
+    author_name: Optional[str] = None
+    author_username: Optional[str] = None
+    channel_title: Optional[str] = None
+    published_at: Optional[datetime] = None
+    tonality: Optional[str] = None
+    categories: List[str] = []
+    detected_links: List[str] = []
+    topics: List[str] = []
+    sentiment_score: Optional[float] = None
+    content_description: Optional[str] = None
+    engagement_metrics: Optional[Dict] = None
+    risk_factors: List[str] = []
+    compliance_flags: List[str] = []
+    recommendation: Optional[str] = None
+    recommendation_confidence: Optional[float] = None
+
     model_confidence: Optional[float] = None
     model_class_probabilities: Optional[Dict[str, float]] = None
 
@@ -79,6 +97,14 @@ class AnalysisUpdate(BaseModel):
     method: Optional[str] = None
     model_version: Optional[str] = None
     model_confidence: Optional[float] = None
+    
+    # New metadata fields
+    author: Optional[str] = None
+    channel: Optional[str] = None
+    published_at: Optional[datetime] = None
+    tonality: Optional[str] = None
+    categories: Optional[List[str]] = None
+
     model_class_probabilities: Optional[Dict[str, float]] = None
     processing_time: Optional[float] = None
     error_message: Optional[str] = None
@@ -89,5 +115,8 @@ class AnalysisUpdate(BaseModel):
 class QuickAnalysisResponse(BaseModel):
     """Quick response for analysis endpoint"""
     video_id: str
+    status: str
+    message: str
+deo_id: str
     status: str
     message: str

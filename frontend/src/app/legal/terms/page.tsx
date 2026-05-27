@@ -1,18 +1,21 @@
-import { Metadata } from "next"
-import Link from "next/link"
+﻿import Link from "next/link"
 import { ArrowLeft, FileText, UserCheck, CreditCard, Scale, AlertCircle, Mail } from "lucide-react"
 import { SiteShell } from "@/components/SiteShell"
+import { JsonLd } from "@/components/seo/JsonLd"
 
-export const metadata: Metadata = {
-  title: "Terms of Service | VeritasAd",
-  description: "Terms of Service for VeritasAd - AI-powered advertising detection system",
+
+const webPageSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "Terms of Service",
+  url: "https://veritasad.ai/legal/terms",
 }
-
 export default function TermsPage() {
   const lastUpdated = "March 31, 2026"
 
   return (
     <SiteShell>
+      <JsonLd data={webPageSchema} />
       <div className="container mx-auto max-w-3xl px-4 py-12">
         <div className="mb-10">
           <h1 className="text-4xl font-extrabold tracking-tight">Terms of Service</h1>
@@ -200,3 +203,7 @@ export default function TermsPage() {
     </SiteShell>
   )
 }
+
+
+
+

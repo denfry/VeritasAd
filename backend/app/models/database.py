@@ -306,6 +306,24 @@ class Analysis(Base):
     ad_classification: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     ad_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     method: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    
+    # New metadata fields
+    author_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    author_username: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    channel_title: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    published_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    tonality: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    categories: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
+    detected_links: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
+    topics: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
+    sentiment_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    content_description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    engagement_metrics: Mapped[Optional[Dict]] = mapped_column(JSON, nullable=True)
+    risk_factors: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
+    compliance_flags: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
+    recommendation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    recommendation_confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
     status: Mapped[str] = mapped_column(
         SQLEnum(
             AnalysisStatus, name="analysis_status", values_callable=lambda x: [e.value for e in x]

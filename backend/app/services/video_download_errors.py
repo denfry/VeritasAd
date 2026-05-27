@@ -17,6 +17,33 @@ def classify_processing_error(error_text: str) -> Dict[str, str]:
     raw = (error_text or "").strip()
     low = raw.lower()
 
+    if "ffmpeg could not be found" in low or "ffprobe could not be found" in low:
+        return {
+            "error_code": ErrorCode.VIDEO_DOWNLOAD_FAILED,
+            "user_message": (
+                "Video download failed because ffmpeg is not installed in runtime PATH. "
+                "Install ffmpeg and retry."
+            ),
+        }
+
+    if any(
+        marker in low
+        for marker in [
+            "cookies from browser",
+            "dpapi",
+            "failed to decrypt",
+            "unable to decrypt",
+            "keyring",
+        ]
+    ):
+        return {
+            "error_code": ErrorCode.VIDEO_DOWNLOAD_FAILED,
+            "user_message": (
+                "Video download failed while decrypting browser cookies. "
+                "Retry without browser cookies or provide YTDLP_COOKIES_FILE."
+            ),
+        }
+
     # YouTube anti-bot / auth required
     if (
         "sign in to confirm" in low

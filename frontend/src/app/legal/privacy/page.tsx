@@ -1,18 +1,21 @@
-import { Metadata } from "next"
-import Link from "next/link"
+﻿import Link from "next/link"
 import { ArrowLeft, Shield, Database, Eye, Lock, Share2, Clock, UserCheck, Cookie, Mail } from "lucide-react"
 import { SiteShell } from "@/components/SiteShell"
+import { JsonLd } from "@/components/seo/JsonLd"
 
-export const metadata: Metadata = {
-  title: "Privacy Policy | VeritasAd",
-  description: "Privacy Policy for VeritasAd - How we collect, use, and protect your data",
+
+const webPageSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "Privacy Policy",
+  url: "https://veritasad.ai/legal/privacy",
 }
-
 export default function PrivacyPage() {
   const lastUpdated = "March 31, 2026"
 
   return (
     <SiteShell>
+      <JsonLd data={webPageSchema} />
       <div className="container mx-auto max-w-3xl px-4 py-12">
         <div className="mb-10">
           <h1 className="text-4xl font-extrabold tracking-tight">Privacy Policy</h1>
@@ -251,3 +254,7 @@ export default function PrivacyPage() {
     </SiteShell>
   )
 }
+
+
+
+

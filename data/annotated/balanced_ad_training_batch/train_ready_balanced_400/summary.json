@@ -1,0 +1,12 @@
+{
+  "target_per_label": 80,
+  "labels": {
+    "mention": 80,
+    "hidden_ad": 80,
+    "official": 80,
+    "no_ad": 80,
+    "unofficial": 80
+  },
+  "total": 400,
+  "oversampled_records": 28
+}

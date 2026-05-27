@@ -29,8 +29,8 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=PROJECT_ROOT / "data" / "annotated" / "balanced_ad_training_batch",
     )
-    parser.add_argument("--videos-per-profile", type=int, default=10)
-    parser.add_argument("--posts-per-profile", type=int, default=10)
+    parser.add_argument("--videos-per-profile", type=int, default=40)
+    parser.add_argument("--posts-per-profile", type=int, default=40)
     parser.add_argument("--review-threshold", type=float, default=0.78)
     parser.add_argument(
         "--profile",
@@ -47,6 +47,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--consolidate-only",
         action="store_true",
         help="Skip collection and rebuild dataset.jsonl plus review_queue.jsonl from existing profile outputs.",
+    )
+    parser.add_argument(
+        "--retry-failed-only",
+        action="store_true",
+        help="Re-run profile collection only for profiles where dataset.jsonl still has failed records.",
     )
     return parser
 
@@ -77,18 +82,45 @@ def main() -> int:
         result = consolidate_profile_outputs(plan)
         print(f"dataset records: {result['dataset_records']}")
         print(f"review queue records: {result['review_queue_records']}")
+        if "failed_records" in result:
+            print(f"failed records: {result['failed_records']}")
+        print(f"dataset csv: {plan.dataset_csv_path}")
+        print(f"sources manifest: {plan.sources_path}")
+        print(f"summary: {plan.summary_path}")
         return 0
 
     if not args.run:
         return 0
 
-    for command in commands:
+    commands_to_run = commands
+    if args.retry_failed_only:
+        failed_profiles = []
+        for profile in profiles:
+            dataset_path = plan.output_dir / profile.name / "dataset.jsonl"
+            if not dataset_path.exists():
+                failed_profiles.append(profile.name)
+                continue
+            lines = dataset_path.read_text(encoding="utf-8").splitlines()
+            has_failed = any('"status": "failed"' in line for line in lines if line.strip())
+            if has_failed:
+                failed_profiles.append(profile.name)
+        commands_to_run = [
+            command for profile, command in zip(profiles, commands) if profile.name in failed_profiles
+        ]
+        print(f"retry_failed_profiles: {', '.join(failed_profiles) if failed_profiles else 'none'}")
+
+    for command in commands_to_run:
         completed = subprocess.run(command, cwd=BACKEND_ROOT, check=False)
         if completed.returncode != 0:
             return completed.returncode
     result = consolidate_profile_outputs(plan)
     print(f"dataset records: {result['dataset_records']}")
     print(f"review queue records: {result['review_queue_records']}")
+    if "failed_records" in result:
+        print(f"failed records: {result['failed_records']}")
+    print(f"dataset csv: {plan.dataset_csv_path}")
+    print(f"sources manifest: {plan.sources_path}")
+    print(f"summary: {plan.summary_path}")
     return 0
 
 

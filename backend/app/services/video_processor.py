@@ -11,6 +11,7 @@ import uuid
 import subprocess
 import shutil
 import asyncio
+import inspect
 import re
 import sys
 import json
@@ -242,12 +243,12 @@ class VideoProcessor:
             else:
                 logger.warning(f"YTDLP_COOKIES_FILE does not exist: {cookies_path}")
 
-        if not auth_args and settings.YTDLP_COOKIES_FROM_BROWSER:
+        if (
+            not auth_args
+            and settings.YTDLP_COOKIES_FROM_BROWSER
+            and not self._is_youtube_url(url)
+        ):
             auth_args.extend(["--cookies-from-browser", settings.YTDLP_COOKIES_FROM_BROWSER])
-
-        # Backward-compatible defaults for known platforms
-        if not auth_args and ("t.me" in url or "instagram.com" in url):
-            auth_args.extend(["--cookies-from-browser", "chrome"])
 
         return auth_args
 
@@ -321,6 +322,25 @@ class VideoProcessor:
             "fragment not found" in output_lower
             or "the downloaded file is empty" in output_lower
             or "requested fragment" in output_lower
+        )
+
+    @staticmethod
+    def _is_ffmpeg_missing_error(output: str) -> bool:
+        output_lower = output.lower()
+        return "ffmpeg could not be found" in output_lower or "ffprobe could not be found" in output_lower
+
+    @staticmethod
+    def _is_cookie_decryption_error(output: str) -> bool:
+        output_lower = output.lower()
+        return any(
+            marker in output_lower
+            for marker in [
+                "dpapi",
+                "failed to decrypt",
+                "unable to decrypt",
+                "cookies from browser",
+                "keyring",
+            ]
         )
 
     def _run_yt_dlp_with_progress(
@@ -419,14 +439,14 @@ class VideoProcessor:
     def download_video(
         self,
         url: str,
-        progress_callback: Optional[Callable[[int, str], Awaitable[None]]] = None,
+        progress_callback: Optional[Callable[[int, str], Any]] = None,
     ) -> Optional[Path]:
         """
         Download video from URL using yt-dlp with optimized settings
 
         Args:
             url: Video URL
-            progress_callback: Async callback function(progress: int, message: str) for progress updates
+            progress_callback: Sync or async callback function(progress: int, message: str) for progress updates
 
         Returns:
             Path to downloaded video or None
@@ -434,11 +454,14 @@ class VideoProcessor:
         def emit_progress(progress: int, message: str) -> None:
             if not progress_callback:
                 return
+            progress_result = progress_callback(progress, message)
+            if not inspect.isawaitable(progress_result):
+                return
             try:
                 loop = asyncio.get_running_loop()
-                loop.create_task(progress_callback(progress, message))
+                loop.create_task(progress_result)
             except RuntimeError:
-                asyncio.run(progress_callback(progress, message))
+                asyncio.run(progress_result)
 
         try:
             video_id = f"{datetime.now():%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}"
@@ -450,31 +473,24 @@ class VideoProcessor:
             # Report initial progress (downloading started)
             emit_progress(5, "Downloading video")
             auth_args = self._build_auth_args(url)
-            cmd = self._build_yt_dlp_download_cmd(url, video_path, auth_args)
+            cmd = self._build_yt_dlp_download_cmd(
+                url,
+                video_path,
+                auth_args,
+                format_selector="best[ext=mp4]/best",
+            )
             result, output_lines = self._run_yt_dlp_with_progress(cmd, emit_progress)
 
-            # Retry once for YouTube bot-check errors with Chrome cookies if not already used
             output_text = "".join(output_lines)
-            used_cookies_from_browser = "--cookies-from-browser" in cmd
-            if (
-                result.returncode != 0
-                and self._is_youtube_url(url)
-                and self._is_youtube_bot_check(output_text)
-                and settings.YTDLP_YOUTUBE_TRY_CHROME_COOKIES
-                and not used_cookies_from_browser
-            ):
-                retry_auth_args = auth_args + ["--cookies-from-browser", "chrome"]
-                logger.info("yt-dlp YouTube bot-check detected, retrying with Chrome cookies")
-                emit_progress(6, "Retrying download with YouTube authentication")
-                retry_cmd = self._build_yt_dlp_download_cmd(url, video_path, retry_auth_args)
-                result, output_lines = self._run_yt_dlp_with_progress(retry_cmd, emit_progress)
-                output_text = "".join(output_lines)
 
             # Retry once with safer fragment settings for partial DASH/HLS failures.
             if (
                 result.returncode != 0
                 and self._is_youtube_url(url)
-                and self._is_fragment_download_error(output_text)
+                and (
+                    self._is_fragment_download_error(output_text)
+                    or self._is_youtube_bot_check(output_text)
+                )
             ):
                 logger.info("yt-dlp fragment error detected, retrying with safer download settings")
                 emit_progress(6, "Retrying download with safer settings")
@@ -485,7 +501,7 @@ class VideoProcessor:
                             "best[protocol^=http]/best[ext=mp4]/best"
                         ),
                         "concurrent_fragments": 1,
-                        "youtube_player_client": "web,default",
+                        "youtube_player_client": "default,web",
                     },
                     {
                         "format_selector": (
@@ -516,10 +532,16 @@ class VideoProcessor:
 
             if result.returncode != 0:
                 output_tail = "\n".join("".join(output_lines).strip().splitlines()[-8:])
+                if self._is_ffmpeg_missing_error(output_text):
+                    output_tail += "\nHint: install ffmpeg and ensure it is available in PATH."
+                if self._is_cookie_decryption_error(output_text):
+                    output_tail += (
+                        "\nHint: browser-cookie decryption failed (DPAPI/keyring). "
+                        "Retry without --cookies-from-browser and use YTDLP_COOKIES_FILE only."
+                    )
                 if self._is_youtube_url(url) and self._is_youtube_bot_check(output_text):
                     output_tail += (
-                        "\nHint: configure YTDLP_COOKIES_FROM_BROWSER (e.g. chrome) "
-                        "or YTDLP_COOKIES_FILE in backend/.env for authenticated YouTube access."
+                        "\nHint: this video may require authentication; provide YTDLP_COOKIES_FILE if needed."
                     )
                 raise RuntimeError(f"yt-dlp failed with code {result.returncode}: {output_tail}")
 

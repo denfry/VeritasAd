@@ -1,0 +1,702 @@
+{
+  "output_dir": "D:\\Projects\\VeritasAd\\data\\annotated\\balanced_ad_training_batch\\unofficial",
+  "target_videos": 40,
+  "target_posts": 40,
+  "video_queries": [
+    "brand integration review without sponsor disclosure",
+    "creator recommends product no disclosure",
+    "ambassador review brand mention discount"
+  ],
+  "telegram_channels": [
+    "banksta",
+    "meduzalive",
+    "rozetked",
+    "vcnews",
+    "tproger",
+    "thevillage",
+    "durov"
+  ],
+  "queued_sources": [
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=iu4NeB8C8pM",
+      "source_key": "https://www.youtube.com/watch?v=iu4NeB8C8pM",
+      "title": "Brands I REFUSE To Be Sponsored By And WHY",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=MTF-K-j3mxE",
+      "source_key": "https://www.youtube.com/watch?v=MTF-K-j3mxE",
+      "title": "How to Disclose Sponsored and Free Product in Videos - FTC Disclosure for YouTubers",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=WggQgUkjUeg",
+      "source_key": "https://www.youtube.com/watch?v=WggQgUkjUeg",
+      "title": "Brand Ambassador Scams: How To Spot Fake Brand Deals 🧐",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=sCrWsFMTixk",
+      "source_key": "https://www.youtube.com/watch?v=sCrWsFMTixk",
+      "title": "How to Handle YouTube Sponsorships in 2025 | Beginner’s Guide",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=epRHDMjcT04",
+      "source_key": "https://www.youtube.com/watch?v=epRHDMjcT04",
+      "title": "DEVONthink 4 Review: Worth the $99 AI Document Manager? (2026)",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=5ffPCgRFNj8",
+      "source_key": "https://www.youtube.com/watch?v=5ffPCgRFNj8",
+      "title": "Wetracked.io Review: Is This the Real Fix for Broken Shopify Ad Tracking? (2026)",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=FE1BBlp-5aI",
+      "source_key": "https://www.youtube.com/watch?v=FE1BBlp-5aI",
+      "title": "Codeberg vs GitLab: Free Forever or Worth Paying For? (2026)",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=90VWFAVtWZI",
+      "source_key": "https://www.youtube.com/watch?v=90VWFAVtWZI",
+      "title": "Cin7 Review: Best Inventory Software or Support Nightmare? (2026)",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=rTMb7TC0WpM",
+      "source_key": "https://www.youtube.com/watch?v=rTMb7TC0WpM",
+      "title": "Mailbird Review: The Lifetime License Controversy Explained (2026)",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=5S4rJOPXf6c",
+      "source_key": "https://www.youtube.com/watch?v=5S4rJOPXf6c",
+      "title": "Manager.io vs QuickBooks: Is Free Really Better? (2026)",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=3nhpXB5tw3Y",
+      "source_key": "https://www.youtube.com/watch?v=3nhpXB5tw3Y",
+      "title": "The Best Print On Demand Company That NO ONE Talks About",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=vQLlAX1JfhA",
+      "source_key": "https://www.youtube.com/watch?v=vQLlAX1JfhA",
+      "title": "Apollo.io Review: Better Than ZoomInfo for Half the Price? (2026)",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=h0aQ1pukYzQ",
+      "source_key": "https://www.youtube.com/watch?v=h0aQ1pukYzQ",
+      "title": "Supliful Review: Worth Starting Your Own Supplement Brand? (2026)",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=bgF8SP_teNU",
+      "source_key": "https://www.youtube.com/watch?v=bgF8SP_teNU",
+      "title": "ChatGPT Images 2.0: What Most Reviews Are Missing (2026)",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=wv6cDEFC-dQ",
+      "source_key": "https://www.youtube.com/watch?v=wv6cDEFC-dQ",
+      "title": "Why Small Business Owners Ignoring AI Won't Survive in 2026",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=0pyLHEoxHZY",
+      "source_key": "https://www.youtube.com/watch?v=0pyLHEoxHZY",
+      "title": "DIY Detail Products : Brand Review",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=vn_xupmTtr8",
+      "source_key": "https://www.youtube.com/watch?v=vn_xupmTtr8",
+      "title": "What NO ONE Tells You About Affiliate Marketing on Instagram",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=KGJmTtx5jFE",
+      "source_key": "https://www.youtube.com/watch?v=KGJmTtx5jFE",
+      "title": "Pipedream Review: Is It Still Worth It After the Price Hike? (2026)",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=TzPxr-pzamM",
+      "source_key": "https://www.youtube.com/watch?v=TzPxr-pzamM",
+      "title": "Square Online Review: Better Than Wix and Shopify? (2026)",
+      "origin": "youtube_search",
+      "query": "brand integration review without sponsor disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=oQhn2MkCyK4",
+      "source_key": "https://www.youtube.com/watch?v=oQhn2MkCyK4",
+      "title": "FTC Disclosures 101 for Social Media Influencers & Creators",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=9kkOe6v0i00",
+      "source_key": "https://www.youtube.com/watch?v=9kkOe6v0i00",
+      "title": "Season 2, Episode 24: Cynical Quickie: Your Favorite Influencer Is Full of Sh*t",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=5tQzjntsxpk",
+      "source_key": "https://www.youtube.com/watch?v=5tQzjntsxpk",
+      "title": "My Top Product Picks for Content Creators at NAB 2026!",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=suVv45HCYlI",
+      "source_key": "https://www.youtube.com/watch?v=suVv45HCYlI",
+      "title": "$100 Billion Buyout. The Creator Economy Is DEAD",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=XJGo2DlmH3c",
+      "source_key": "https://www.youtube.com/watch?v=XJGo2DlmH3c",
+      "title": "UAP Disclosure - A Huge problem for the UFO Community??",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=ycnw3F3vcIE",
+      "source_key": "https://www.youtube.com/watch?v=ycnw3F3vcIE",
+      "title": "Introducing Clareos",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=GxjGbAiUeY0",
+      "source_key": "https://www.youtube.com/watch?v=GxjGbAiUeY0",
+      "title": "7 Most POWERFUL Less Lethal Guns On Amazon (No License!)",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=HarRKsrqOss",
+      "source_key": "https://www.youtube.com/watch?v=HarRKsrqOss",
+      "title": "2026 Will Prowse Approved Solar Products: Which Ones Survived?!",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=AriVGSsPyKw",
+      "source_key": "https://www.youtube.com/watch?v=AriVGSsPyKw",
+      "title": "Visual Matches, Storefronts for Associates & FTC Disclosures",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=U1C0vCn-ask",
+      "source_key": "https://www.youtube.com/watch?v=U1C0vCn-ask",
+      "title": "How to Get a $50,000 Business Credit Line with No Revenue - April 2026",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=lgIjs6w8lME",
+      "source_key": "https://www.youtube.com/watch?v=lgIjs6w8lME",
+      "title": "Video Express 3.0 Examples - I Created 25+ Videos To Show What It Can do",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=cKbxj1TrYMw",
+      "source_key": "https://www.youtube.com/watch?v=cKbxj1TrYMw",
+      "title": "DEADLY Mistakes Bloggers Make With Affiliate Links // Insert Amazon Affiliate Links into WordPress",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=dE2db7K3df8",
+      "source_key": "https://www.youtube.com/watch?v=dE2db7K3df8",
+      "title": "STOP Using Kajabi, Skool & SamCart: Better Tools You Need to Create & Sell Your Digital Product",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=EnWh8rEQfSI",
+      "source_key": "https://www.youtube.com/watch?v=EnWh8rEQfSI",
+      "title": "From URL to Viral Video: My Automation Secret Revealed",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=78lhTP04GiU",
+      "source_key": "https://www.youtube.com/watch?v=78lhTP04GiU",
+      "title": "The New Federal Bill Could Require Disclosure of Music Used in AI Training",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=FFmKittgYeQ",
+      "source_key": "https://www.youtube.com/watch?v=FFmKittgYeQ",
+      "title": "How Graza’s Founder Built a Cult Brand from a Squeeze Bottle and a Big Idea",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=uizAj8aBPYI",
+      "source_key": "https://www.youtube.com/watch?v=uizAj8aBPYI",
+      "title": "Affiate disclosure generator disclosure  i am an independent clickfunnels affiate  not a",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=JgiqmiZfsqg",
+      "source_key": "https://www.youtube.com/watch?v=JgiqmiZfsqg",
+      "title": "MAMA JUNE: SHAYNN, JESSICA, & JOSH HOOKED UP! Pumpkin EXPOSED HUGE family secrets #mamajune #wetv",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=IW1Ysx5P494",
+      "source_key": "https://www.youtube.com/watch?v=IW1Ysx5P494",
+      "title": "😱 Affiliate Marketing & Digital Products | Earn Without Own Product | Module 6",
+      "origin": "youtube_search",
+      "query": "creator recommends product no disclosure"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=UrSo2svaGOQ",
+      "source_key": "https://www.youtube.com/watch?v=UrSo2svaGOQ",
+      "title": "Moksa Brand Ambassador package unboxing and discount code!",
+      "origin": "youtube_search",
+      "query": "ambassador review brand mention discount"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=pY_bRdmSbBY",
+      "source_key": "https://www.youtube.com/watch?v=pY_bRdmSbBY",
+      "title": "How Brand Ambassadors Get Paid in 2026",
+      "origin": "youtube_search",
+      "query": "ambassador review brand mention discount"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93863",
+      "source_key": "https://t.me/banksta/93863",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93864",
+      "source_key": "https://t.me/banksta/93864",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93866",
+      "source_key": "https://t.me/banksta/93866",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93867",
+      "source_key": "https://t.me/banksta/93867",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93868",
+      "source_key": "https://t.me/banksta/93868",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93869",
+      "source_key": "https://t.me/banksta/93869",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93870",
+      "source_key": "https://t.me/banksta/93870",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93871",
+      "source_key": "https://t.me/banksta/93871",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93872",
+      "source_key": "https://t.me/banksta/93872",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93873",
+      "source_key": "https://t.me/banksta/93873",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93874",
+      "source_key": "https://t.me/banksta/93874",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93875",
+      "source_key": "https://t.me/banksta/93875",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93876",
+      "source_key": "https://t.me/banksta/93876",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93877",
+      "source_key": "https://t.me/banksta/93877",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93878",
+      "source_key": "https://t.me/banksta/93878",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93881",
+      "source_key": "https://t.me/banksta/93881",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93882",
+      "source_key": "https://t.me/banksta/93882",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93883",
+      "source_key": "https://t.me/banksta/93883",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93843",
+      "source_key": "https://t.me/banksta/93843",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93844",
+      "source_key": "https://t.me/banksta/93844",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142366",
+      "source_key": "https://t.me/meduzalive/142366",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142368",
+      "source_key": "https://t.me/meduzalive/142368",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142369",
+      "source_key": "https://t.me/meduzalive/142369",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142370",
+      "source_key": "https://t.me/meduzalive/142370",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142371",
+      "source_key": "https://t.me/meduzalive/142371",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142372",
+      "source_key": "https://t.me/meduzalive/142372",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142373",
+      "source_key": "https://t.me/meduzalive/142373",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142374",
+      "source_key": "https://t.me/meduzalive/142374",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142375",
+      "source_key": "https://t.me/meduzalive/142375",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142376",
+      "source_key": "https://t.me/meduzalive/142376",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142377",
+      "source_key": "https://t.me/meduzalive/142377",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142378",
+      "source_key": "https://t.me/meduzalive/142378",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142379",
+      "source_key": "https://t.me/meduzalive/142379",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142380",
+      "source_key": "https://t.me/meduzalive/142380",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142381",
+      "source_key": "https://t.me/meduzalive/142381",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142382",
+      "source_key": "https://t.me/meduzalive/142382",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142383",
+      "source_key": "https://t.me/meduzalive/142383",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142384",
+      "source_key": "https://t.me/meduzalive/142384",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142385",
+      "source_key": "https://t.me/meduzalive/142385",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142346",
+      "source_key": "https://t.me/meduzalive/142346",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    }
+  ],
+  "resume": true
+}

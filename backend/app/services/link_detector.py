@@ -67,11 +67,21 @@ class LinkDetector:
             'telegra.ph', 'teletype.in', 'taplink.cc', 'linktr.ee'
         ]
 
-        # Social platforms (less suspicious but can contain ads)
-        self.social_platforms = [
-            't.me', 'telegram.me', 'vk.com', 'instagram.com',
-            'youtube.com', 'tiktok.com', 'twitter.com'
-        ]
+        # Social platforms (neutral but can contain ads)
+        self.social_platforms = {
+            't.me': 'telegram',
+            'telegram.me': 'telegram',
+            'vk.com': 'vk',
+            'vk.ru': 'vk',
+            'instagram.com': 'instagram',
+            'instagr.am': 'instagram',
+            'youtube.com': 'youtube',
+            'youtu.be': 'youtube',
+            'tiktok.com': 'tiktok',
+            'twitter.com': 'twitter',
+            'x.com': 'twitter',
+            'reddit.com': 'reddit',
+        }
 
         # Call-to-action patterns (RU/EN)
         self.cta_patterns = [
@@ -136,9 +146,11 @@ class LinkDetector:
 
             # Check social platforms (neutral)
             is_social = False
-            for social in self.social_platforms:
-                if social in domain:
+            platform = None
+            for social_domain, plat_name in self.social_platforms.items():
+                if social_domain in domain:
                     is_social = True
+                    platform = plat_name
                     break
 
             if not is_social:
@@ -168,6 +180,7 @@ class LinkDetector:
                 'domain': domain,
                 'is_commercial': score > 0.3,
                 'is_social': is_social,
+                'platform': platform,
                 'score': score,
                 'signals': signals,
             }

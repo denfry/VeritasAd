@@ -1,0 +1,702 @@
+{
+  "output_dir": "D:\\Projects\\VeritasAd\\data\\annotated\\balanced_ad_training_batch\\official",
+  "target_videos": 40,
+  "target_posts": 40,
+  "video_queries": [
+    "#ad sponsored review promo code",
+    "paid partnership #sponsored discount code",
+    "sponsored by use code discount review"
+  ],
+  "telegram_channels": [
+    "banksta",
+    "meduzalive",
+    "rozetked",
+    "vcnews",
+    "tproger",
+    "thevillage",
+    "durov"
+  ],
+  "queued_sources": [
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=97_WiZvq9wY",
+      "source_key": "https://www.youtube.com/watch?v=97_WiZvq9wY",
+      "title": "Set Up Your $75 Bing Ads Promo Code Today with Clever Ads",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=qRu8u9137eE",
+      "source_key": "https://www.youtube.com/watch?v=qRu8u9137eE",
+      "title": "Madgicx Review & Exclusive Promo Code 🚀 Save Big in 2025!",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=tznzETB0M2M",
+      "source_key": "https://www.youtube.com/watch?v=tznzETB0M2M",
+      "title": "AdsPower Coupon Code 2026: Get 25% OFF (Tested & Working!)",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=oNtVccciEpg",
+      "source_key": "https://www.youtube.com/watch?v=oNtVccciEpg",
+      "title": "ExpressVPN Promo Code April & May 2026 🚀 Save 74% Instantly",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=nAcxI-3YehA",
+      "source_key": "https://www.youtube.com/watch?v=nAcxI-3YehA",
+      "title": "Surfshark Coupon Code | Get 89% + FREE Months | Surfshark Review 2026",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=ciR2vZiASCA",
+      "source_key": "https://www.youtube.com/watch?v=ciR2vZiASCA",
+      "title": "Arcads AI Review 2026: DO NOT Buy Until You Watch This! (75% Cheaper Alternatives + Promo Code)",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=C-z_rQQPRA4",
+      "source_key": "https://www.youtube.com/watch?v=C-z_rQQPRA4",
+      "title": "Arcads AI Coupon Code 2026 – Get Exclusive 75% Off (Working Deal) Fully Safe & Secure Mega Offer",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=JeElZgC-ZE4",
+      "source_key": "https://www.youtube.com/watch?v=JeElZgC-ZE4",
+      "title": "AdsPower Coupon Code 2026: Get 50% OFF Instantly!",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=i-Udu239yaU",
+      "source_key": "https://www.youtube.com/watch?v=i-Udu239yaU",
+      "title": "Surfshark Coupon Code 2026 | Latest Surfshark VPN Promo Code 🔥",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=-mzwZ-jNyAM",
+      "source_key": "https://www.youtube.com/watch?v=-mzwZ-jNyAM",
+      "title": "Arcads AI Pricing & Coupon Code (Secret 50% Off in 2026)",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=z7WHkR6clb8",
+      "source_key": "https://www.youtube.com/watch?v=z7WHkR6clb8",
+      "title": "Arcads AI Pricing 2026: Get 30% OFF + Official Promo Code Secrets! (Verified)",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=9ppLjDWSucU",
+      "source_key": "https://www.youtube.com/watch?v=9ppLjDWSucU",
+      "title": "Unlock Your $520 Bonus with 1XBET Promo Code 2026 - Register Now!",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=8HC3evqKF1Q",
+      "source_key": "https://www.youtube.com/watch?v=8HC3evqKF1Q",
+      "title": "RichAds Review [In-page push ads tutorial] - Promo Code for 10% Bonus",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=bLf68D-QOT0",
+      "source_key": "https://www.youtube.com/watch?v=bLf68D-QOT0",
+      "title": "Helium 10 Discount | Helium 10 Coupon Code 2026 | Helium10 Promo Code | Updated Coupon Code 2026",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=Taqw7k0E6a0",
+      "source_key": "https://www.youtube.com/watch?v=Taqw7k0E6a0",
+      "title": "✨ Contabo Promo Code - Get Your First Server 60% OFF!",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=xmRatypnRJ0",
+      "source_key": "https://www.youtube.com/watch?v=xmRatypnRJ0",
+      "title": "Surfshark Coupon Code ✅ Save 88% + Get Bonus FREE Months",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=UEqhFqav-_Q",
+      "source_key": "https://www.youtube.com/watch?v=UEqhFqav-_Q",
+      "title": "Arcads AI Promo Code 2026: Get 50% OFF! (Limited Time)",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=pWcXpYXKDb8",
+      "source_key": "https://www.youtube.com/watch?v=pWcXpYXKDb8",
+      "title": "How to find Promo Codes to share with your followers",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=AWMVBCoSLyw",
+      "source_key": "https://www.youtube.com/watch?v=AWMVBCoSLyw",
+      "title": "Surfshark Coupon Code 2026 | Surfshark VPN Promo Code 😎👌🔥",
+      "origin": "youtube_search",
+      "query": "#ad sponsored review promo code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=-hx9uomZYYE",
+      "source_key": "https://www.youtube.com/watch?v=-hx9uomZYYE",
+      "title": "How to Get Ad Code on Instagram (2025 Guide) | Add Partners, Branded Content & Boosts",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=FVJl0FtndyQ",
+      "source_key": "https://www.youtube.com/watch?v=FVJl0FtndyQ",
+      "title": "Influencers Can’t Keep Getting Away With This: Improper Paid Promotion, Brand Partnership & FTC",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=QsK0PsTyo4w",
+      "source_key": "https://www.youtube.com/watch?v=QsK0PsTyo4w",
+      "title": "How To Get Ad Code On Instagram (2026) | Share Code With Brand Or Partner",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=2cS45n60ukU",
+      "source_key": "https://www.youtube.com/watch?v=2cS45n60ukU",
+      "title": "How To Add Paid Partnership On Instagram Post",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=AnIDAGPjHIw",
+      "source_key": "https://www.youtube.com/watch?v=AnIDAGPjHIw",
+      "title": "AlphaCapital Affiliate Code : (E4TU0) Get 10% Discount On Trading Fees | AlphaCapital Partner Code",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=S8vn3mqVN7g",
+      "source_key": "https://www.youtube.com/watch?v=S8vn3mqVN7g",
+      "title": "Upfluence Academy: AST: Setup An Affiliate Partnership Without A Discount Code (5/7)",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=7T6hnnR85Wg",
+      "source_key": "https://www.youtube.com/watch?v=7T6hnnR85Wg",
+      "title": "How To Add Coupons In Collabdiary",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=_xDiHKXkWrQ",
+      "source_key": "https://www.youtube.com/watch?v=_xDiHKXkWrQ",
+      "title": "How to Get Instagram Partnership Ad Code (2026 Step-by-Step)",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=SlKKVDvLCe0",
+      "source_key": "https://www.youtube.com/watch?v=SlKKVDvLCe0",
+      "title": "PAID PARTNERSHIP with Celtara Gut Health",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=vToB_eQ8RdY",
+      "source_key": "https://www.youtube.com/watch?v=vToB_eQ8RdY",
+      "title": "Creating EVERY Amazon Promotion in Seller Central | Coupons, Deals, Discounts Tutorial (2023)",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=54x8zqBLQXs",
+      "source_key": "https://www.youtube.com/watch?v=54x8zqBLQXs",
+      "title": "How to Get Instant Discounts with Coupons in Dahua Partner App",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=fKADlbFRKaI",
+      "source_key": "https://www.youtube.com/watch?v=fKADlbFRKaI",
+      "title": "Facebook Share Partnership Ad Code kya hai | How to use Partnership Ad Code setting on facebook",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=e9ABh8l9sDU",
+      "source_key": "https://www.youtube.com/watch?v=e9ABh8l9sDU",
+      "title": "What is Get Partnership Ad Code? How to use Instagram Reels Get Partnership Ad Code",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=ISkncJDgv5E",
+      "source_key": "https://www.youtube.com/watch?v=ISkncJDgv5E",
+      "title": "SKINCLUB HUGE ALL IN BATTLE PAID INSANE (SkinClub Promo Code 2026)",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=xqweQXYC_H0",
+      "source_key": "https://www.youtube.com/watch?v=xqweQXYC_H0",
+      "title": "Get Brand Collaborations on Instagram With Under 100 Followers in 2025 (Dot & Key, Savana & more)",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=dzQOscTsy50",
+      "source_key": "https://www.youtube.com/watch?v=dzQOscTsy50",
+      "title": "#UNBOXING ESPOIR LONDON 1st paid Partnership",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=-q4Y_QCFdHk",
+      "source_key": "https://www.youtube.com/watch?v=-q4Y_QCFdHk",
+      "title": "888starz Partners. Affiliate program 888starz. Creating promotional codes and links.",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=0N2EmDKjrrA",
+      "source_key": "https://www.youtube.com/watch?v=0N2EmDKjrrA",
+      "title": "🤑 Now we will give you Brand Sponsorship too ⚡️🔥| How to Get Brand Deals on Instagram | How to ge...",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=IhLTdQG0clk",
+      "source_key": "https://www.youtube.com/watch?v=IhLTdQG0clk",
+      "title": "DADDYSKINS MY OWN SLAX PARTNER CASE LIVE ?! - (DaddySkins Promo Code 2025)",
+      "origin": "youtube_search",
+      "query": "paid partnership #sponsored discount code"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=QQ4vepyr170",
+      "source_key": "https://www.youtube.com/watch?v=QQ4vepyr170",
+      "title": "How to add discount code to review request emails?",
+      "origin": "youtube_search",
+      "query": "sponsored by use code discount review"
+    },
+    {
+      "content_type": "video",
+      "source_type": "youtube",
+      "source_url": "https://www.youtube.com/watch?v=78sbZbqjguI",
+      "source_key": "https://www.youtube.com/watch?v=78sbZbqjguI",
+      "title": "How To Get The Discount Code For Limited Users On Fundednext.Com",
+      "origin": "youtube_search",
+      "query": "sponsored by use code discount review"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93767",
+      "source_key": "https://t.me/banksta/93767",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93768",
+      "source_key": "https://t.me/banksta/93768",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93771",
+      "source_key": "https://t.me/banksta/93771",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93772",
+      "source_key": "https://t.me/banksta/93772",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93773",
+      "source_key": "https://t.me/banksta/93773",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93774",
+      "source_key": "https://t.me/banksta/93774",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93775",
+      "source_key": "https://t.me/banksta/93775",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93776",
+      "source_key": "https://t.me/banksta/93776",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93777",
+      "source_key": "https://t.me/banksta/93777",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93778",
+      "source_key": "https://t.me/banksta/93778",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93779",
+      "source_key": "https://t.me/banksta/93779",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93780",
+      "source_key": "https://t.me/banksta/93780",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93781",
+      "source_key": "https://t.me/banksta/93781",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93782",
+      "source_key": "https://t.me/banksta/93782",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93783",
+      "source_key": "https://t.me/banksta/93783",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93784",
+      "source_key": "https://t.me/banksta/93784",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93785",
+      "source_key": "https://t.me/banksta/93785",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93786",
+      "source_key": "https://t.me/banksta/93786",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93787",
+      "source_key": "https://t.me/banksta/93787",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/banksta/93788",
+      "source_key": "https://t.me/banksta/93788",
+      "origin": "telegram_archive",
+      "channel": "banksta"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142284",
+      "source_key": "https://t.me/meduzalive/142284",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142285",
+      "source_key": "https://t.me/meduzalive/142285",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142286",
+      "source_key": "https://t.me/meduzalive/142286",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142287",
+      "source_key": "https://t.me/meduzalive/142287",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142288",
+      "source_key": "https://t.me/meduzalive/142288",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142294",
+      "source_key": "https://t.me/meduzalive/142294",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142295",
+      "source_key": "https://t.me/meduzalive/142295",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142296",
+      "source_key": "https://t.me/meduzalive/142296",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142297",
+      "source_key": "https://t.me/meduzalive/142297",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142298",
+      "source_key": "https://t.me/meduzalive/142298",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142299",
+      "source_key": "https://t.me/meduzalive/142299",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142300",
+      "source_key": "https://t.me/meduzalive/142300",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142301",
+      "source_key": "https://t.me/meduzalive/142301",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142302",
+      "source_key": "https://t.me/meduzalive/142302",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142303",
+      "source_key": "https://t.me/meduzalive/142303",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142264",
+      "source_key": "https://t.me/meduzalive/142264",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142265",
+      "source_key": "https://t.me/meduzalive/142265",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142266",
+      "source_key": "https://t.me/meduzalive/142266",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142267",
+      "source_key": "https://t.me/meduzalive/142267",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142268",
+      "source_key": "https://t.me/meduzalive/142268",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    }
+  ],
+  "resume": false
+}

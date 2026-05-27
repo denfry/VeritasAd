@@ -1,0 +1,185 @@
+{
+  "output_dir": "data\\annotated\\balanced_ad_training_batch",
+  "dataset_path": "data\\annotated\\balanced_ad_training_batch\\dataset.jsonl",
+  "review_queue_path": "data\\annotated\\balanced_ad_training_batch\\review_queue.jsonl",
+  "review_labels_path": "data\\annotated\\balanced_ad_training_batch\\review_labels.jsonl",
+  "reviewed_path": "data\\annotated\\balanced_ad_training_batch\\reviewed.jsonl",
+  "videos_per_profile": 40,
+  "posts_per_profile": 40,
+  "total_target_videos": 200,
+  "total_target_posts": 200,
+  "profiles": [
+    {
+      "name": "official",
+      "expected_label": "official",
+      "video_queries": [
+        "#ad sponsored review promo code",
+        "paid partnership #sponsored discount code",
+        "sponsored by use code discount review"
+      ],
+      "telegram_channels": [],
+      "reviewer_hint": "Paid promotion with an explicit disclosure marker such as #ad, #sponsored, ERID, or paid partnership."
+    },
+    {
+      "name": "hidden_ad",
+      "expected_label": "hidden_ad",
+      "video_queries": [
+        "affiliate link discount code review",
+        "coupon code link in description review",
+        "promo code exclusive discount no sponsored disclosure"
+      ],
+      "telegram_channels": [],
+      "reviewer_hint": "Commercial CTA, affiliate/coupon link, or sales script without clear disclosure."
+    },
+    {
+      "name": "unofficial",
+      "expected_label": "unofficial",
+      "video_queries": [
+        "brand integration review without sponsor disclosure",
+        "creator recommends product no disclosure",
+        "ambassador review brand mention discount"
+      ],
+      "telegram_channels": [],
+      "reviewer_hint": "Advertising intent is plausible, but official disclosure and hard affiliate evidence are absent."
+    },
+    {
+      "name": "mention",
+      "expected_label": "mention",
+      "video_queries": [
+        "tech review unboxing comparison",
+        "product review no affiliate link",
+        "brand news analysis review"
+      ],
+      "telegram_channels": [],
+      "reviewer_hint": "Brand appears or is discussed, but the content is not primarily promotional."
+    },
+    {
+      "name": "no_ad",
+      "expected_label": "no_ad",
+      "video_queries": [
+        "tutorial how to build project",
+        "news analysis today no sponsor",
+        "educational explanation lecture"
+      ],
+      "telegram_channels": [
+        "meduzalive",
+        "tproger",
+        "durov"
+      ],
+      "reviewer_hint": "No meaningful brand promotion, CTA, disclosure, or commercial link evidence."
+    }
+  ],
+  "commands": [
+    [
+      "C:\\Users\\dabin\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "scripts/auto_annotate.py",
+      "--target-videos",
+      "40",
+      "--target-posts",
+      "40",
+      "--output-dir",
+      "data\\annotated\\balanced_ad_training_batch\\official",
+      "--local-video-dir",
+      "data\\annotated\\balanced_ad_training_batch\\_empty_video_source",
+      "--review-threshold",
+      "0.78",
+      "--no-resume",
+      "--video-query",
+      "#ad sponsored review promo code",
+      "--video-query",
+      "paid partnership #sponsored discount code",
+      "--video-query",
+      "sponsored by use code discount review"
+    ],
+    [
+      "C:\\Users\\dabin\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "scripts/auto_annotate.py",
+      "--target-videos",
+      "40",
+      "--target-posts",
+      "40",
+      "--output-dir",
+      "data\\annotated\\balanced_ad_training_batch\\hidden_ad",
+      "--local-video-dir",
+      "data\\annotated\\balanced_ad_training_batch\\_empty_video_source",
+      "--review-threshold",
+      "0.78",
+      "--no-resume",
+      "--video-query",
+      "affiliate link discount code review",
+      "--video-query",
+      "coupon code link in description review",
+      "--video-query",
+      "promo code exclusive discount no sponsored disclosure"
+    ],
+    [
+      "C:\\Users\\dabin\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "scripts/auto_annotate.py",
+      "--target-videos",
+      "40",
+      "--target-posts",
+      "40",
+      "--output-dir",
+      "data\\annotated\\balanced_ad_training_batch\\unofficial",
+      "--local-video-dir",
+      "data\\annotated\\balanced_ad_training_batch\\_empty_video_source",
+      "--review-threshold",
+      "0.78",
+      "--no-resume",
+      "--video-query",
+      "brand integration review without sponsor disclosure",
+      "--video-query",
+      "creator recommends product no disclosure",
+      "--video-query",
+      "ambassador review brand mention discount"
+    ],
+    [
+      "C:\\Users\\dabin\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "scripts/auto_annotate.py",
+      "--target-videos",
+      "40",
+      "--target-posts",
+      "40",
+      "--output-dir",
+      "data\\annotated\\balanced_ad_training_batch\\mention",
+      "--local-video-dir",
+      "data\\annotated\\balanced_ad_training_batch\\_empty_video_source",
+      "--review-threshold",
+      "0.78",
+      "--no-resume",
+      "--video-query",
+      "tech review unboxing comparison",
+      "--video-query",
+      "product review no affiliate link",
+      "--video-query",
+      "brand news analysis review"
+    ],
+    [
+      "C:\\Users\\dabin\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "scripts/auto_annotate.py",
+      "--target-videos",
+      "40",
+      "--target-posts",
+      "40",
+      "--output-dir",
+      "data\\annotated\\balanced_ad_training_batch\\no_ad",
+      "--local-video-dir",
+      "data\\annotated\\balanced_ad_training_batch\\_empty_video_source",
+      "--review-threshold",
+      "0.78",
+      "--no-resume",
+      "--video-query",
+      "tutorial how to build project",
+      "--video-query",
+      "news analysis today no sponsor",
+      "--video-query",
+      "educational explanation lecture",
+      "--telegram-channel",
+      "meduzalive",
+      "--telegram-channel",
+      "tproger",
+      "--telegram-channel",
+      "durov"
+    ]
+  ]
+}

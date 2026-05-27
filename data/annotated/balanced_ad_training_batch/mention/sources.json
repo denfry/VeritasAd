@@ -1,0 +1,985 @@
+{
+  "output_dir": "D:\\Projects\\VeritasAd\\data\\annotated\\balanced_ad_training_batch\\mention",
+  "target_videos": 0,
+  "target_posts": 120,
+  "video_queries": [
+    "sponsored review promo code",
+    "affiliate review partner discount",
+    "brand integration ad read",
+    "обзор промокод реклама",
+    "спонсор интеграция скидка",
+    "партнерский материал бренд",
+    "tech review unboxing",
+    "gaming highlights stream",
+    "news analysis today",
+    "tutorial how to build"
+  ],
+  "telegram_channels": [
+    "meduzalive",
+    "tproger",
+    "durov"
+  ],
+  "queued_sources": [
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142373",
+      "source_key": "https://t.me/meduzalive/142373",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142374",
+      "source_key": "https://t.me/meduzalive/142374",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142375",
+      "source_key": "https://t.me/meduzalive/142375",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142376",
+      "source_key": "https://t.me/meduzalive/142376",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142377",
+      "source_key": "https://t.me/meduzalive/142377",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142378",
+      "source_key": "https://t.me/meduzalive/142378",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142379",
+      "source_key": "https://t.me/meduzalive/142379",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142380",
+      "source_key": "https://t.me/meduzalive/142380",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142381",
+      "source_key": "https://t.me/meduzalive/142381",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142382",
+      "source_key": "https://t.me/meduzalive/142382",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142383",
+      "source_key": "https://t.me/meduzalive/142383",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142384",
+      "source_key": "https://t.me/meduzalive/142384",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142385",
+      "source_key": "https://t.me/meduzalive/142385",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142386",
+      "source_key": "https://t.me/meduzalive/142386",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142387",
+      "source_key": "https://t.me/meduzalive/142387",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142388",
+      "source_key": "https://t.me/meduzalive/142388",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142389",
+      "source_key": "https://t.me/meduzalive/142389",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142390",
+      "source_key": "https://t.me/meduzalive/142390",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142391",
+      "source_key": "https://t.me/meduzalive/142391",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142392",
+      "source_key": "https://t.me/meduzalive/142392",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142353",
+      "source_key": "https://t.me/meduzalive/142353",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142354",
+      "source_key": "https://t.me/meduzalive/142354",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142355",
+      "source_key": "https://t.me/meduzalive/142355",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142356",
+      "source_key": "https://t.me/meduzalive/142356",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142357",
+      "source_key": "https://t.me/meduzalive/142357",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142358",
+      "source_key": "https://t.me/meduzalive/142358",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142359",
+      "source_key": "https://t.me/meduzalive/142359",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142360",
+      "source_key": "https://t.me/meduzalive/142360",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142361",
+      "source_key": "https://t.me/meduzalive/142361",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142362",
+      "source_key": "https://t.me/meduzalive/142362",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142363",
+      "source_key": "https://t.me/meduzalive/142363",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142364",
+      "source_key": "https://t.me/meduzalive/142364",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142365",
+      "source_key": "https://t.me/meduzalive/142365",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142366",
+      "source_key": "https://t.me/meduzalive/142366",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142368",
+      "source_key": "https://t.me/meduzalive/142368",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142369",
+      "source_key": "https://t.me/meduzalive/142369",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142370",
+      "source_key": "https://t.me/meduzalive/142370",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142371",
+      "source_key": "https://t.me/meduzalive/142371",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142372",
+      "source_key": "https://t.me/meduzalive/142372",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142333",
+      "source_key": "https://t.me/meduzalive/142333",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142334",
+      "source_key": "https://t.me/meduzalive/142334",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142335",
+      "source_key": "https://t.me/meduzalive/142335",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142336",
+      "source_key": "https://t.me/meduzalive/142336",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142337",
+      "source_key": "https://t.me/meduzalive/142337",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142338",
+      "source_key": "https://t.me/meduzalive/142338",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142339",
+      "source_key": "https://t.me/meduzalive/142339",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142341",
+      "source_key": "https://t.me/meduzalive/142341",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/meduzalive/142342",
+      "source_key": "https://t.me/meduzalive/142342",
+      "origin": "telegram_archive",
+      "channel": "meduzalive"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14467",
+      "source_key": "https://t.me/tproger/14467",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14468",
+      "source_key": "https://t.me/tproger/14468",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14469",
+      "source_key": "https://t.me/tproger/14469",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14472",
+      "source_key": "https://t.me/tproger/14472",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14473",
+      "source_key": "https://t.me/tproger/14473",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14474",
+      "source_key": "https://t.me/tproger/14474",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14475",
+      "source_key": "https://t.me/tproger/14475",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14477",
+      "source_key": "https://t.me/tproger/14477",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14479",
+      "source_key": "https://t.me/tproger/14479",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14480",
+      "source_key": "https://t.me/tproger/14480",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14481",
+      "source_key": "https://t.me/tproger/14481",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14482",
+      "source_key": "https://t.me/tproger/14482",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14483",
+      "source_key": "https://t.me/tproger/14483",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14484",
+      "source_key": "https://t.me/tproger/14484",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14485",
+      "source_key": "https://t.me/tproger/14485",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14486",
+      "source_key": "https://t.me/tproger/14486",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14487",
+      "source_key": "https://t.me/tproger/14487",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14488",
+      "source_key": "https://t.me/tproger/14488",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14489",
+      "source_key": "https://t.me/tproger/14489",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14490",
+      "source_key": "https://t.me/tproger/14490",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14443",
+      "source_key": "https://t.me/tproger/14443",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14445",
+      "source_key": "https://t.me/tproger/14445",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14446",
+      "source_key": "https://t.me/tproger/14446",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14447",
+      "source_key": "https://t.me/tproger/14447",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14448",
+      "source_key": "https://t.me/tproger/14448",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14449",
+      "source_key": "https://t.me/tproger/14449",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14451",
+      "source_key": "https://t.me/tproger/14451",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14452",
+      "source_key": "https://t.me/tproger/14452",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14453",
+      "source_key": "https://t.me/tproger/14453",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14454",
+      "source_key": "https://t.me/tproger/14454",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14455",
+      "source_key": "https://t.me/tproger/14455",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14456",
+      "source_key": "https://t.me/tproger/14456",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14458",
+      "source_key": "https://t.me/tproger/14458",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14459",
+      "source_key": "https://t.me/tproger/14459",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14460",
+      "source_key": "https://t.me/tproger/14460",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14461",
+      "source_key": "https://t.me/tproger/14461",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14463",
+      "source_key": "https://t.me/tproger/14463",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14464",
+      "source_key": "https://t.me/tproger/14464",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14465",
+      "source_key": "https://t.me/tproger/14465",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14466",
+      "source_key": "https://t.me/tproger/14466",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14420",
+      "source_key": "https://t.me/tproger/14420",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14421",
+      "source_key": "https://t.me/tproger/14421",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14423",
+      "source_key": "https://t.me/tproger/14423",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14424",
+      "source_key": "https://t.me/tproger/14424",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14425",
+      "source_key": "https://t.me/tproger/14425",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14426",
+      "source_key": "https://t.me/tproger/14426",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14427",
+      "source_key": "https://t.me/tproger/14427",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/tproger/14428",
+      "source_key": "https://t.me/tproger/14428",
+      "origin": "telegram_archive",
+      "channel": "tproger"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/495",
+      "source_key": "https://t.me/durov/495",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/496",
+      "source_key": "https://t.me/durov/496",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/497",
+      "source_key": "https://t.me/durov/497",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/498",
+      "source_key": "https://t.me/durov/498",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/499",
+      "source_key": "https://t.me/durov/499",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/500",
+      "source_key": "https://t.me/durov/500",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/501",
+      "source_key": "https://t.me/durov/501",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/502",
+      "source_key": "https://t.me/durov/502",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/503",
+      "source_key": "https://t.me/durov/503",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/504",
+      "source_key": "https://t.me/durov/504",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/505",
+      "source_key": "https://t.me/durov/505",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/506",
+      "source_key": "https://t.me/durov/506",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/507",
+      "source_key": "https://t.me/durov/507",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/508",
+      "source_key": "https://t.me/durov/508",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/509",
+      "source_key": "https://t.me/durov/509",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/510",
+      "source_key": "https://t.me/durov/510",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/512",
+      "source_key": "https://t.me/durov/512",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/513",
+      "source_key": "https://t.me/durov/513",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/514",
+      "source_key": "https://t.me/durov/514",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/473",
+      "source_key": "https://t.me/durov/473",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/474",
+      "source_key": "https://t.me/durov/474",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/475",
+      "source_key": "https://t.me/durov/475",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/476",
+      "source_key": "https://t.me/durov/476",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    },
+    {
+      "content_type": "post",
+      "source_type": "telegram",
+      "source_url": "https://t.me/durov/477",
+      "source_key": "https://t.me/durov/477",
+      "origin": "telegram_archive",
+      "channel": "durov"
+    }
+  ],
+  "resume": true
+}

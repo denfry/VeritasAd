@@ -4,6 +4,7 @@ from app.ml.ad_batch import (
     build_review_queue_rows,
     build_review_guide,
     combine_profile_records,
+    consolidate_profile_outputs,
     create_batch_plan,
 )
 
@@ -105,7 +106,71 @@ def test_build_review_queue_rows_keeps_expected_label_as_hint_only():
     ]
 
 
+def test_consolidate_profile_outputs_writes_dataset_artifacts_and_deduplicates_sources():
+    output_dir = _path("consolidate")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    profiles = (DEFAULT_BATCH_PROFILES["official"], DEFAULT_BATCH_PROFILES["hidden_ad"])
+    plan = create_batch_plan(
+        output_dir=output_dir,
+        videos_per_profile=1,
+        posts_per_profile=1,
+        profiles=profiles,
+    )
+
+    _write_jsonl(
+        output_dir / "official" / "dataset.jsonl",
+        [
+            {
+                "status": "completed",
+                "record_id": "video::a",
+                "source_key": "https://example.test/a",
+                "content_type": "video",
+                "source_type": "youtube",
+                "ad_classification": "official",
+            }
+        ],
+    )
+    _write_jsonl(
+        output_dir / "hidden_ad" / "dataset.jsonl",
+        [
+            {
+                "status": "completed",
+                "record_id": "video::a2",
+                "source_key": "https://example.test/a",
+                "content_type": "video",
+                "source_type": "youtube",
+                "ad_classification": "hidden_ad",
+            },
+            {
+                "status": "completed",
+                "record_id": "post::b",
+                "source_key": "https://t.me/channel/1",
+                "content_type": "post",
+                "source_type": "telegram",
+                "ad_classification": "mention",
+            },
+        ],
+    )
+
+    result = consolidate_profile_outputs(plan)
+
+    assert result["dataset_records"] == 2
+    assert result["review_queue_records"] == 2
+    assert plan.dataset_csv_path.exists()
+    assert plan.sources_path.exists()
+    assert plan.summary_path.exists()
+
+
 def _path(value: str):
     from pathlib import Path
 
-    return Path("D:/veritasad-test") / value
+    return Path(__file__).resolve().parents[2] / ".test-temp" / "ad-batch" / value
+
+
+def _write_jsonl(path, rows):
+    import json
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        for row in rows:
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")

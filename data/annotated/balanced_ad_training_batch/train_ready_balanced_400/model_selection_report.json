@@ -1,0 +1,10 @@
+{
+  "chosen_seed": 20260512,
+  "model_path": "data\\annotated\\balanced_ad_training_batch\\train_ready_balanced_400\\model\\ad_hybrid_best_val_20260512.json",
+  "split_dir": "data\\annotated\\balanced_ad_training_batch\\train_ready_balanced_400\\sweeps\\split_20260512",
+  "selection_metric": "val_macro_f1",
+  "val_macro_f1": 0.5130699930699931,
+  "val_accuracy": 0.5333333333333333,
+  "test_accuracy": 0.5166666666666667,
+  "test_macro_f1": 0.507870919534862
+}
