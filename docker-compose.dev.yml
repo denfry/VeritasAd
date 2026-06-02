@@ -32,6 +32,10 @@ services:
       # Development - отключение авторизации для тестирования
       - DISABLE_AUTH=true
 
+      # Disable heavy ML models in dev (avoids 600MB CLIP download deadlock)
+      - ENABLE_ZERO_SHOT=false
+      - ENABLE_BRAND_OCR=false
+
       # YouTube cookies
       - YTDLP_COOKIES_FILE=/app/data/cookies/youtube_cookies.txt
 

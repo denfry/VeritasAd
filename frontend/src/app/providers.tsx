@@ -6,6 +6,7 @@ import { Toaster } from "sonner"
 import { useState } from "react"
 import { AuthProvider } from "@/contexts/auth-context"
 import { CurrencyProvider } from "@/contexts/currency-context"
+import { LanguageProvider } from "@/contexts/language-context"
 import { CookieConsent } from "@/components/CookieConsent"
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -20,6 +21,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
       <AuthProvider>
         <CurrencyProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -29,6 +31,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           </ThemeProvider>
         </CurrencyProvider>
       </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   )
 }

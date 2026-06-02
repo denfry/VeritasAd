@@ -12,6 +12,7 @@ import { fetchAnalysisHistory, ApiError } from "@/lib/api-client"
 import type { AnalysisHistoryItem } from "@/types/api"
 import { motion, AnimatePresence } from "framer-motion"
 import { formatDistanceToNow } from "date-fns"
+import { useLanguage } from "@/contexts/language-context"
 
 const PLATFORMS = [
   { id: "youtube", label: "YouTube" },
@@ -44,6 +45,8 @@ function getSourceTypeName(sourceType: string): string {
 export default function HistoryPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
+  const { t } = useLanguage()
+  const h = t.history
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [totalCount, setTotalCount] = useState(0)
@@ -61,10 +64,10 @@ export default function HistoryPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      toast.error("Please sign in to view history")
+      toast.error(t.errors.signInHistory)
       router.push("/auth/login")
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, router, t.errors.signInHistory])
 
   const loadHistory = useCallback(async () => {
     setIsLoading(true)
@@ -116,8 +119,8 @@ export default function HistoryPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
-            <h1 className="text-4xl font-semibold tracking-tight lg:text-5xl">Analysis Archive</h1>
-            <p className="text-muted-foreground text-sm leading-7 lg:text-base">Detailed history of all your compliance checks and generated reports.</p>
+            <h1 className="text-4xl font-semibold tracking-tight lg:text-5xl">{h.title}</h1>
+            <p className="text-muted-foreground text-sm leading-7 lg:text-base">{h.description}</p>
           </div>
           <div className="flex gap-2">
             <button
@@ -126,12 +129,12 @@ export default function HistoryPage() {
               className="btn btn-outline h-11 px-4 rounded-xl gap-2 font-bold transition-all hover:bg-muted"
             >
               <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-              Refresh
+              {h.refresh}
             </button>
             <button 
               onClick={() => {
                 if (filteredHistory.length === 0) {
-                  toast.error("No data to export")
+                  toast.error(t.errors.noDataExport)
                   return
                 }
                 // Convert to CSV
@@ -165,7 +168,7 @@ export default function HistoryPage() {
               className="btn btn-primary h-11 px-6 rounded-xl gap-2 font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
             >
               <Download className="h-4 w-4" />
-              Export CSV
+              {h.exportCsv}
             </button>
           </div>
         </div>
@@ -175,9 +178,9 @@ export default function HistoryPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input 
-                type="text" 
-                placeholder="Search by Task ID..."
+              <input
+                type="text"
+                placeholder={h.searchPlaceholder}
                 className="input-field pl-12 h-12 bg-card border-border shadow-sm focus:border-primary/50 transition-all font-medium"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -188,7 +191,7 @@ export default function HistoryPage() {
               className={`btn h-12 px-6 rounded-full gap-2 font-semibold border shadow-sm transition-all ${showFilters ? 'bg-primary text-white border-primary shadow-primary/20' : 'bg-card border-border hover:bg-muted'}`}
             >
               <Filter className="h-4 w-4" />
-              {showFilters ? 'Hide Filters' : 'Filters'}
+              {showFilters ? h.hideFilters : h.filters}
               {(platformFilter || statusFilter) && (
                 <span className="ml-1 px-1.5 py-0.5 bg-white/20 rounded-full text-[10px]">!</span>
               )}
@@ -205,24 +208,24 @@ export default function HistoryPage() {
               >
                 <div className="surface p-6 border border-dashed border-border/50 grid grid-cols-1 md:grid-cols-3 gap-6">
                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Platform Origin</label>
-                      <select 
-                        value={platformFilter} 
+                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">{h.platformOrigin}</label>
+                      <select
+                        value={platformFilter}
                         onChange={(e) => setPlatformFilter(e.target.value)}
                       className="input-field h-11 bg-background text-sm font-semibold"
                       >
-                        <option value="">All Platforms</option>
+                        <option value="">{h.allPlatforms}</option>
                         {PLATFORMS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
                       </select>
                    </div>
                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Processing Status</label>
-                      <select 
-                        value={statusFilter} 
+                      <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">{h.processingStatus}</label>
+                      <select
+                        value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
                       className="input-field h-11 bg-background text-sm font-semibold"
                       >
-                        <option value="">All Statuses</option>
+                        <option value="">{h.allStatuses}</option>
                         {STATUSES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
                       </select>
                    </div>
@@ -233,7 +236,7 @@ export default function HistoryPage() {
                         className="btn btn-ghost h-11 w-full gap-2 text-xs font-semibold uppercase tracking-[0.22em] disabled:opacity-30"
                       >
                         <FilterX className="h-4 w-4" />
-                        Reset All Filters
+                        {h.resetFilters}
                       </button>
                    </div>
                 </div>
@@ -245,10 +248,10 @@ export default function HistoryPage() {
         {/* Table/List */}
         {loadError && history.length === 0 ? (
           <div className="surface p-8 border border-red-500/20 bg-red-500/5">
-            <h2 className="text-lg font-semibold">History unavailable</h2>
+            <h2 className="text-lg font-semibold">{h.unavailable}</h2>
             <p className="mt-2 text-sm text-muted-foreground">{loadError}</p>
             <button className="btn btn-primary mt-4" onClick={loadHistory}>
-              Retry
+              {h.retry}
             </button>
           </div>
         ) : (
@@ -257,11 +260,11 @@ export default function HistoryPage() {
             <table className="w-full text-sm text-left">
               <thead className="bg-muted/30 text-muted-foreground font-black uppercase tracking-widest text-[10px] border-b border-border/50">
                 <tr>
-                  <th className="px-6 py-4">Status & ID</th>
-                  <th className="px-6 py-4">Source Platform</th>
-                  <th className="px-6 py-4 text-center">Confidence</th>
-                  <th className="px-6 py-4">Compliance Verdict</th>
-                  <th className="px-6 py-4">Sync Date</th>
+                  <th className="px-6 py-4">{h.columns.statusId}</th>
+                  <th className="px-6 py-4">{h.columns.platform}</th>
+                  <th className="px-6 py-4 text-center">{h.columns.confidence}</th>
+                  <th className="px-6 py-4">{h.columns.verdict}</th>
+                  <th className="px-6 py-4">{h.columns.date}</th>
                   <th className="px-6 py-4"></th>
                 </tr>
               </thead>
@@ -288,18 +291,18 @@ export default function HistoryPage() {
                            <FileText className="h-10 w-10 text-muted-foreground/50" />
                         </div>
                         <div className="space-y-1">
-                          <h3 className="text-xl font-black tracking-tight">No Records Located</h3>
+                          <h3 className="text-xl font-black tracking-tight">{h.noRecordsTitle}</h3>
                           <p className="text-sm text-muted-foreground font-medium">
-                            {searchQuery || platformFilter || statusFilter 
-                              ? "Zero matches found for active filter parameters." 
-                              : "The neural archive is currently empty. Start a new analysis to populate history."}
+                            {searchQuery || platformFilter || statusFilter
+                              ? h.noRecordsFiltered
+                              : h.noRecordsEmpty}
                           </p>
                         </div>
-                        <button 
-                          onClick={() => { clearFilters(); router.push("/analyze") }} 
+                        <button
+                          onClick={() => { clearFilters(); router.push("/analyze") }}
                           className="btn btn-primary h-11 px-8 rounded-full font-semibold text-xs uppercase tracking-[0.22em] shadow-lg shadow-primary/20"
                         >
-                          {searchQuery || platformFilter || statusFilter ? "Clear Filters" : "New Analysis"}
+                          {searchQuery || platformFilter || statusFilter ? h.clearFilters : h.newAnalysis}
                         </button>
                       </div>
                     </td>
@@ -326,7 +329,7 @@ export default function HistoryPage() {
                               <RefreshCw className="h-5 w-5 animate-spin" />}
                            </div>
                            <div>
-                             <p className="font-bold text-foreground">Task {item.task_id.slice(0, 8)}</p>
+                             <p className="font-bold text-foreground">{h.taskPrefix} {item.task_id.slice(0, 8)}</p>
                              <div className="flex items-center gap-2">
                                 <span className={`text-[10px] font-black uppercase tracking-tighter ${
                                   item.status === 'completed' ? 'text-emerald-600' :
@@ -362,15 +365,15 @@ export default function HistoryPage() {
                         {item.status === "completed" ? (
                           item.has_advertising ? (
                             <span className="inline-flex items-center gap-1.5 text-red-500 font-black text-[10px] uppercase tracking-widest">
-                              <AlertCircle className="h-3 w-3" /> ADVERTISING
+                              <AlertCircle className="h-3 w-3" /> {h.advertising}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1.5 text-emerald-500 font-black text-[10px] uppercase tracking-widest">
-                              <CheckCircle2 className="h-3 w-3" /> CLEAN NODE
+                              <CheckCircle2 className="h-3 w-3" /> {h.cleanNode}
                             </span>
                           )
                         ) : (
-                          <span className="text-muted-foreground italic text-[10px] font-bold uppercase tracking-widest animate-pulse">PENDING...</span>
+                          <span className="text-muted-foreground italic text-[10px] font-bold uppercase tracking-widest animate-pulse">{h.pending}</span>
                         )}
                       </td>
                       <td className="px-6 py-5">
@@ -404,25 +407,25 @@ export default function HistoryPage() {
           
           <div className="px-6 py-4 bg-muted/10 border-t border-border/50 flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                Showing {history.length} of {totalCount} results
+                {h.showing} {history.length} {h.of} {totalCount} {h.results}
               </span>
               <div className="flex gap-2">
-                <button 
+                <button
                   disabled={page === 0}
                   onClick={() => setPage(p => Math.max(0, p - 1))}
                   className="btn btn-outline btn-sm h-9 px-4 rounded-lg font-bold disabled:opacity-30"
                 >
-                  Prev
+                  {h.prev}
                 </button>
                 <span className="flex items-center px-3 text-xs font-bold text-muted-foreground">
-                  Page {page + 1}
+                  {h.page} {page + 1}
                 </span>
-                <button 
+                <button
                   disabled={history.length < PAGE_SIZE}
                   onClick={() => setPage(p => p + 1)}
                   className="btn btn-outline btn-sm h-9 px-4 rounded-lg font-bold disabled:opacity-30"
                 >
-                  Next
+                  {h.next}
                 </button>
               </div>
           </div>

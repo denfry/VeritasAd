@@ -18,6 +18,8 @@ class AudioAnalyzer:
         """
         from app.services.model_manager import model_manager
         self.model = model_manager.get_whisper()
+        if self.model is None:
+            logger.warning("Audio transcription disabled because Whisper failed to load")
 
         # Advertising keywords (Russian)
         self.ad_keywords = [
@@ -103,6 +105,9 @@ class AudioAnalyzer:
             Transcription results with text and segments
         """
         try:
+            if self.model is None:
+                return {"text": "", "segments": [], "language": "unknown"}
+
             logger.info(f"Transcribing audio: {audio_path}")
 
             segments, info = self.model.transcribe(
@@ -175,6 +180,14 @@ class AudioAnalyzer:
             Complete analysis results
         """
         try:
+            if self.model is None:
+                return {
+                    "transcript": "",
+                    "keywords": [],
+                    "score": 0.0,
+                    "error": "Whisper model unavailable",
+                }
+
             # Extract audio
             audio_path = self.extract_audio(video_path)
             if not audio_path or not audio_path.exists():

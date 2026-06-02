@@ -24,85 +24,42 @@ import { SectionReveal } from "@/components/SectionReveal"
 import { SiteShell } from "@/components/SiteShell"
 import { CountUp } from "@/components/ui/CountUp"
 import { ThreeScene } from "@/components/three/ThreeScene"
-
-const proofStats = [
-  { label: "Analyses processed", value: 12840, icon: TrendingUp },
-  { label: "Average confidence", value: 98.4, decimals: 1, suffix: "%", icon: ShieldCheck },
-  { label: "Detected brand events", value: 317000, icon: Eye },
-  { label: "Export-ready reports", value: 9420, icon: FileText },
-]
-
-const pillars = [
-  {
-    title: "Multi-layer evidence",
-    description: "Visual logos, spoken mentions, disclosure labels, links, and CTA signals assembled into one clear verdict.",
-    icon: BrainCircuit,
-    accent: "from-cyan-500/20 to-sky-500/5",
-    iconBg: "bg-cyan-500/10 text-cyan-500",
-  },
-  {
-    title: "Command-center UX",
-    description: "Real-time progress, brand timelines, and PDF reports — all in one cohesive workspace.",
-    icon: Radar,
-    accent: "from-sky-500/20 to-indigo-500/5",
-    iconBg: "bg-sky-500/10 text-sky-500",
-  },
-  {
-    title: "Self-hosted MVP path",
-    description: "Point the frontend to your backend, disable auth for demos, and verify the server immediately from the UI.",
-    icon: Server,
-    accent: "from-orange-400/20 to-amber-400/5",
-    iconBg: "bg-orange-400/10 text-orange-500",
-  },
-]
-
-const pipelineSteps = [
-  {
-    eyebrow: "01 — Intake",
-    title: "Receive a video URL or file upload",
-    body: "Accepts direct uploads or public URLs, pushing them into a single analysis flow without extra infrastructure setup.",
-    icon: Boxes,
-  },
-  {
-    eyebrow: "02 — Analysis",
-    title: "Fuse visual, audio, and disclosure signals",
-    body: "Brand exposure, voice references, missing disclaimers, and outbound links build a structured confidence score.",
-    icon: Waves,
-  },
-  {
-    eyebrow: "03 — Delivery",
-    title: "Return a verdict your team can act on",
-    body: "Reports, timelines, export actions, and live status updates turn the backend output into something clients can trust.",
-    icon: BadgeCheck,
-  },
-]
-
-const mvpSteps = [
-  {
-    title: "Point the frontend at your backend",
-    detail: "Set `NEXT_PUBLIC_API_URL` to your own API domain or local FastAPI instance.",
-  },
-  {
-    title: "Run without Supabase if needed",
-    detail: "Enable `NEXT_PUBLIC_DISABLE_AUTH=true` on the frontend and `DISABLE_AUTH=true` on the backend for demo readiness.",
-  },
-  {
-    title: "Expose your frontend domain in CORS",
-    detail: "Add your frontend host to backend `CORS_ORIGINS` so uploads, progress streams, and reports work from the browser.",
-  },
-]
-
-const signalTiles = [
-  { label: "Detected brands", value: "12", icon: Eye },
-  { label: "Voice mentions", value: "7", icon: AudioLines },
-  { label: "Disclosure gaps", value: "4", icon: ShieldCheck },
-]
+import { useLanguage } from "@/contexts/language-context"
 
 export default function HomePage() {
   const reduceMotion = useReducedMotion()
   const { scrollYProgress } = useScroll()
   const previewY = useTransform(scrollYProgress, [0, 1], [0, reduceMotion ? 0 : -100])
   const haloY = useTransform(scrollYProgress, [0, 1], [0, reduceMotion ? 0 : 160])
+  const { t } = useLanguage()
+  const h = t.home
+
+  const proofStats = [
+    { label: h.stats.analyses, value: 12840, icon: TrendingUp },
+    { label: h.stats.confidence, value: 98.4, decimals: 1, suffix: "%", icon: ShieldCheck },
+    { label: h.stats.brands, value: 317000, icon: Eye },
+    { label: h.stats.reports, value: 9420, icon: FileText },
+  ]
+
+  const signalTiles = [
+    { label: h.signalBrands, value: "12", icon: Eye },
+    { label: h.signalVoice, value: "7", icon: AudioLines },
+    { label: h.signalDisclosure, value: "4", icon: ShieldCheck },
+  ]
+
+  const pillarIcons = [BrainCircuit, Radar, Server]
+  const pillarAccents = [
+    "from-cyan-500/20 to-sky-500/5",
+    "from-sky-500/20 to-indigo-500/5",
+    "from-orange-400/20 to-amber-400/5",
+  ]
+  const pillarIconBgs = [
+    "bg-cyan-500/10 text-cyan-500",
+    "bg-sky-500/10 text-sky-500",
+    "bg-orange-400/10 text-orange-500",
+  ]
+
+  const pipelineIcons = [Boxes, Waves, BadgeCheck]
 
   return (
     <ThreeScene intensity="medium" type="neural">
@@ -117,21 +74,20 @@ export default function HomePage() {
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground backdrop-blur-xl">
                     <span className="status-dot status-dot-green" />
-                    Self-hosted ad intelligence
+                    {h.heroBadge}
                   </span>
                   <ApiConnectionStatus compact />
                 </div>
 
                 {/* Headline */}
                 <h1 className="display-type mt-7 max-w-4xl text-5xl font-semibold leading-[0.95] sm:text-6xl lg:text-7xl xl:text-[5.4rem]">
-                  Detect ads.{" "}
-                  <span className="gradient-text">Prove compliance.</span>{" "}
-                  Ship faster.
+                  {h.heroTitle1}{" "}
+                  <span className="gradient-text">{h.heroTitle2}</span>{" "}
+                  {h.heroTitle3}
                 </h1>
 
                 <p className="mt-6 max-w-xl text-lg leading-8 text-muted-foreground">
-                  VeritasAd analyzes videos and social content for advertising signals — then surfaces
-                  evidence in a polished workspace your team can actually use.
+                  {h.heroDescription}
                 </p>
 
                 {/* CTAs */}
@@ -140,17 +96,17 @@ export default function HomePage() {
                     href="/analyze"
                     className="btn btn-primary btn-premium h-12 px-7 shadow-[0_20px_50px_-18px_hsl(var(--primary)/0.8)]"
                   >
-                    Open analysis workspace
+                    {h.ctaAnalyze}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link href="/docs" className="btn btn-outline h-12 px-6">
-                    Self-hosted setup
+                    {h.ctaDocs}
                   </Link>
                 </div>
 
                 {/* Feature pills */}
                 <div className="mt-8 flex flex-wrap gap-2">
-                  {["Realtime progress", "Brand timeline", "PDF reports", "Mock auth", "Custom API"].map((item) => (
+                  {h.featurePills.map((item) => (
                     <span
                       key={item}
                       className="rounded-full border border-border/60 bg-background/70 px-3 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-xl"
@@ -204,7 +160,7 @@ export default function HomePage() {
                         </div>
                         <span className="badge badge-green">
                           <Activity className="h-3 w-3" />
-                          Live system
+                          {h.previewLiveSystem}
                         </span>
                       </div>
 
@@ -213,17 +169,17 @@ export default function HomePage() {
                         <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
                           {/* Verdict */}
                           <div className="rounded-[1.3rem] border border-border/60 bg-gradient-to-br from-cyan-500/10 via-sky-500/5 to-orange-400/5 p-5">
-                            <p className="eyebrow">Current verdict</p>
+                            <p className="eyebrow">{h.previewVerdict}</p>
                             <div className="mt-3 flex items-end justify-between gap-4">
                               <div>
                                 <div className="text-4xl font-semibold tracking-tight">
                                   <CountUp end={98.4} decimals={1} />%
                                 </div>
                                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                                  High-confidence ad detection with corroborated logo and speech evidence.
+                                  {h.previewConfidenceDesc}
                                 </p>
                               </div>
-                              <span className="badge badge-green whitespace-nowrap">Verified</span>
+                              <span className="badge badge-green whitespace-nowrap">{h.previewVerified}</span>
                             </div>
                             <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted/60">
                               <div className="h-full w-[88%] rounded-full bg-gradient-to-r from-cyan-500 via-sky-500 to-orange-400" />
@@ -247,12 +203,12 @@ export default function HomePage() {
                         {/* Pipeline + evidence */}
                         <div className="grid gap-3 md:grid-cols-[1.2fr_0.8fr]">
                           <div className="rounded-[1.3rem] border border-border/60 bg-background/84 p-4">
-                            <p className="eyebrow">Pipeline snapshot</p>
+                            <p className="eyebrow">{h.previewPipeline}</p>
                             <div className="mt-4 grid gap-2.5">
                               {[
-                                ["Upload normalized", "Done", "badge-green"],
-                                ["Speech-to-text & OCR", "Active", "badge-primary"],
-                                ["Report compilation", "Queued", "badge-amber"],
+                                [h.previewUploadDone, h.statusDone, "badge-green"],
+                                [h.previewSpeechActive, h.statusActive, "badge-primary"],
+                                [h.previewReportQueued, h.statusQueued, "badge-amber"],
                               ].map(([step, status, tone]) => (
                                 <div key={step} className="flex items-center justify-between rounded-2xl border border-border/50 bg-muted/15 px-4 py-2.5">
                                   <span className="text-sm font-medium">{step}</span>
@@ -263,11 +219,11 @@ export default function HomePage() {
                           </div>
 
                           <div className="rounded-[1.3rem] border border-border/60 bg-background/84 p-4">
-                            <p className="eyebrow">Evidence mix</p>
+                            <p className="eyebrow">{h.previewEvidence}</p>
                             <div className="mt-4 space-y-3">
-                              <ScoreRow label="Visual" value={78} tone="cyan" />
-                              <ScoreRow label="Audio" value={61} tone="blue" />
-                              <ScoreRow label="Disclosure" value={34} tone="orange" />
+                              <ScoreRow label={h.evidenceVisual} value={78} tone="cyan" />
+                              <ScoreRow label={h.evidenceAudio} value={61} tone="blue" />
+                              <ScoreRow label={h.evidenceDisclosure} value={34} tone="orange" />
                             </div>
                           </div>
                         </div>
@@ -282,14 +238,14 @@ export default function HomePage() {
                           animate={{ y: [0, -10, 0] }}
                           transition={{ duration: 7, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
                         >
-                          Progress stream attached
+                          {h.previewTooltip1}
                         </motion.div>
                         <motion.div
                           className="pointer-events-none absolute -right-6 bottom-12 hidden rounded-full border border-border/60 bg-background/90 px-4 py-2 text-xs font-medium text-muted-foreground shadow-xl backdrop-blur-xl lg:block"
                           animate={{ y: [0, 10, 0] }}
                           transition={{ duration: 8, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
                         >
-                          PDF export ready
+                          {h.previewTooltip2}
                         </motion.div>
                       </>
                     ) : null}
@@ -305,26 +261,25 @@ export default function HomePage() {
           <div className="container mx-auto max-w-7xl px-4">
             <SectionReveal className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
               <div className="max-w-xl">
-                <p className="eyebrow">Product pillars</p>
+                <p className="eyebrow">{h.pillarsEyebrow}</p>
                 <h2 className="mt-3 text-3xl font-semibold tracking-tight lg:text-5xl">
-                  More than just a score.
+                  {h.pillarsTitle}
                 </h2>
               </div>
               <p className="max-w-md text-sm leading-7 text-muted-foreground">
-                VeritasAd frames advertising compliance as a structured, evidence-driven workflow —
-                not a single black-box number.
+                {h.pillarsDescription}
               </p>
             </SectionReveal>
 
             <div className="mt-10 grid gap-4 lg:grid-cols-3">
-              {pillars.map((pillar, index) => {
-                const Icon = pillar.icon
+              {h.pillars.map((pillar, index) => {
+                const Icon = pillarIcons[index]
                 return (
                   <SectionReveal key={pillar.title} delay={index * 0.06}>
                     <div className="surface bg-noise group relative h-full overflow-hidden p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(0,0,0,0.14)]">
-                      <div className={`absolute inset-0 bg-gradient-to-br ${pillar.accent} opacity-100`} />
+                      <div className={`absolute inset-0 bg-gradient-to-br ${pillarAccents[index]} opacity-100`} />
                       <div className="relative">
-                        <div className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl ${pillar.iconBg} border border-border/40`}>
+                        <div className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl ${pillarIconBgs[index]} border border-border/40`}>
                           <Icon className="h-5 w-5" />
                         </div>
                         <h3 className="mt-5 text-xl font-semibold tracking-tight">{pillar.title}</h3>
@@ -344,17 +299,16 @@ export default function HomePage() {
             <div className="grid gap-6 lg:grid-cols-[0.96fr_1.04fr]">
               <SectionReveal className="space-y-6">
                 <div className="section-shell bg-noise p-8">
-                  <p className="eyebrow">MVP path</p>
+                  <p className="eyebrow">{h.mvpEyebrow}</p>
                   <h2 className="mt-3 text-3xl font-semibold tracking-tight lg:text-4xl">
-                    Connect your own server. Verify from the UI.
+                    {h.mvpTitle}
                   </h2>
                   <p className="mt-4 text-sm leading-7 text-muted-foreground">
-                    A demo-ready path with no auth and minimal configuration — so you can ship fast and
-                    validate the integration in seconds.
+                    {h.mvpDescription}
                   </p>
 
                   <div className="mt-6 space-y-3">
-                    {mvpSteps.map((step, index) => (
+                    {h.mvpSteps.map((step, index) => (
                       <div key={step.title} className="rounded-[1.3rem] border border-border/60 bg-background/76 p-4">
                         <div className="flex items-center gap-3">
                           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
@@ -369,14 +323,14 @@ export default function HomePage() {
 
                   <div className="mt-6 grid gap-3 md:grid-cols-2">
                     <ConfigCard
-                      title="Frontend env"
+                      title={h.frontendEnv}
                       rows={[
                         "NEXT_PUBLIC_API_URL=https://api.your-domain.com",
                         "NEXT_PUBLIC_DISABLE_AUTH=true",
                       ]}
                     />
                     <ConfigCard
-                      title="Backend env"
+                      title={h.backendEnv}
                       rows={[
                         "DISABLE_AUTH=true",
                         'CORS_ORIGINS=["https://app.your-domain.com"]',
@@ -390,20 +344,11 @@ export default function HomePage() {
                 <ApiConnectionStatus />
 
                 <div className="section-shell p-6">
-                  <p className="eyebrow">Product surfaces</p>
+                  <p className="eyebrow">{h.productSurfaces}</p>
                   <div className="mt-5 grid gap-4 md:grid-cols-3">
-                    <SurfaceCard
-                      title="Landing"
-                      body="Premium first impression with layered motion and self-hosted messaging."
-                    />
-                    <SurfaceCard
-                      title="Analyze"
-                      body="A production-style workspace with upload, realtime progress, timelines, and export."
-                    />
-                    <SurfaceCard
-                      title="Docs"
-                      body="A clearer self-hosted setup path so frontend, backend, and auth mode align faster."
-                    />
+                    {h.surfaces.map((s) => (
+                      <SurfaceCard key={s.title} title={s.title} body={s.body} />
+                    ))}
                   </div>
                 </div>
               </SectionReveal>
@@ -416,19 +361,18 @@ export default function HomePage() {
           <div className="container mx-auto max-w-7xl px-4">
             <SectionReveal className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
               <div className="section-shell p-8">
-                <p className="eyebrow">Pipeline</p>
+                <p className="eyebrow">{h.pipelineEyebrow}</p>
                 <h2 className="mt-3 text-3xl font-semibold tracking-tight lg:text-4xl">
-                  One flow from intake to evidence-ready report.
+                  {h.pipelineTitle}
                 </h2>
                 <p className="mt-4 text-sm leading-7 text-muted-foreground">
-                  Input, analysis, reporting, and deployment readiness — all inside the same
-                  visual language and a single coherent story.
+                  {h.pipelineDescription}
                 </p>
               </div>
 
               <div className="space-y-4">
-                {pipelineSteps.map((step, index) => {
-                  const Icon = step.icon
+                {h.pipeline.map((step, index) => {
+                  const Icon = pipelineIcons[index]
                   return (
                     <SectionReveal key={step.title} delay={index * 0.06}>
                       <div className="surface p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_50px_rgba(0,0,0,0.12)]">
@@ -460,22 +404,21 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-dots opacity-40" />
                 <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
                   <div className="max-w-2xl">
-                    <p className="eyebrow">Get started</p>
+                    <p className="eyebrow">{h.ctaEyebrow}</p>
                     <h2 className="mt-3 text-3xl font-semibold tracking-tight lg:text-5xl">
-                      From prototype to convincing MVP — with your own backend attached.
+                      {h.ctaTitle}
                     </h2>
                     <p className="mt-4 text-sm leading-7 text-muted-foreground">
-                      The connection state and self-hosted path make it easy to demo on your own
-                      infrastructure, while the UI gives clients a professional first impression.
+                      {h.ctaDescription}
                     </p>
                   </div>
                   <div className="flex flex-shrink-0 flex-wrap gap-3">
                     <Link href="/analyze" className="btn btn-primary btn-premium h-12 px-7">
                       <Sparkles className="h-4 w-4" />
-                      Start analysis
+                      {h.ctaStartAnalysis}
                     </Link>
                     <Link href="/docs" className="btn btn-outline h-12 px-6">
-                      Open setup docs
+                      {h.ctaOpenDocs}
                     </Link>
                   </div>
                 </div>

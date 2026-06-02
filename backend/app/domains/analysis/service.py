@@ -309,7 +309,11 @@ class AnalysisService:
             try:
                 download_video_task.delay(**task_kwargs)
             except Exception as exc:
-                logger.warning("celery_enqueue_failed_falling_back_to_inline_download", task_id=task_id, error=str(exc))
+                logger.warning(
+                    "celery_enqueue_failed_falling_back_to_inline_download task_id=%s error=%s",
+                    task_id,
+                    str(exc),
+                )
                 _run_task_inline(download_video_task, task_kwargs)
         else:
             task_kwargs = {
@@ -322,7 +326,11 @@ class AnalysisService:
             try:
                 analyze_video_task.delay(**task_kwargs)
             except Exception as exc:
-                logger.warning("celery_enqueue_failed_falling_back_to_inline_analysis", task_id=task_id, error=str(exc))
+                logger.warning(
+                    "celery_enqueue_failed_falling_back_to_inline_analysis task_id=%s error=%s",
+                    task_id,
+                    str(exc),
+                )
                 _run_task_inline(analyze_video_task, task_kwargs)
 
         await increment_usage_fn(user, session)

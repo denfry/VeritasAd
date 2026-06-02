@@ -51,23 +51,27 @@ async def upload_video(
                 raise HTTPException(400, f"yt-dlp error: {result.stderr}")
             source = "url"
 
-        annotate_cmd = [
-            "python",
-            "../scripts/auto_annotate.py",
-            "--video-path",
-            str(video_path),
-        ]
-        annotate_result = subprocess.run(annotate_cmd, capture_output=True, text=True)
-        if annotate_result.returncode != 0:
-            logger.error(f"annotation_failed - stderr={annotate_result.stderr}")
-            raise HTTPException(500, "Video processing failed")
+        annotate_script = Path(__file__).resolve().parents[4] / "scripts" / "auto_annotate.py"
+        if annotate_script.exists():
+            annotate_cmd = [
+                "python",
+                str(annotate_script),
+                "--video-path",
+                str(video_path),
+            ]
+            annotate_result = subprocess.run(annotate_cmd, capture_output=True, text=True)
+            if annotate_result.returncode != 0:
+                logger.error(f"annotation_failed - stderr={annotate_result.stderr}")
+                raise HTTPException(500, "Video processing failed")
+        else:
+            logger.warning("annotation_script_missing - skipping dataset annotation")
 
         return JSONResponse(
             {
                 "status": "success",
                 "video_id": video_id,
                 "source": source,
-                "message": "Video processed and added to dataset",
+                "message": "Video uploaded successfully",
             }
         )
 

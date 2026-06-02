@@ -58,6 +58,8 @@ else:
         result_serializer="json",
         timezone="UTC",
         enable_utc=True,
+        task_always_eager=settings.CELERY_TASK_ALWAYS_EAGER,
+        task_eager_propagates=True,
         task_default_queue="analysis",
         task_default_exchange="analysis",
         task_default_routing_key="analysis",

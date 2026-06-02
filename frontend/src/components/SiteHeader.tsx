@@ -8,21 +8,24 @@ import { Menu, ShieldCheck, Sparkles, X, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "./ThemeToggle"
 import { CurrencySelector } from "./CurrencySelector"
+import { LanguageSwitcher } from "./LanguageSwitcher"
 import { useAuth } from "@/contexts/auth-context"
 import { useCurrency } from "@/contexts/currency-context"
-
-const navLinks = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/analyze", label: "Analyze" },
-  { href: "/history", label: "History" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/docs", label: "Docs" },
-]
+import { useLanguage } from "@/contexts/language-context"
 
 export function SiteHeader() {
   const [isOpen, setIsOpen] = useState(false)
   const { user } = useAuth()
+  const { t } = useLanguage()
   const pathname = usePathname()
+
+  const navLinks = [
+    { href: "/dashboard", label: t.nav.dashboard },
+    { href: "/analyze", label: t.nav.analyze },
+    { href: "/history", label: t.nav.history },
+    { href: "/pricing", label: t.nav.pricing },
+    { href: "/docs", label: t.nav.docs },
+  ]
 
   return (
     <motion.header
@@ -70,18 +73,19 @@ export function SiteHeader() {
             <CurrencySelectorCompact />
           </div>
 
+          <LanguageSwitcher />
           <ThemeToggle />
 
           {user ? (
             <>
               <Link href="/analyze" className="hidden sm:inline-flex btn btn-primary btn-premium h-9 px-4 text-xs">
                 <Sparkles className="h-3.5 w-3.5" />
-                Analyze
+                {t.header.analyze}
               </Link>
               <Link
                 href="/account"
                 className="hidden md:inline-flex btn btn-ghost h-9 w-9 p-0 rounded-full"
-                title="Account"
+                title={t.header.account}
               >
                 <User className="h-4 w-4" />
               </Link>
@@ -89,10 +93,10 @@ export function SiteHeader() {
           ) : (
             <>
               <Link href="/auth/login" className="btn btn-ghost h-9 px-4 hidden sm:inline-flex text-xs">
-                Sign in
+                {t.header.signIn}
               </Link>
               <Link href="/auth/register" className="btn btn-primary btn-premium h-9 px-4 hidden sm:inline-flex text-xs">
-                Get started
+                {t.header.getStarted}
               </Link>
             </>
           )}
@@ -102,7 +106,7 @@ export function SiteHeader() {
             type="button"
             onClick={() => setIsOpen((open) => !open)}
             className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/80 text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-primary/5 transition-all backdrop-blur-sm"
-            aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-label={isOpen ? t.header.closeMenu : t.header.openMenu}
             whileTap={{ scale: 0.93 }}
           >
             <AnimatePresence mode="wait" initial={false}>
@@ -176,7 +180,7 @@ export function SiteHeader() {
                       className="block rounded-xl px-3 py-2.5 font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                       onClick={() => setIsOpen(false)}
                     >
-                      Account
+                      {t.header.account}
                     </Link>
                     <Link
                       href="/analyze"
@@ -184,7 +188,7 @@ export function SiteHeader() {
                       onClick={() => setIsOpen(false)}
                     >
                       <Sparkles className="h-4 w-4" />
-                      Start analysis
+                      {t.analyze.startAnalysis}
                     </Link>
                   </div>
                 ) : (
@@ -194,14 +198,14 @@ export function SiteHeader() {
                       className="btn btn-outline"
                       onClick={() => setIsOpen(false)}
                     >
-                      Sign in
+                      {t.header.signIn}
                     </Link>
                     <Link
                       href="/auth/register"
                       className="btn btn-primary btn-premium"
                       onClick={() => setIsOpen(false)}
                     >
-                      Get started
+                      {t.header.getStarted}
                     </Link>
                   </div>
                 )}

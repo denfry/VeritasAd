@@ -8,11 +8,15 @@ import { ArrowRight, Loader2, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 import { SiteShell } from "@/components/SiteShell"
 import { useAuth } from "@/contexts/auth-context"
+import { useLanguage } from "@/contexts/language-context"
 import { ThreeScene } from "@/components/three/ThreeScene"
 
 export default function RegisterPage() {
   const router = useRouter()
   const { signUp, isMock } = useAuth()
+  const { t } = useLanguage()
+  const r = t.auth.register
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -23,21 +27,21 @@ export default function RegisterPage() {
     const nextErrors: typeof errors = {}
 
     if (!emailValue.trim()) {
-      nextErrors.email = "Email is required"
+      nextErrors.email = r.errors.emailRequired
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
-      nextErrors.email = "Invalid email format"
+      nextErrors.email = r.errors.emailInvalid
     }
 
     if (!passwordValue) {
-      nextErrors.password = "Password is required"
+      nextErrors.password = r.errors.passwordRequired
     } else if (passwordValue.length < 8) {
-      nextErrors.password = "Password must be at least 8 characters"
+      nextErrors.password = r.errors.passwordTooShort
     }
 
     if (!confirmValue) {
-      nextErrors.confirmPassword = "Please confirm your password"
+      nextErrors.confirmPassword = r.errors.confirmRequired
     } else if (passwordValue && confirmValue !== passwordValue) {
-      nextErrors.confirmPassword = "Passwords do not match"
+      nextErrors.confirmPassword = r.errors.passwordMismatch
     }
 
     setErrors(nextErrors)
@@ -84,19 +88,19 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
-                Create account
+                {r.createAccount}
               </p>
               <h1 className="text-3xl font-semibold tracking-tight lg:text-4xl">
-                Start with a workflow that feels considered.
+                {r.title}
               </h1>
               <p className="text-sm leading-7 text-muted-foreground">
-                Create your account to use the analysis dashboard, reports, and pricing tiers.
+                {r.description}
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="email">Email</label>
+                <label className="text-sm font-medium" htmlFor="email">{r.email}</label>
                 <input
                   id="email"
                   type="email"
@@ -112,7 +116,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="password">Password</label>
+                <label className="text-sm font-medium" htmlFor="password">{r.password}</label>
                 <input
                   id="password"
                   type="password"
@@ -124,11 +128,11 @@ export default function RegisterPage() {
                     validate(email, e.target.value, confirmPassword)
                   }}
                 />
-                {errors.password ? <p className="text-xs text-red-500">{errors.password}</p> : <p className="text-xs text-muted-foreground">At least 8 characters.</p>}
+                {errors.password ? <p className="text-xs text-red-500">{errors.password}</p> : <p className="text-xs text-muted-foreground">{r.passwordHint}</p>}
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="confirmPassword">Confirm password</label>
+                <label className="text-sm font-medium" htmlFor="confirmPassword">{r.confirmPassword}</label>
                 <input
                   id="confirmPassword"
                   type="password"
@@ -145,10 +149,10 @@ export default function RegisterPage() {
 
               <button type="submit" disabled={loading} className="btn btn-primary h-12 w-full">
                 {loading ? (
-                  <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Creating account...</span>
+                  <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />{r.creating}</span>
                 ) : (
                   <>
-                    Create account
+                    {r.submit}
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -156,9 +160,9 @@ export default function RegisterPage() {
             </form>
 
             <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
+              {r.alreadyHave}{" "}
               <Link href="/auth/login" className="underline underline-offset-4 hover:text-foreground">
-                Sign in
+                {r.signIn}
               </Link>
             </p>
           </div>
@@ -173,15 +177,10 @@ export default function RegisterPage() {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-cyan-400/5 to-transparent" />
           <div className="relative space-y-6">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
-              What you get
+              {r.whatYouGet}
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
-              {[
-                ["Premium reports", "Sharper output for review"],
-                ["Live workflow", "Clean progress states"],
-                ["Usage tracking", "Clear quotas and limits"],
-                ["Modern pricing", "Designed for teams"],
-              ].map(([title, desc]) => (
+              {r.features.map(([title, desc]) => (
                 <div key={title} className="surface p-4">
                   <div className="text-sm font-semibold">{title}</div>
                   <p className="mt-1 text-xs text-muted-foreground">{desc}</p>
@@ -191,9 +190,9 @@ export default function RegisterPage() {
 
             <blockquote className="surface border-l-2 border-primary/40 p-5">
               <p className="text-sm leading-7 text-muted-foreground">
-                “Registration should be the lightest part of the experience, not the most confusing one.”
+                &ldquo;{r.quote}&rdquo;
               </p>
-              <footer className="mt-3 text-xs font-medium text-foreground">Auth design note</footer>
+              <footer className="mt-3 text-xs font-medium text-foreground">{r.quoteFooter}</footer>
             </blockquote>
           </div>
         </motion.div>

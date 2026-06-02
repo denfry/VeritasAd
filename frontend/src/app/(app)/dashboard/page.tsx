@@ -16,6 +16,7 @@ import type { AnalysisHistoryItem } from "@/types/api"
 import { Toaster } from "sonner"
 import { formatDistanceToNow } from "date-fns"
 import { useAuth } from "@/contexts/auth-context"
+import { useLanguage } from "@/contexts/language-context"
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -31,6 +32,8 @@ const PAGE_SIZE = 5
 
 export default function DashboardPage() {
   const { user, loading: authLoading, updateMockUser } = useAuth()
+  const { t } = useLanguage()
+  const d = t.dashboard
   const router = useRouter()
   const [history, setHistory] = useState<AnalysisHistoryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -160,10 +163,10 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         <div className="card p-6 border border-red-500/20 bg-red-500/5">
-          <h2 className="text-lg font-semibold">Dashboard unavailable</h2>
+          <h2 className="text-lg font-semibold">{d.unavailable}</h2>
           <p className="mt-2 text-sm text-muted-foreground">{loadError}</p>
           <button className="btn btn-primary mt-4" onClick={() => loadData(0)}>
-            Retry
+            {d.retry}
           </button>
         </div>
       </div>
@@ -217,7 +220,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1 }}
           >
-            Welcome back
+            {d.eyebrow}
           </motion.p>
           <motion.h1
             className="text-3xl font-semibold tracking-tight lg:text-4xl"
@@ -225,7 +228,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
-            Dashboard
+            {d.title}
           </motion.h1>
           <motion.p
             className="text-sm text-muted-foreground"
@@ -233,7 +236,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            Monitor your content analysis and compliance status.
+            {d.description}
           </motion.p>
         </motion.div>
 
@@ -243,16 +246,16 @@ export default function DashboardPage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4 }}
         >
-           <button 
+           <button
             onClick={() => loadData(0)}
             className="btn btn-outline h-10 w-10 p-0 rounded-lg"
-            title="Refresh data"
+            title={d.refresh}
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
           <Link href="/analyze" className="btn btn-primary btn-premium px-5 rounded-full gap-2 shadow-[0_4px_20px_hsl(var(--primary)/0.25)]">
             <BarChart3 className="h-4 w-4" />
-            <span className="font-medium">New Analysis</span>
+            <span className="font-medium">{d.newAnalysis}</span>
           </Link>
         </motion.div>
       </div>
@@ -265,28 +268,28 @@ export default function DashboardPage() {
         animate="visible"
       >
         <StatCard
-          label="Total analyses"
+          label={d.stats.total}
           value={stats.totalAnalyses}
-          helper="All time"
+          helper={d.stats.allTime}
           icon={<TrendingUp className="h-4 w-4" />}
         />
         <StatCard
-          label="Confidence"
+          label={d.stats.confidence}
           value={stats.avgScore}
-          helper="Avg. score"
+          helper={d.stats.avgScore}
           icon={<ShieldCheck className="h-4 w-4" />}
         />
         <StatCard
-          label="Daily limit"
+          label={d.stats.dailyLimit}
           value={`${stats.dailyUsed}/${stats.dailyLimit}`}
           helper={`${stats.dailyPercentage.toFixed(0)}% used`}
           icon={<Zap className="h-4 w-4" />}
           progress={stats.dailyPercentage}
         />
         <StatCard
-          label="Active"
+          label={d.stats.active}
           value={stats.activeTasks}
-          helper="Processing"
+          helper={d.stats.processing}
           icon={<Activity className="h-4 w-4" />}
         />
       </motion.div>
@@ -298,25 +301,29 @@ export default function DashboardPage() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
       >
-        <PipelineCard 
-          label="Video Analysis" 
+        <PipelineCard
+          label={d.pipeline.videoAnalysis}
           status={history.some(h => h.status === 'processing') ? 'active' : 'operational'}
-          description="Content scanning"
+          description={d.pipeline.contentScanning}
+          statusLabels={d.pipeline}
         />
-        <PipelineCard 
-          label="Brand Detection" 
+        <PipelineCard
+          label={d.pipeline.brandDetection}
           status="operational"
-          description="Logo recognition"
+          description={d.pipeline.logoRecognition}
+          statusLabels={d.pipeline}
         />
-        <PipelineCard 
-          label="Audio Analysis" 
+        <PipelineCard
+          label={d.pipeline.audioAnalysis}
           status="operational"
-          description="Speech recognition"
+          description={d.pipeline.speechRecognition}
+          statusLabels={d.pipeline}
         />
-        <PipelineCard 
-          label="LLM Detection" 
+        <PipelineCard
+          label={d.pipeline.llmDetection}
           status={stats.avgScore > 0 ? 'operational' : 'degraded'}
-          description="AI analysis"
+          description={d.pipeline.aiAnalysis}
+          statusLabels={d.pipeline}
         />
       </motion.div>
 
@@ -332,13 +339,13 @@ export default function DashboardPage() {
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
               <History className="h-4 w-4" />
             </div>
-            <h2 className="font-semibold">Recent analyses</h2>
+            <h2 className="font-semibold">{d.recentAnalyses}</h2>
           </div>
           <Link
             href="/history"
             className="text-sm text-primary hover:underline flex items-center gap-1"
           >
-            View all <ArrowRight className="h-3 w-3" />
+            {d.viewAll} <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
         
@@ -372,11 +379,11 @@ export default function DashboardPage() {
                     {isLoading ? (
                       <>
                         <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                        Loading...
+                        {d.loading}
                       </>
                     ) : (
                       <>
-                        Load more
+                        {d.loadMore}
                       </>
                     )}
                   </button>
@@ -391,12 +398,12 @@ export default function DashboardPage() {
                   <FileVideo className="h-7 w-7 text-primary/80" />
                 </div>
               </div>
-              <h3 className="text-lg font-bold tracking-tight mb-2">No analyses yet</h3>
+              <h3 className="text-lg font-bold tracking-tight mb-2">{d.noAnalysesTitle}</h3>
               <p className="max-w-sm text-sm text-muted-foreground mb-6">
-                Start by analyzing your first video or social post. The intelligent pipeline will extract deep compliance insights.
+                {d.noAnalysesDesc}
               </p>
               <Link href="/analyze" className="btn btn-primary btn-premium px-8">
-                Start Analysis
+                {d.startAnalysis}
               </Link>
             </div>
           )}
@@ -407,6 +414,7 @@ export default function DashboardPage() {
 }
 
 function AnalysisRow({ analysis, index }: { analysis: AnalysisHistoryItem; index: number }) {
+  const { t } = useLanguage()
   const statusIcon = {
     completed: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
     failed: <XCircle className="h-4 w-4 text-red-500" />,
@@ -454,7 +462,7 @@ function AnalysisRow({ analysis, index }: { analysis: AnalysisHistoryItem; index
           <p className="font-semibold text-sm">
             {analysis.confidence_score ? (analysis.confidence_score * 100).toFixed(0) + '%' : '--'}
           </p>
-          <p className="text-[10px] text-muted-foreground">Confidence</p>
+          <p className="text-[10px] text-muted-foreground">{t.dashboard.confidence}</p>
         </div>
         
         <span className={`px-3 py-1 rounded-lg text-[10px] font-medium border ${statusColor}`}>
@@ -465,14 +473,16 @@ function AnalysisRow({ analysis, index }: { analysis: AnalysisHistoryItem; index
   )
 }
 
-function PipelineCard({ 
-  label, 
-  status, 
-  description 
-}: { 
+function PipelineCard({
+  label,
+  status,
+  description,
+  statusLabels,
+}: {
   label: string
   status: 'operational' | 'degraded' | 'active' | 'down'
   description: string
+  statusLabels: { operational: string; degraded: string; active: string; down: string }
 }) {
   const colors = {
     operational: 'bg-emerald-500',
@@ -480,13 +490,8 @@ function PipelineCard({
     active: 'bg-primary',
     down: 'bg-red-500'
   }
-  
-  const labels = {
-    operational: 'Operational',
-    degraded: 'Degraded',
-    active: 'Active',
-    down: 'Down'
-  }
+
+  const labels = statusLabels
 
   return (
     <div className="card p-5 mt-2 flex flex-col gap-3 relative overflow-hidden group hover:border-primary/20 transition-all duration-300 hover:shadow-[0_4px_24px_rgba(0,0,0,0.06)] hover:-translate-y-[2px]">

@@ -3,23 +3,26 @@
 import Link from "next/link"
 import { ShieldCheck } from "lucide-react"
 import { motion } from "framer-motion"
-
-const productLinks = [
-  { href: "/analyze", label: "Analyze" },
-  { href: "/history", label: "History" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/docs", label: "Documentation" },
-]
-
-const legalLinks = [
-  { href: "/legal/terms", label: "Terms of Service" },
-  { href: "/legal/privacy", label: "Privacy Policy" },
-  { href: "/legal/cookies", label: "Cookie Policy" },
-  { href: "/legal/gdpr", label: "GDPR Rights" },
-  { href: "/legal/disclaimer", label: "Disclaimer" },
-]
+import { useLanguage } from "@/contexts/language-context"
 
 export function SiteFooter() {
+  const { t } = useLanguage()
+
+  const productLinks = [
+    { href: "/analyze", label: t.footer.links.analyze },
+    { href: "/history", label: t.footer.links.history },
+    { href: "/pricing", label: t.footer.links.pricing },
+    { href: "/docs", label: t.footer.links.docs },
+  ]
+
+  const legalLinks = [
+    { href: "/legal/terms", label: t.footer.links.terms },
+    { href: "/legal/privacy", label: t.footer.links.privacy },
+    { href: "/legal/cookies", label: t.footer.links.cookies },
+    { href: "/legal/gdpr", label: t.footer.links.gdpr },
+    { href: "/legal/disclaimer", label: t.footer.links.disclaimer },
+  ]
+
   return (
     <footer className="border-t border-border/50 bg-background/80 backdrop-blur-2xl">
       <div className="container mx-auto max-w-6xl px-4 py-12">
@@ -39,12 +42,11 @@ export function SiteFooter() {
             </Link>
 
             <p className="mt-4 max-w-xs text-sm leading-6 text-muted-foreground text-balance">
-              AI-first advertising disclosure detection for marketing teams, compliance
-              officers, and social platforms.
+              {t.footer.tagline}
             </p>
 
             <p className="mt-5 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground/50">
-              Built with FastAPI · Next.js · ML
+              {t.footer.builtWith}
             </p>
           </motion.div>
 
@@ -56,7 +58,7 @@ export function SiteFooter() {
             transition={{ duration: 0.4, delay: 0.08 }}
           >
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground/60 mb-4">
-              Product
+              {t.footer.product}
             </p>
             <ul className="space-y-3">
               {productLinks.map((link) => (
@@ -82,7 +84,7 @@ export function SiteFooter() {
             transition={{ duration: 0.4, delay: 0.14 }}
           >
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground/60 mb-4">
-              Legal
+              {t.footer.legal}
             </p>
             <ul className="space-y-3">
               {legalLinks.map((link) => (
@@ -110,11 +112,11 @@ export function SiteFooter() {
           transition={{ delay: 0.2 }}
         >
           <p className="text-xs text-muted-foreground/60">
-            © {new Date().getFullYear()} VeritasAd. All rights reserved.
+            © {new Date().getFullYear()} VeritasAd. {t.footer.allRights}
           </p>
           <div className="flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
-            <span className="text-xs text-muted-foreground/60">All systems operational</span>
+            <span className="text-xs text-muted-foreground/60">{t.footer.allSystemsOk}</span>
           </div>
         </motion.div>
       </div>

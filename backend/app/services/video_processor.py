@@ -41,8 +41,14 @@ class VideoProcessor:
         from app.services.model_manager import model_manager
         logger.info("Initializing Video Processor via ModelManager")
 
-        # CLIP for logo/brand detection
-        self.clip_model, self.clip_processor = model_manager.get_clip()
+        # CLIP for logo/brand detection (only load if zero-shot is enabled)
+        if settings.ENABLE_ZERO_SHOT:
+            self.clip_model, self.clip_processor = model_manager.get_clip()
+            if self.clip_model is None or self.clip_processor is None:
+                logger.warning("Brand-vision detection disabled because CLIP failed to load")
+        else:
+            self.clip_model, self.clip_processor = None, None
+            logger.info("CLIP skipped: ENABLE_ZERO_SHOT=false")
 
         # Load brand aliases from config
         self.brand_aliases = settings.get_brand_aliases()
@@ -875,6 +881,9 @@ class VideoProcessor:
             Detection results
         """
         if not frames or not text_prompts:
+            return {"score": 0.0, "detected_brands": [], "max_scores": []}
+
+        if self.clip_model is None or self.clip_processor is None:
             return {"score": 0.0, "detected_brands": [], "max_scores": []}
 
         try:

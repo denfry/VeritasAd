@@ -8,12 +8,14 @@ import { ArrowRight, Github, Globe, Loader2, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 import { SiteShell } from "@/components/SiteShell"
 import { useAuth } from "@/contexts/auth-context"
+import { useLanguage } from "@/contexts/language-context"
 import { ThreeScene } from "@/components/three/ThreeScene"
 
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { signIn, isMock } = useAuth()
+  const { t } = useLanguage()
   const reduceMotion = useReducedMotion()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -44,6 +46,8 @@ export default function LoginPage() {
     }
   }
 
+  const l = t.auth.login
+
   return (
     <ThreeScene intensity="light" type="particles">
       <SiteShell>
@@ -72,22 +76,18 @@ export default function LoginPage() {
 
             <div className="max-w-xl space-y-4">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
-                Premium access
+                {l.premiumAccess}
               </p>
               <h1 className="text-balance text-4xl font-semibold tracking-tight lg:text-5xl">
-                Sign in to a cleaner, faster analysis workspace.
+                {l.title}
               </h1>
               <p className="max-w-lg text-sm leading-7 text-muted-foreground lg:text-base">
-                Access your dashboard, analysis history, reports, and workflow controls from one place.
+                {l.description}
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                ["Fast setup", "Mock auth ready"],
-                ["Better flow", "One workspace"],
-                ["Clear status", "Always visible"],
-              ].map(([title, desc]) => (
+              {l.features.map(([title, desc]) => (
                 <div key={title} className="surface p-4">
                   <div className="text-sm font-semibold">{title}</div>
                   <p className="mt-1 text-xs text-muted-foreground">{desc}</p>
@@ -97,10 +97,9 @@ export default function LoginPage() {
 
             <blockquote className="surface border-l-2 border-primary/40 p-5">
               <p className="text-sm leading-7 text-muted-foreground">
-                “A high-trust interface should feel calm, fast, and structured. That is the direction
-                this redesign is moving toward.”
+                &ldquo;{l.quote}&rdquo;
               </p>
-              <footer className="mt-3 text-xs font-medium text-foreground">Product design note</footer>
+              <footer className="mt-3 text-xs font-medium text-foreground">{l.quoteFooter}</footer>
             </blockquote>
           </div>
         </motion.div>
@@ -114,16 +113,16 @@ export default function LoginPage() {
           <div className="mx-auto max-w-md space-y-6">
             <div className="space-y-2 text-center">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground/70">
-                Sign in
+                {l.signIn}
               </p>
-              <h2 className="text-2xl font-semibold tracking-tight">Welcome back</h2>
-              <p className="text-sm text-muted-foreground">Enter your email to continue.</p>
+              <h2 className="text-2xl font-semibold tracking-tight">{l.welcomeBack}</h2>
+              <p className="text-sm text-muted-foreground">{l.emailHint}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium leading-none" htmlFor="email">
-                  Email
+                  {l.email}
                 </label>
                 <input
                   id="email"
@@ -141,10 +140,10 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium leading-none" htmlFor="password">
-                    Password
+                    {l.password}
                   </label>
                   <Link href="/auth/forgot-password" className="text-xs text-muted-foreground hover:text-foreground">
-                    Forgot password?
+                    {l.forgotPassword}
                   </Link>
                 </div>
                 <input
@@ -160,11 +159,11 @@ export default function LoginPage() {
                 {loading ? (
                   <span className="inline-flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Signing in...
+                    {l.signingIn}
                   </span>
                 ) : (
                   <>
-                    Continue
+                    {l.continue}
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -174,7 +173,7 @@ export default function LoginPage() {
             <div className="relative py-2">
               <div className="absolute inset-x-0 top-1/2 h-px bg-border/70" />
               <span className="relative mx-auto block w-fit bg-card px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                Or continue with
+                {l.orContinueWith}
               </span>
             </div>
 
@@ -191,7 +190,7 @@ export default function LoginPage() {
 
             <p className="text-center text-sm text-muted-foreground">
               <Link href="/auth/register" className="underline underline-offset-4 hover:text-foreground">
-                Don&apos;t have an account? Sign up
+                {l.noAccount}
               </Link>
             </p>
           </div>

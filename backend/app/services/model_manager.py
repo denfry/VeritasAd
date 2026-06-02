@@ -18,9 +18,16 @@ class ModelManager:
     def get_clip(self):
         if "clip" not in self._models:
             logger.info(f"Loading CLIP model: {settings.CLIP_MODEL}")
-            model = CLIPModel.from_pretrained(settings.CLIP_MODEL)
-            processor = CLIPProcessor.from_pretrained(settings.CLIP_MODEL)
-            self._models["clip"] = (model, processor)
+            try:
+                model = CLIPModel.from_pretrained(settings.CLIP_MODEL)
+                processor = CLIPProcessor.from_pretrained(settings.CLIP_MODEL)
+                self._models["clip"] = (model, processor)
+            except Exception as exc:
+                logger.warning(
+                    "CLIP model unavailable, continuing without brand-vision detection: %s",
+                    exc,
+                )
+                self._models["clip"] = (None, None)
         return self._models["clip"]
 
     def get_whisper(self):
@@ -28,9 +35,16 @@ class ModelManager:
             device = "cuda" if torch.cuda.is_available() else "cpu"
             compute_type = "float16" if device == "cuda" else "int8"
             logger.info(f"Loading Whisper model: {settings.WHISPER_MODEL} ({device}, {compute_type})")
-            self._models["whisper"] = WhisperModel(
-                settings.WHISPER_MODEL, device=device, compute_type=compute_type
-            )
+            try:
+                self._models["whisper"] = WhisperModel(
+                    settings.WHISPER_MODEL, device=device, compute_type=compute_type
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Whisper model unavailable, continuing without audio transcription: %s",
+                    exc,
+                )
+                self._models["whisper"] = None
         return self._models["whisper"]
 
     def get_llm(self, adapter_path: str):
