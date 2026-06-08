@@ -70,12 +70,33 @@ class DisclosureDetector:
         self.compiled_cta_patterns = [re.compile(p, re.IGNORECASE) for p in self.cta_patterns]
         self.compiled_promo_patterns = [re.compile(p) for p in self.promo_patterns]
 
+    # Tokens that look capitalised but are NOT brands: legal forms, generic
+    # commerce/disclosure nouns and connectors. Without this filter the
+    # context-discovery step emitted junk "brands" (ООО, ИНН, КУПИТЬ, Набор,
+    # Компания, Сотрудничество, Серия ...) that polluted the brand list and
+    # inflated the brand signal score.
+    DISCOVERY_STOPWORDS = {
+        # legal forms / registry
+        "ооо", "оао", "зао", "пао", "ао", "ип", "инн", "огрн", "кпп",
+        # disclosure / commerce nouns
+        "реклама", "рекламы", "рекламе", "промокод", "промокода", "скидка",
+        "скидки", "бонус", "купон", "акция", "ссылка", "ссылке", "сайт",
+        "сайте", "артикул", "erid", "эрид", "купить", "заказать", "заказ",
+        "набор", "набора", "наборы", "серия", "серии", "компания", "компании",
+        "сотрудничество", "магазин", "магазине", "доставка", "подарок",
+        "цена", "рублей", "руб", "товар", "товары", "распродажа", "предложение",
+        # generic connectors / adjectives that start sentences
+        "все", "всё", "наш", "наша", "наши", "новый", "новая", "новое",
+        "быстрее", "лучший", "лучшая", "это", "этот", "эта", "также",
+        "дистрибьюторская", "production", "продакшен",
+    }
+
     def extract_potential_brands(self, text: str, matches: list) -> list:
         """
         Extract potential brand names from the context surrounding detected markers.
         """
         discovered_brands = []
-        
+
         for match_text in matches:
             # Find the position of the marker in the original text
             try:
@@ -96,15 +117,24 @@ class DisclosureDetector:
                 # - Can be in quotes
                 potential = re.findall(r'[«"\'\s]([A-ZА-Я][a-zа-яA-ZА-Я0-9]{2,})[»"\'\s]', context)
                 for p in potential:
-                    # Filter out блогерские ники (often all caps or mixed case near promo codes)
-                    # This is naive but better than nothing
-                    if len(p) < 15 and p.lower() not in ["реклама", "промокод", "ссылка", "сайт"]:
-                        discovered_brands.append({
-                            "name": p,
-                            "confidence": 0.6,
-                            "source": "contextual_discovery",
-                            "marker": match_text
-                        })
+                    pl = p.lower()
+                    # Skip legal forms / generic commerce nouns / connectors and
+                    # ALL-CAPS Cyrillic tokens (registry boilerplate like ИНН).
+                    if pl in self.DISCOVERY_STOPWORDS:
+                        continue
+                    if len(p) >= 15:
+                        continue
+                    is_cyrillic_allcaps = p.isupper() and re.search(r"[А-Я]", p)
+                    if is_cyrillic_allcaps:
+                        continue
+                    discovered_brands.append({
+                        "name": p,
+                        # Low confidence: contextual guesses are weak evidence and
+                        # must not dominate the brand signal score.
+                        "confidence": 0.4,
+                        "source": "contextual_discovery",
+                        "marker": match_text
+                    })
             except Exception as e:
                 logger.debug(f"Error extracting context: {e}")
                 

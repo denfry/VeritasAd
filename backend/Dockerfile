@@ -32,6 +32,8 @@ FROM python:3.12-slim
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     tesseract-ocr \
+    tesseract-ocr-rus \
+    tesseract-ocr-eng \
     curl \
     && rm -rf /var/lib/apt/lists/*
 

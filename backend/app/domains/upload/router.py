@@ -20,6 +20,7 @@ RAW_DIR = settings.data_path / "raw"
 RAW_DIR.mkdir(exist_ok=True, parents=True)
 
 
+@router.post("")  # alias for POST /api/v1/upload (thesis app. B)
 @router.post("/video")
 async def upload_video(
     file: UploadFile = File(None),

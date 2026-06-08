@@ -204,6 +204,29 @@ async def verify_supabase_token(token: str) -> dict:
         )
 
 
+async def _try_native_jwt_user(token: str, db: AsyncSession) -> Optional[User]:
+    """Resolve a user from a native (non-Supabase) access token.
+
+    Returns the matching user, or None when the token is not a valid native
+    access token (so the caller can fall back to Supabase verification).
+    """
+    try:
+        payload = verify_jwt_token(token, token_type="access")
+    except Exception:
+        return None
+
+    sub = payload.get("sub")
+    if sub is None:
+        return None
+    try:
+        user_id = int(sub)
+    except (TypeError, ValueError):
+        return None
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
+
+
 async def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     api_key: Optional[str] = Header(None, alias=settings.API_KEY_HEADER),
@@ -260,6 +283,13 @@ async def get_current_user(
         auth_token = token
 
     if auth_token:
+        # Native JWT issued by /auth/login|register|refresh (HS256, our secret).
+        # Tried before Supabase; on failure we silently fall through.
+        native_user = await _try_native_jwt_user(auth_token, db)
+        if native_user is not None:
+            user = native_user
+
+    if auth_token and user is None:
         try:
             payload = await verify_supabase_token(auth_token)
             supabase_user_id = payload.get("sub")

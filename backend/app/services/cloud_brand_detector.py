@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 import logging
 import time
 from dataclasses import dataclass
@@ -27,8 +28,29 @@ class CloudBrandDetector:
 
     def __init__(self) -> None:
         self.provider = (settings.BRAND_DETECTION_PROVIDER or "none").lower().strip()
+        # Thesis sec. 3.2: cloud responses are cached in Redis under key
+        # cloud:{frame_hash} with a TTL of 300 seconds.
         self.cache_ttl = max(30, int(settings.BRAND_CLOUD_CACHE_TTL_SECONDS))
-        self._cache: Dict[str, _CacheItem] = {}
+        self._cache: Dict[str, _CacheItem] = {}  # in-memory fallback if Redis is down
+        self._redis = self._init_redis()
+
+    @staticmethod
+    def _init_redis():
+        """Create a synchronous Redis client; return None to fall back to memory."""
+        try:
+            import redis  # type: ignore
+
+            client = redis.Redis.from_url(
+                settings.REDIS_URL,
+                decode_responses=True,
+                socket_connect_timeout=2,
+                socket_timeout=2,
+            )
+            client.ping()
+            return client
+        except Exception as exc:  # pragma: no cover - depends on runtime infra
+            logger.warning("cloud_cache_redis_unavailable_using_memory: %s", exc)
+            return None
 
         self.azure_endpoint = (settings.AZURE_CV_ENDPOINT or "").rstrip("/")
         self.azure_key = settings.AZURE_CV_KEY or ""
@@ -85,7 +107,7 @@ class CloudBrandDetector:
 
     def _detect_frame_azure(self, image: Image.Image) -> List[Dict[str, object]]:
         image_bytes = self._to_jpeg_bytes(image)
-        cache_key = f"azure:{self._hash_bytes(image_bytes)}"
+        cache_key = f"cloud:{self._hash_bytes(image_bytes)}"
         cached = self._get_cached(cache_key)
         if cached is not None:
             return cached
@@ -112,7 +134,7 @@ class CloudBrandDetector:
 
     def _detect_frame_aws(self, image: Image.Image) -> List[Dict[str, object]]:
         image_bytes = self._to_jpeg_bytes(image)
-        cache_key = f"aws:{self._hash_bytes(image_bytes)}"
+        cache_key = f"cloud:{self._hash_bytes(image_bytes)}"
         cached = self._get_cached(cache_key)
         if cached is not None:
             return cached
@@ -149,6 +171,16 @@ class CloudBrandDetector:
         return hashlib.sha256(payload).hexdigest()
 
     def _get_cached(self, key: str) -> Optional[List[Dict[str, float | str]]]:
+        # Prefer Redis (shared, survives worker restarts); fall back to memory.
+        if self._redis is not None:
+            try:
+                raw = self._redis.get(key)
+                if raw is not None:
+                    return json.loads(raw)
+                return None
+            except Exception as exc:  # pragma: no cover - runtime infra
+                logger.warning("cloud_cache_redis_get_failed: %s", exc)
+
         item = self._cache.get(key)
         now = time.time()
         if item and item.expires_at > now:
@@ -158,4 +190,11 @@ class CloudBrandDetector:
         return None
 
     def _set_cached(self, key: str, payload: List[Dict[str, float | str]]) -> None:
+        if self._redis is not None:
+            try:
+                self._redis.setex(key, self.cache_ttl, json.dumps(payload))
+                return
+            except Exception as exc:  # pragma: no cover - runtime infra
+                logger.warning("cloud_cache_redis_set_failed: %s", exc)
+
         self._cache[key] = _CacheItem(expires_at=time.time() + self.cache_ttl, payload=payload)

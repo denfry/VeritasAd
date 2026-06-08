@@ -20,12 +20,14 @@ redis[hiredis]==5.2.0
 celery[redis]==5.4.0
 
 # Video processing
-yt-dlp==2026.1.6.233142.dev0                # или самая свежая 2026.x
+yt-dlp==2026.3.17                  # keep recent: YouTube extraction breaks on older builds
+curl_cffi==0.14.0                  # TLS impersonation for yt-dlp (YouTube now requires it)
 opencv-python==4.11.0.86           # или новее
 ffmpeg-python==0.2.0               # старая, но стабильная, альтернативы почти нет
 
 # Machine Learning
-torch==2.9.1                       # + torchvision torchaudio по желанию
+torch==2.9.1
+torchvision==0.24.1                # required by easyocr (CPU build matches torch)
 transformers==4.57.3
 sentencepiece==0.2.1
 faster-whisper==1.0.3              # faster inference via CTranslate2
@@ -35,12 +37,15 @@ google-generativeai>=0.8.0
 
 # Audio processing
 librosa==0.11.0                    # или новее
+scikit-learn==1.5.2                # KNN classifier for MFCC ad-window detection
 
 # PDF generation
 reportlab==4.3.0                   # или 4.2.x+ обновления
 
 # OCR
-pytesseract==0.3.13                # ставится, но возможны runtime проблемы
+pytesseract==0.3.13                # preferred engine when the tesseract binary is present
+easyocr==1.7.2                     # OCR fallback (no system binary; strong ru+en/Cyrillic) — active brand-text reader
+python-Levenshtein==0.26.1         # fuzzy brand matching (Levenshtein ratio)
 imageio-ffmpeg==0.6.0              # Bundled ffmpeg fallback for local/dev audio extraction
 
 # HTML parsing
@@ -67,6 +72,8 @@ numpy==2.1.2                       # или 2.2.x если стабильна
 requests==2.32.3
 PyJWT==2.9.0                       # JWT token verification
 python-jose[cryptography]==3.3.0   # Additional JWT support
+passlib[bcrypt]==1.7.4             # password hashing context (legacy)
+bcrypt>=4.1.0                      # native bcrypt for /auth password hashing
 pyqrcode==1.2.1                    # QR code generation for 2FA
 pypng==0.20220715.0                # PNG support for pyqrcode
 httpx==0.28.0

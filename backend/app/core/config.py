@@ -56,8 +56,10 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str = "redis://redis:6379/1"
     CELERY_TASK_ALWAYS_EAGER: bool = False
     CELERY_TASK_TRACK_STARTED: bool = True
-    CELERY_TASK_SOFT_TIME_LIMIT: int = 540
-    CELERY_TASK_TIME_LIMIT: int = 600
+    # Sized for full-length videos: transcribing a 2-hour clip with Whisper on
+    # CPU can take tens of minutes, so the worker must not be killed at 10 min.
+    CELERY_TASK_SOFT_TIME_LIMIT: int = 5400  # 90 min
+    CELERY_TASK_TIME_LIMIT: int = 5700  # 95 min
     CELERY_WORKER_PREFETCH_MULTIPLIER: int = 1
     CELERY_WORKER_MAX_TASKS_PER_CHILD: int = 50
 
@@ -78,8 +80,9 @@ class Settings(BaseSettings):
         description="JWT secret key. Required in production (min 64 chars).",
     )
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    # Thesis sec. 3.4: access token lives 24h, refresh token 30 days.
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
     # ==================== SUPABASE ====================
     SUPABASE_URL: Optional[str] = None
@@ -115,7 +118,10 @@ class Settings(BaseSettings):
     PAYG_BUSINESS_VALIDITY_DAYS: int = 180
 
     # ==================== FILE PROCESSING ====================
-    MAX_VIDEO_DURATION: int = 600  # seconds
+    # 0 = no duration limit (videos of any length are accepted). The visual
+    # channel samples the whole clip within BRAND_MAX_FRAMES, and the audio
+    # channel transcribes it end-to-end.
+    MAX_VIDEO_DURATION: int = 0  # seconds (0 = unlimited)
     MAX_FILE_SIZE: int = 2 * 1024 * 1024 * 1024  # 2GB
     ALLOWED_VIDEO_EXTENSIONS: Union[List[str], str] = [".mp4", ".avi", ".mov", ".mkv", ".webm"]
     CHUNK_SIZE: int = 1024 * 1024  # 1MB
@@ -143,9 +149,20 @@ class Settings(BaseSettings):
     # ==================== ML MODELS ====================
     USE_LLM: bool = False
     MOCK_LLM_RESPONSES: bool = False  # Use mock responses for development (no API keys needed)
-    WHISPER_MODEL: Literal["tiny", "base", "small", "medium", "large"] = "tiny"
+    WHISPER_MODEL: Literal["tiny", "base", "small", "medium", "large"] = "base"
     CLIP_MODEL: str = "openai/clip-vit-base-patch32"
     TORCH_DEVICE: Literal["cpu", "cuda", "mps"] = "cpu"
+
+    # ==================== AUDIO (MFCC + KNN) ====================
+    # Thesis sec. 3.2: 40 MFCC coefficients over a 2s window with 50% overlap,
+    # classified by a KNN (k=5). The model is optional; when the artifact is
+    # missing the analyzer falls back to keyword detection.
+    AUDIO_SAMPLE_RATE: int = 16000
+    AUDIO_MFCC_COUNT: int = 40
+    AUDIO_WINDOW_SECONDS: float = 2.0
+    AUDIO_WINDOW_OVERLAP: float = 0.5
+    AUDIO_KNN_NEIGHBORS: int = 5
+    AUDIO_KNN_MODEL_PATH: Optional[str] = "models/audio_knn.joblib"
 
     # LLM Providers & Models
     LLM_PROVIDER: Literal["local", "openai", "anthropic", "google"] = "local"
@@ -187,24 +204,38 @@ class Settings(BaseSettings):
     DEFAULT_BRANDS: Optional[str] = None
     # Enable OCR for brand detection
     ENABLE_BRAND_OCR: bool = True
+    # Discover ARBITRARY (not-in-list) brands from on-screen text. A logo/product
+    # name persists across frames, so OCR text seen in several sampled frames (or
+    # once with very high confidence) is surfaced as a discovered brand — this is
+    # what lets the system name brands absent from the known list (e.g. niche
+    # marketplace products).
+    OCR_DISCOVERY_ENABLED: bool = True
+    OCR_DISCOVERY_MIN_FRAMES: int = 2      # distinct frames a token must appear in
+    OCR_DISCOVERY_MIN_OCR_CONF: float = 0.45  # min average OCR confidence to keep
+    OCR_DISCOVERY_STRONG_CONF: float = 0.85   # single-frame hit accepted at/above this
     # Enable zero-shot detection for unknown brands
     ENABLE_ZERO_SHOT: bool = True
-    # Detection threshold (0.0-1.0) - lowered for better sensitivity
-    BRAND_DETECTION_THRESHOLD: float = 0.05
-    # Max frames to sample for brand detection (increased for long videos)
-    BRAND_MAX_FRAMES: int = 100
-    # Frame sample interval in seconds (adaptive based on video duration)
+    # Detection threshold (0.0-1.0): CLIP cosine similarity above which a brand is
+    # considered detected (per thesis sec. 3.2 — bound > 0.30).
+    BRAND_DETECTION_THRESHOLD: float = 0.30
+    # Frame budget for brand detection. Frames are spread UNIFORMLY across the
+    # whole video, so this is the total number of frames inspected regardless of
+    # length (a 2-hour clip is covered end-to-end at ~1 frame/72s with 100).
+    BRAND_MAX_FRAMES: int = 150
+    # Baseline frame extraction rate in fps for short videos (thesis sec. 3.2:
+    # 0.5 fps = 1 frame / 2s). Longer videos stretch the interval to fit the budget.
     BRAND_FRAME_INTERVAL: float = 0.5
-    # Timeout for brand detection stage in seconds
-    BRAND_DETECTION_TIMEOUT: int = 240
+    # Timeout for brand detection stage in seconds (OCR over many frames is slow
+    # on CPU, so allow generous headroom for long videos).
+    BRAND_DETECTION_TIMEOUT: int = 1200
     # Minimum confidence for brand display (filter out low confidence detections)
     BRAND_MIN_CONFIDENCE_DISPLAY: float = 0.3
     # Enable brand aliases matching
     ENABLE_BRAND_ALIASES: bool = True
     # Cloud logo detection provider: none | azure | aws
     BRAND_DETECTION_PROVIDER: Literal["none", "azure", "aws"] = "none"
-    # Cloud result cache TTL (seconds)
-    BRAND_CLOUD_CACHE_TTL_SECONDS: int = 3600
+    # Cloud result cache TTL (seconds) — cached in Redis under key cloud:{frame_hash}
+    BRAND_CLOUD_CACHE_TTL_SECONDS: int = 300
     # Azure Computer Vision
     AZURE_CV_ENDPOINT: Optional[str] = None
     AZURE_CV_KEY: Optional[str] = None
