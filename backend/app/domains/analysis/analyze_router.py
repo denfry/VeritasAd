@@ -8,10 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Any
 
 from app.core.dependencies import get_current_user, increment_usage
+from app.core.errors import NotFoundException
 from app.core.redis import get_redis, RedisClient
 from app.models.database import get_db, User
 from app.domains.analysis.service import AnalysisService
-from app.domains.analysis.dependencies import get_analysis_service
+from app.domains.analysis.dependencies import get_analysis_service, get_analysis_repository
+from app.domains.analysis.repository import AnalysisRepository
 
 router = APIRouter()
 
@@ -51,6 +53,7 @@ def is_safe_url(url: str) -> bool:
         return False
 
 
+@router.post("")  # alias for POST /api/v1/analyze (thesis app. B)
 @router.post("/check")
 async def check_video(
     file: UploadFile = File(None),
@@ -106,3 +109,42 @@ async def get_analysis_history(
         limit=limit,
         offset=offset,
     )
+
+
+@router.post("/{task_id}/cancel")
+async def cancel_analysis(
+    task_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    redis: RedisClient = Depends(get_redis),
+    service: AnalysisService = Depends(get_analysis_service),
+):
+    """Cancel a queued or running analysis (also clears stuck tasks)."""
+    return await service.cancel_analysis(
+        task_id=task_id,
+        user=user,
+        session=db,
+        redis=redis,
+    )
+
+
+@router.get("/{task_id}")  # alias for GET /api/v1/analyze/{task_id} (thesis app. B)
+async def get_analysis_by_task_id(
+    task_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    redis: RedisClient = Depends(get_redis),
+    repository: AnalysisRepository = Depends(get_analysis_repository),
+):
+    """Return analysis status and, when finished, the full result for a task."""
+    # Late import avoids any module import-order coupling with progress_router.
+    from app.domains.analysis.progress_router import _serialize_analysis
+
+    analysis = await repository.get_by_task_id(db, task_id, user_id=user.id)
+    if analysis is not None:
+        return _serialize_analysis(analysis)
+
+    progress_data = await redis.get_task_progress(task_id)
+    if not progress_data:
+        raise NotFoundException(f"Task {task_id} not found")
+    return progress_data

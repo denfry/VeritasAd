@@ -66,6 +66,10 @@ async def progress_stream(
         last_status = None
         max_iterations = 600
         iteration = 0
+        # Re-emit current state at least this often even when unchanged, so the
+        # client's heartbeat timeout survives long, quiet stages.
+        heartbeat_every = 15
+        iters_since_send = 0
 
         while iteration < max_iterations:
             progress_data = await redis.get_task_progress(task_id)
@@ -81,7 +85,12 @@ async def progress_stream(
             stage = progress_data.get("stage")
             error_code = progress_data.get("error_code")
 
-            if current_progress != last_progress or status != last_status or message != last_message:
+            changed = (
+                current_progress != last_progress
+                or status != last_status
+                or message != last_message
+            )
+            if changed or iters_since_send >= heartbeat_every:
                 data = {
                     "task_id": task_id,
                     "progress": current_progress,
@@ -94,6 +103,9 @@ async def progress_stream(
                 last_progress = current_progress
                 last_status = status
                 last_message = message
+                iters_since_send = 0
+            else:
+                iters_since_send += 1
 
             if status in ["completed", "failed"]:
                 logger.info("sse_stream_ended", task_id=task_id, status=status)
@@ -144,6 +156,12 @@ async def stream_analysis_progress_ws(websocket: WebSocket, task_id: str):
         last_progress = -1
         last_message = None
         last_status = None
+        # Re-send the current state at least this often even when nothing changed,
+        # so the client's heartbeat timeout doesn't trip during long, quiet stages
+        # (e.g. CPU logo detection / Whisper transcription can run minutes without
+        # a progress change).
+        heartbeat_every = 15
+        iters_since_send = 0
 
         for _ in range(600):
             progress_data = await redis.get_task_progress(task_id)
@@ -157,7 +175,12 @@ async def stream_analysis_progress_ws(websocket: WebSocket, task_id: str):
             stage = progress_data.get("stage")
             error_code = progress_data.get("error_code")
 
-            if current_progress != last_progress or status != last_status or message != last_message:
+            changed = (
+                current_progress != last_progress
+                or status != last_status
+                or message != last_message
+            )
+            if changed or iters_since_send >= heartbeat_every:
                 await websocket.send_json(
                     {
                         "task_id": task_id,
@@ -171,6 +194,9 @@ async def stream_analysis_progress_ws(websocket: WebSocket, task_id: str):
                 last_progress = current_progress
                 last_status = status
                 last_message = message
+                iters_since_send = 0
+            else:
+                iters_since_send += 1
 
             if status in ["completed", "failed"]:
                 break

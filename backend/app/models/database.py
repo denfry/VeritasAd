@@ -20,12 +20,19 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     AsyncEngine,
 )
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import declarative_base, relationship, Mapped, mapped_column
 from sqlalchemy.pool import NullPool, QueuePool
 import enum
 from app.core.config import settings
 
 Base = declarative_base()
+
+# Portable column types: use JSONB / native ARRAY on PostgreSQL (thesis sec. 3.5)
+# while degrading gracefully to plain JSON on SQLite for local development.
+JSONB_VARIANT = JSON().with_variant(JSONB, "postgresql")
+TEXT_ARRAY_VARIANT = JSON().with_variant(ARRAY(Text), "postgresql")
+FLOAT_ARRAY_VARIANT = JSON().with_variant(ARRAY(Float), "postgresql")
 
 
 class UserPlan(str, enum.Enum):
@@ -47,6 +54,7 @@ class AnalysisStatus(str, enum.Enum):
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
+    CANCELLED = "cancelled"
 
 
 class SourceType(str, enum.Enum):
@@ -220,6 +228,9 @@ class User(Base):
         String(255), unique=True, index=True, nullable=True
     )
     email: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
+    # bcrypt password hash for native JWT auth (thesis sec. 3.4); null for users
+    # provisioned via Supabase / API key only.
+    hashed_password: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     # Telegram integration
     telegram_id: Mapped[Optional[int]] = mapped_column(
@@ -295,14 +306,15 @@ class Analysis(Base):
     text_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     disclosure_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     link_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    detected_brands: Mapped[Optional[Dict]] = mapped_column(JSON, nullable=True)
-    detected_keywords: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
+    detected_brands: Mapped[Optional[Dict]] = mapped_column(JSONB_VARIANT, nullable=True)
+    ad_segments: Mapped[Optional[List]] = mapped_column(JSONB_VARIANT, nullable=True)
+    detected_keywords: Mapped[Optional[List]] = mapped_column(JSONB_VARIANT, nullable=True)
     transcript: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    disclosure_markers: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
-    cta_matches: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
-    commercial_urls: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
-    erids: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
-    promo_codes: Mapped[Optional[List]] = mapped_column(JSON, nullable=True)
+    disclosure_markers: Mapped[Optional[List]] = mapped_column(JSONB_VARIANT, nullable=True)
+    cta_matches: Mapped[Optional[List]] = mapped_column(JSONB_VARIANT, nullable=True)
+    commercial_urls: Mapped[Optional[List]] = mapped_column(JSONB_VARIANT, nullable=True)
+    erids: Mapped[Optional[List]] = mapped_column(JSONB_VARIANT, nullable=True)
+    promo_codes: Mapped[Optional[List]] = mapped_column(JSONB_VARIANT, nullable=True)
     ad_classification: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     ad_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     method: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
@@ -475,12 +487,17 @@ class CustomBrand(Base):
         nullable=False,
     )
 
-    # Aliases and variations (JSON array of strings)
-    aliases: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
+    # Aliases and variations (TEXT[] on PostgreSQL, JSON on SQLite)
+    aliases: Mapped[Optional[List[str]]] = mapped_column(TEXT_ARRAY_VARIANT, nullable=True)
 
     # Logo for visual matching (optional - stored as base64 or path)
     logo_base64: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     logo_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    # 512-dim CLIP embedding of the brand logo (FLOAT[] on PostgreSQL) used for
+    # visual similarity matching (thesis sec. 3.5).
+    logo_embedding: Mapped[Optional[List[float]]] = mapped_column(
+        FLOAT_ARRAY_VARIANT, nullable=True
+    )
 
     # Detection settings
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -539,6 +556,23 @@ async def init_db() -> None:
         await conn.run_sync(Base.metadata.create_all)
         if "sqlite" in settings.DATABASE_URL.lower():
             await _sync_sqlite_analysis_columns(conn)
+            await _sync_sqlite_user_columns(conn)
+
+
+async def _sync_sqlite_user_columns(conn) -> None:
+    """Add missing user columns for local SQLite dev databases."""
+    result = await conn.execute(text("PRAGMA table_info(users)"))
+    existing_columns = {row[1] for row in result.fetchall()}
+
+    desired_columns = {
+        "hashed_password": "VARCHAR(255)",
+    }
+
+    for column_name, column_type in desired_columns.items():
+        if column_name not in existing_columns:
+            await conn.execute(
+                text(f"ALTER TABLE users ADD COLUMN {column_name} {column_type}")
+            )
 
 
 async def _sync_sqlite_analysis_columns(conn) -> None:
@@ -550,6 +584,7 @@ async def _sync_sqlite_analysis_columns(conn) -> None:
         "link_score": "REAL",
         "cta_matches": "JSON",
         "commercial_urls": "JSON",
+        "ad_segments": "JSON",
     }
 
     for column_name, column_type in desired_columns.items():

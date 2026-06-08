@@ -11,7 +11,7 @@ from yt_dlp import YoutubeDL
 from app.core.config import settings
 from app.core.errors import ValidationException
 from app.core.redis import RedisClient
-from app.models.database import Analysis, SourceType, User
+from app.models.database import Analysis, AnalysisStatus, SourceType, User
 from app.services.link_detector import LinkDetector
 from app.services.video_processor import VideoProcessor
 from app.services.disclosure_detector import DisclosureDetector
@@ -417,6 +417,125 @@ class AnalysisService:
     ) -> int:
         """Get total count of user's analyses."""
         return await self.repository.get_user_analyses_count(session, user_id=user.id)
+
+    async def cancel_analysis(
+        self,
+        *,
+        task_id: str,
+        user: User,
+        session: Any,
+        redis: RedisClient,
+    ) -> Dict[str, Any]:
+        """
+        Cancel a queued or running analysis.
+
+        Marks the record CANCELLED, raises a Redis cancellation flag (workers poll
+        it between stages and abort), and pushes a terminal progress update so any
+        open WebSocket/SSE stream closes. Terminal analyses are returned unchanged.
+        """
+        analysis = await self.repository.get_by_task_id(session, task_id, user_id=user.id)
+        if analysis is None:
+            from app.core.errors import NotFoundException
+
+            raise NotFoundException(f"Task {task_id} not found")
+
+        terminal = {
+            AnalysisStatus.COMPLETED,
+            AnalysisStatus.FAILED,
+            AnalysisStatus.CANCELLED,
+        }
+        if analysis.status in terminal:
+            return {
+                "task_id": task_id,
+                "status": analysis.status.value
+                if hasattr(analysis.status, "value")
+                else analysis.status,
+                "cancelled": False,
+                "message": "Analysis already finished",
+            }
+
+        # Signal the worker to stop at its next checkpoint.
+        try:
+            await redis.request_cancel(task_id)
+        except Exception as exc:  # best effort
+            logger.warning("cancel_flag_failed task_id=%s error=%s", task_id, exc)
+
+        analysis.status = AnalysisStatus.CANCELLED
+        analysis.error_message = "Cancelled by user"
+        await session.commit()
+
+        # Close any open progress stream.
+        try:
+            await redis.set_task_progress(
+                task_id,
+                progress=analysis.progress or 0,
+                status="cancelled",
+                message="Cancelled by user",
+                stage="cancelled",
+                error_code="CANCELLED",
+            )
+        except Exception as exc:  # best effort
+            logger.warning("cancel_progress_update_failed task_id=%s error=%s", task_id, exc)
+
+        return {
+            "task_id": task_id,
+            "status": AnalysisStatus.CANCELLED.value,
+            "cancelled": True,
+            "message": "Analysis cancelled",
+        }
+
+    async def get_or_generate_report(
+        self,
+        *,
+        video_id: str,
+        session: Any,
+    ) -> Path:
+        """
+        Return the PDF report path for a video, generating it on demand.
+
+        Reports are not produced inline during analysis, so the first download
+        builds the PDF from the stored analysis record and caches it under
+        ``settings.reports_path``. Subsequent calls reuse the existing file.
+        """
+        from sqlalchemy import select, desc
+
+        # 1. Serve an already-generated report if present.
+        reports_dir = settings.reports_path
+        reports_dir.mkdir(parents=True, exist_ok=True)
+        existing = list(reports_dir.glob(f"report_{video_id}_*.pdf"))
+        if existing:
+            return max(existing, key=lambda p: p.stat().st_mtime)
+
+        # 2. Otherwise load the analysis and generate one.
+        result = await session.execute(
+            select(Analysis)
+            .where(Analysis.video_id == video_id)
+            .order_by(desc(Analysis.created_at))
+        )
+        analysis = result.scalars().first()
+        if analysis is None:
+            raise ValidationException(f"No analysis found for video_id: {video_id}")
+
+        analysis_data = self._serialize_analysis(analysis)
+        # Enrich with the commercial-evidence fields the report surfaces.
+        analysis_data.update(
+            {
+                "link_score": getattr(analysis, "link_score", None) or 0.0,
+                "commercial_urls": analysis.commercial_urls or [],
+                "promo_codes": analysis.promo_codes or [],
+                "cta_matches": analysis.cta_matches or [],
+                "erids": analysis.erids or [],
+            }
+        )
+        # ReportGenerator reads `disclosure_text`; map from stored markers.
+        analysis_data.setdefault("disclosure_text", analysis_data.get("disclosure_markers", []))
+
+        from app.services.report_generator import ReportGenerator
+
+        # PDF rendering is synchronous (reportlab); run off the event loop.
+        import asyncio
+
+        return await asyncio.to_thread(ReportGenerator().generate, analysis_data)
 
     def _serialize_analysis(self, analysis: Analysis) -> Dict[str, Any]:
         """Serialize analysis model to dict."""

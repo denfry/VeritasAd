@@ -75,7 +75,7 @@ class VideoProcessor:
             "РЎРѕРІРєРѕРјР±Р°РЅРє", "MKB", "РњРўРЎ Р‘Р°РЅРє", "Ak Bars", "РђРљ Р‘РђР РЎ",
             
             # Technology (РўРµС…РЅРѕР»РѕРіРёРё)
-            "Apple", "Samsung", "Xiaomi", "Huawei", "Honor", "OnePlus",
+            "Apple", "Samsung", "Xiaomi", "Redmi", "POCO", "Huawei", "Honor", "OnePlus",
             "Google", "Microsoft", "Intel", "AMD", "NVIDIA", "ASUS",
             "Lenovo", "HP", "Dell", "Acer", "LG", "Sony", "Panasonic",
             
@@ -210,6 +210,27 @@ class VideoProcessor:
             "заказать",
             "купить",
         }
+        # Background / null prompts. CLIP applies softmax across the supplied
+        # prompts, so without a "no brand present" option every frame is forced
+        # to assign its probability mass to some brand — a plain Dubai street
+        # scene then "matches" logo-of-Lamborghini / logo-of-McDonald's at high
+        # confidence. These background prompts absorb that mass; a frame is only
+        # counted as a brand hit when a brand prompt out-scores every background.
+        self.background_clip_prompts: List[str] = [
+            "a photo of a person talking",
+            "an ordinary outdoor street scene",
+            "an indoor room with people",
+            "a natural landscape with no logos",
+            "a close-up of a human face",
+            "a car driving on a road",
+            "food on a table",
+            "a random video frame with no brand logo",
+            "people walking outdoors",
+            "the exterior of a building",
+            "a hand holding an object",
+            "a desert or beach scene",
+        ]
+
         # Initialize sub-analyzers
         self.audio_analyzer = AudioAnalyzer(model_size=settings.WHISPER_MODEL)
         self.disclosure_detector = DisclosureDetector(use_llm=use_llm)
@@ -426,6 +447,7 @@ class VideoProcessor:
         self,
         url: str,
         progress_callback: Optional[Callable[[int, str], Awaitable[None]]] = None,
+        progress_loop: Optional["asyncio.AbstractEventLoop"] = None,
     ) -> Optional[Path]:
         """
         Download video from URL using yt-dlp with optimized settings
@@ -433,6 +455,11 @@ class VideoProcessor:
         Args:
             url: Video URL
             progress_callback: Async callback function(progress: int, message: str) for progress updates
+            progress_loop: Event loop that owns ``progress_callback``'s resources.
+                Required when ``download_video`` runs in a worker thread (e.g.
+                ``asyncio.to_thread``) so progress coroutines are scheduled back
+                onto the loop that owns the Redis/DB connections instead of a new
+                throwaway loop.
 
         Returns:
             Path to downloaded video or None
@@ -440,11 +467,25 @@ class VideoProcessor:
         def emit_progress(progress: int, message: str) -> None:
             if not progress_callback:
                 return
+            # Progress reporting is best-effort: a failure here must never abort
+            # the download itself.
             try:
+                if progress_loop is not None:
+                    # Running in a worker thread: hand the coroutine to the loop
+                    # that owns the callback's connections.
+                    asyncio.run_coroutine_threadsafe(
+                        progress_callback(progress, message), progress_loop
+                    )
+                    return
                 loop = asyncio.get_running_loop()
                 loop.create_task(progress_callback(progress, message))
             except RuntimeError:
-                asyncio.run(progress_callback(progress, message))
+                try:
+                    asyncio.run(progress_callback(progress, message))
+                except Exception as exc:  # pragma: no cover - best effort
+                    logger.debug(f"progress emit failed: {exc}")
+            except Exception as exc:  # pragma: no cover - best effort
+                logger.debug(f"progress emit failed: {exc}")
 
         try:
             video_id = f"{datetime.now():%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}"
@@ -600,38 +641,54 @@ class VideoProcessor:
             frames: List[Image.Image] = []
             timestamps: List[float] = []
 
-            fps = cap.get(cv2.CAP_PROP_FPS)
+            fps = cap.get(cv2.CAP_PROP_FPS) or 0.0
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             duration = total_frames / fps if fps > 0 else 0
+            max_frames = self.max_frames
 
-            # Requirement: long videos should be sampled at ~1 fps.
-            if duration < 120:
-                sample_interval = max(1, int(fps * 0.5))
-                max_frames = min(self.max_frames, 180)
-            elif duration < 600:
-                sample_interval = max(1, int(fps * 1.0))
-                max_frames = min(self.max_frames, 120)
+            # Baseline: 0.5 fps (one frame every 2 s, thesis sec. 3.2). For long
+            # videos that would blow the frame budget and only cover the start,
+            # so the interval is stretched to spread the budget UNIFORMLY across
+            # the whole clip — videos of any length are sampled end-to-end.
+            target_fps = settings.BRAND_FRAME_INTERVAL  # 0.5 fps
+            base_interval = max(1, int(round(fps / target_fps))) if fps > 0 else 1
+            if total_frames > 0 and max_frames > 0:
+                uniform_interval = -(-total_frames // max_frames)  # ceil division
+                sample_interval = max(base_interval, uniform_interval)
             else:
-                sample_interval = max(1, int(fps * 1.0))
-                max_frames = min(self.max_frames, 300)
+                sample_interval = base_interval
 
-            sample_step_seconds = sample_interval / fps if fps > 0 else 1.0
+            sample_step_seconds = sample_interval / fps if fps > 0 else (1.0 / target_fps)
             logger.info(
-                f"Adaptive sampling: duration={duration:.1f}s, interval={sample_interval} frames, max_frames={max_frames}"
+                f"Uniform sampling: duration={duration:.1f}s, interval={sample_interval} frames "
+                f"(~{sample_step_seconds:.1f}s/frame), budget={max_frames}, total_frames={total_frames}"
             )
 
-            frame_count = 0
-            while cap.isOpened() and len(frames) < max_frames:
-                ret, frame = cap.read()
-                if not ret:
-                    break
-
-                if frame_count % sample_interval == 0:
+            if total_frames > 0:
+                # Seek to each target frame: O(max_frames) decodes regardless of
+                # video length, instead of decoding every frame of a 2-hour clip.
+                target = 0
+                while len(frames) < max_frames and target < total_frames:
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, target)
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
                     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     frames.append(Image.fromarray(frame_rgb))
-                    timestamps.append(frame_count / fps if fps > 0 else 0.0)
-
-                frame_count += 1
+                    timestamps.append(target / fps if fps > 0 else 0.0)
+                    target += sample_interval
+            else:
+                # Unknown length (some live/streamed inputs): sequential fallback.
+                frame_count = 0
+                while cap.isOpened() and len(frames) < max_frames:
+                    ret, frame = cap.read()
+                    if not ret:
+                        break
+                    if frame_count % sample_interval == 0:
+                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        frames.append(Image.fromarray(frame_rgb))
+                        timestamps.append(frame_count / fps if fps > 0 else 0.0)
+                    frame_count += 1
 
             cap.release()
 
@@ -887,6 +944,13 @@ class VideoProcessor:
             return {"score": 0.0, "detected_brands": [], "max_scores": []}
 
         try:
+            # Append background/null prompts so softmax can route "no brand"
+            # probability away from brand prompts. Indices >= n_brand_prompts are
+            # background classes and never count as a detection.
+            background_prompts = list(self.background_clip_prompts or [])
+            n_brand_prompts = len(text_prompts)
+            all_prompts = list(text_prompts) + background_prompts
+
             # Run CLIP inference in batches to avoid OOM
             batch_size = 16
             all_frame_probs = []
@@ -894,7 +958,7 @@ class VideoProcessor:
             for i in range(0, len(frames), batch_size):
                 batch_frames = frames[i:i + batch_size]
                 inputs = self.clip_processor(
-                    text=text_prompts,
+                    text=all_prompts,
                     images=batch_frames,
                     return_tensors="pt",
                     padding=True
@@ -916,15 +980,23 @@ class VideoProcessor:
             max_scores = []
 
             for idx, frame_probs in enumerate(all_probs):
-                max_prob, max_idx = frame_probs.max(dim=0)
-                max_scores.append(max_prob.item())
+                # Overall winner across brand + background prompts.
+                overall_idx = int(frame_probs.argmax().item())
+                # Best brand prompt only (used as this frame's brand signal).
+                brand_max, brand_idx = frame_probs[:n_brand_prompts].max(dim=0)
+                max_scores.append(brand_max.item())
 
-                if max_prob.item() > self.detection_threshold:
-                    selected_prompt = text_prompts[max_idx.item()]
+                # Reject the frame when a background prompt wins: no brand is
+                # actually present, the top brand merely got residual softmax mass.
+                if overall_idx >= n_brand_prompts:
+                    continue
+
+                if brand_max.item() > self.detection_threshold:
+                    selected_prompt = text_prompts[brand_idx.item()]
                     brand = prompt_to_brand.get(selected_prompt, selected_prompt) if prompt_to_brand else selected_prompt
                     detected_brands.append({
                         "name": brand,
-                        "confidence": max_prob.item(),
+                        "confidence": brand_max.item(),
                         "timestamp": timestamps[idx],
                         "source": detection_type,
                     })

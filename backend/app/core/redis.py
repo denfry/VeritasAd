@@ -178,6 +178,18 @@ class RedisClient:
         """Get task progress from Redis"""
         return await self.get_json(f"task:{task_id}")
 
+    async def request_cancel(self, task_id: str) -> bool:
+        """Flag a running task for cancellation. Workers poll this between stages."""
+        return await self.set(f"cancel:{task_id}", "1", ex=3600)
+
+    async def is_cancelled(self, task_id: str) -> bool:
+        """Return True if cancellation was requested for this task."""
+        return await self.exists(f"cancel:{task_id}")
+
+    async def clear_cancel(self, task_id: str) -> int:
+        """Remove the cancellation flag for a task."""
+        return await self.delete(f"cancel:{task_id}")
+
 
 # Global Redis client instance
 redis_client = RedisClient()

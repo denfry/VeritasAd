@@ -31,6 +31,7 @@ from app.utils.ad_classification import (
     compute_analysis_decision,
     merge_brand_detections,
 )
+from app.services.aggregator import build_ad_segments
 from sqlalchemy import select, update
 
 logger = structlog.get_logger(__name__)
@@ -57,6 +58,46 @@ class CallbackTask(Task):
             error=str(exc),
             traceback=str(einfo),
         )
+
+
+class TaskCancelled(Exception):
+    """Raised inside a worker when a user requested cancellation."""
+
+
+async def _check_cancelled(task_redis: RedisClient, task_id: str) -> None:
+    """Raise TaskCancelled if the user flagged this task for cancellation."""
+    try:
+        if await task_redis.is_cancelled(task_id):
+            raise TaskCancelled()
+    except TaskCancelled:
+        raise
+    except Exception:
+        # A Redis hiccup must not abort a healthy task.
+        return
+
+
+async def _mark_task_cancelled(task_redis: RedisClient, task_id: str) -> None:
+    """Persist CANCELLED state and clear the cancellation flag."""
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(Analysis).where(Analysis.task_id == task_id))
+        analysis = result.scalar_one_or_none()
+        if analysis:
+            analysis.status = AnalysisStatus.CANCELLED
+            analysis.error_message = "Cancelled by user"
+            await db.commit()
+
+    await task_redis.set_task_progress(
+        task_id,
+        progress=0,
+        status="cancelled",
+        message="Cancelled by user",
+        stage="cancelled",
+        error_code="CANCELLED",
+    )
+    try:
+        await task_redis.clear_cancel(task_id)
+    except Exception:
+        pass
 
 
 async def _mark_task_failed(
@@ -147,6 +188,8 @@ def download_video_task(
             async def update_progress(progress: int, message: str, stage: str = "download"):
                 nonlocal last_reported_progress
 
+                await _check_cancelled(task_redis, task_id)
+
                 async with progress_lock:
                     if progress <= last_reported_progress:
                         return
@@ -170,10 +213,15 @@ def download_video_task(
                     )
 
             await update_progress(5, "Downloading source video", "download")
+            # download_video runs in a worker thread; pass the running loop so its
+            # async progress callback is scheduled back onto this loop (which owns
+            # the Redis/DB connections) rather than a throwaway one.
+            main_loop = asyncio.get_running_loop()
             downloaded_path = await asyncio.to_thread(
                 processor.download_video,
                 source_url,
                 progress_callback=update_progress,
+                progress_loop=main_loop,
             )
             if not downloaded_path:
                 raise RuntimeError(f"Video download returned no file for URL: {source_url}")
@@ -230,6 +278,10 @@ def download_video_task(
                 "video_path": video_path_current,
             }
 
+        except TaskCancelled:
+            logger.info("download_cancelled", task_id=task_id)
+            await _mark_task_cancelled(task_redis, task_id)
+            return {"task_id": task_id, "status": "cancelled"}
         except SoftTimeLimitExceeded as e:
             logger.warning("download_timed_out", task_id=task_id, error=str(e))
             error_info = {
@@ -273,6 +325,12 @@ def download_video_task(
     name="analyze_video",
     soft_time_limit=settings.CELERY_TASK_SOFT_TIME_LIMIT,
     time_limit=settings.CELERY_TASK_TIME_LIMIT,
+    # Per thesis sec. 3.4: on failure the task is retried up to 3 times with a
+    # fixed 60-second interval.
+    autoretry_for=(Exception,),
+    max_retries=3,
+    default_retry_delay=60,
+    retry_backoff=False,
 )
 def analyze_video_task(
     self,
@@ -351,6 +409,11 @@ def analyze_video_task(
                 async def update_progress(progress: int, message: str, stage: str = "processing"):
                     nonlocal last_reported_progress
 
+                    # Cancellation checkpoint: workers poll this between stages and
+                    # on the brand-detection heartbeat, so a cancel takes effect at
+                    # the next progress tick.
+                    await _check_cancelled(task_redis, task_id)
+
                     async with progress_lock:
                         if progress <= last_reported_progress:
                             return
@@ -425,8 +488,24 @@ def analyze_video_task(
                 # analyze метод DisclosureDetector - теперь асинхронный
                 transcript = audio_result.get("transcript", "")
 
-                # URL fetches happen in the download worker; analysis stays local.
+                # The local file metadata (ffprobe) carries no platform description,
+                # so sponsor integrations that live in the YouTube/VK/Telegram
+                # description — brand name, promo code, tracking link — would be
+                # invisible to link/brand/disclosure detection. Re-fetch the source
+                # description (and a better title) from the original URL.
                 description = metadata.get("description", "")
+                source_title = metadata.get("title", "")
+                if source_url and str(source_url).lower().startswith(("http://", "https://")):
+                    try:
+                        url_meta = await asyncio.wait_for(
+                            processor.get_url_metadata(str(source_url)), timeout=45
+                        )
+                        description = url_meta.get("description") or description
+                        source_title = url_meta.get("title") or source_title
+                    except Exception as meta_err:
+                        logger.warning(
+                            "url_metadata_fetch_failed", task_id=task_id, error=str(meta_err)
+                        )
 
                 # Run disclosure detection
                 disclosure_result = await processor.disclosure_detector.analyze(
@@ -478,6 +557,41 @@ def analyze_video_task(
                     text_detected_brands,
                     discovered_brands,
                 )
+                # Drop non-identifying visual signals (generic "company logo"
+                # zero-shot hits and Unknown/fallback detections): the visual
+                # presence is already captured by ``visual_score``; surfacing them
+                # as named "brands" is misleading and they never localise an ad.
+                all_detected_brands = [
+                    b for b in all_detected_brands
+                    if not (
+                        b.get("is_unknown")
+                        or "zero_shot" in str(b.get("source", "")).lower()
+                        or "fallback" in str(b.get("source", "")).lower()
+                    )
+                ]
+
+                # Drop OCR-discovered "brands" that are just on-screen text /
+                # subtitles misread as brands (e.g. "ПРОХОД ВОСПРЕЩЕН", "СОБАЧИЙ
+                # ЛАЙ"). Keep an OCR hit only when its text matches a real, known
+                # brand or alias — those are genuine logo reads.
+                _known_terms = {str(b).lower() for b in processor.brands} | {
+                    str(a).lower() for a in processor.alias_to_brand
+                }
+                all_detected_brands = [
+                    b for b in all_detected_brands
+                    if "ocr" not in str(b.get("source", "")).lower()
+                    or str(b.get("name", "")).strip().lower() in _known_terms
+                ]
+
+                # Temporal NMS over candidate ad segments (thesis sec. 3.2),
+                # combining visual logo hits with spoken ad reads localised on
+                # the Whisper transcript timeline.
+                ad_segments = build_ad_segments(
+                    all_detected_brands,
+                    transcript_segments=audio_result.get("segments", []),
+                    ad_keywords=processor.audio_analyzer.ad_keywords,
+                    brand_terms=list(processor.brands) + list(processor.alias_to_brand.keys()),
+                )
 
                 decision = compute_analysis_decision(
                     visual_score=visual_score,
@@ -504,7 +618,7 @@ def analyze_video_task(
                     commercial_urls=link_result.get("urls", []),
                 )
                 task_payload = {
-                    "title": metadata.get("title", ""),
+                    "title": source_title,
                     "description": description,
                     "transcript": audio_result.get("transcript", ""),
                     "has_advertising": has_advertising,
@@ -541,6 +655,7 @@ def analyze_video_task(
                 analysis.text_score = text_score
                 analysis.disclosure_score = disclosure_score
                 analysis.detected_brands = all_detected_brands
+                analysis.ad_segments = ad_segments
                 analysis.detected_keywords = audio_result.get("keywords", [])
                 analysis.transcript = audio_result.get("transcript", "")
                 analysis.disclosure_markers = disclosure_markers
@@ -585,6 +700,7 @@ def analyze_video_task(
                     "disclosure_score": disclosure_score,
                     "link_score": link_score,
                     "detected_brands": all_detected_brands,
+                    "ad_segments": ad_segments,
                     "detected_keywords": audio_result.get("keywords", []),
                     "transcript": audio_result.get("transcript", ""),
                     "disclosure_markers": disclosure_markers,
@@ -594,6 +710,10 @@ def analyze_video_task(
                     "ad_reason": classification["reason"],
                 }
 
+        except TaskCancelled:
+            logger.info("analysis_cancelled", task_id=task_id)
+            await _mark_task_cancelled(task_redis, task_id)
+            return {"task_id": task_id, "status": "cancelled"}
         except SoftTimeLimitExceeded as e:
             logger.warning("analysis_timed_out", task_id=task_id, error=str(e))
             error_info = {
