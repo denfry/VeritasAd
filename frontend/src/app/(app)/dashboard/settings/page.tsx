@@ -6,6 +6,7 @@ import { Tabs } from "@/components/ui/Tabs"
 import { getUserPreferences, updateUserPreferences } from "@/lib/api-client"
 import type { UserPreferences } from "@/lib/api-client"
 import { toast } from "sonner"
+import { useLanguage } from "@/contexts/language-context"
 
 import {
   Bell,
@@ -39,6 +40,7 @@ const item = {
 }
 
 export default function SettingsPage() {
+  const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState("notifications")
   const [preferences, setPreferences] = useState<UserPreferences | null>(null)
   const [loading, setLoading] = useState(true)
@@ -46,7 +48,7 @@ export default function SettingsPage() {
   useEffect(() => {
     getUserPreferences()
       .then(setPreferences)
-      .catch(() => toast.error("Failed to load preferences"))
+      .catch(() => toast.error(t.toasts.preferencesLoadFailed))
       .finally(() => setLoading(false))
   }, [])
 
@@ -54,9 +56,9 @@ export default function SettingsPage() {
     try {
       await updateUserPreferences({ [key]: value } as Partial<UserPreferences>)
     } catch {
-      toast.error("Failed to save preference")
+      toast.error(t.toasts.preferenceSaveFailed)
     }
-  }, [])
+  }, [t])
 
   const tabs = [
     { id: "notifications", label: "Notifications", icon: <Bell className="h-4 w-4" /> },
@@ -116,6 +118,7 @@ function NotificationsTab({
   preferences: UserPreferences
   onSave: (key: string, value: unknown) => Promise<void>
 }) {
+  const { t } = useLanguage()
   const [toggles, setToggles] = useState(preferences.notifications)
 
   const toggle = async (key: keyof typeof toggles) => {
@@ -126,7 +129,7 @@ function NotificationsTab({
       await onSave("notifications", next)
     } catch {
       setToggles(prev)
-      toast.error("Failed to save preference")
+      toast.error(t.toasts.preferenceSaveFailed)
     }
   }
 

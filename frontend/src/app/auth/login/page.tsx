@@ -23,14 +23,14 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (searchParams.get("registered") === "true") {
-      toast.success("Account created. You can sign in now.")
+      toast.success(t.toasts.accountCreatedSignIn)
     }
-  }, [searchParams])
+  }, [searchParams, t])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!email.trim() || !password) {
-      toast.error("Enter email and password")
+      toast.error(t.toasts.enterEmailPassword)
       return
     }
 

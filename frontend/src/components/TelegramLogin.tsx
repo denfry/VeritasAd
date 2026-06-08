@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react"
 import { useAuth } from "@/contexts/auth-context"
+import { useLanguage } from "@/contexts/language-context"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 
@@ -52,6 +53,7 @@ export function TelegramLogin({
   const containerRef = useRef<HTMLDivElement>(null)
   const scriptLoaded = useRef(false)
   const { refreshSession } = useAuth()
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (scriptLoaded.current) return
@@ -94,7 +96,7 @@ export function TelegramLogin({
 
         await refreshSession?.()
 
-        toast.success("Logged in via Telegram successfully!")
+        toast.success(t.toasts.telegramLoginSuccess)
 
         onAuthSuccess?.(authData)
       } catch (error) {
@@ -103,7 +105,7 @@ export function TelegramLogin({
         onAuthError?.(err)
       }
     },
-    [onAuthSuccess, onAuthError, refreshSession]
+    [onAuthSuccess, onAuthError, refreshSession, t]
   )
 
   useEffect(() => {
@@ -123,7 +125,7 @@ export function TelegramLogin({
       },
       (authData: TelegramAuthData | false) => {
         if (!authData) {
-          toast.error("Authorization cancelled")
+          toast.error(t.toasts.authCancelled)
           return
         }
         handleTelegramAuth(authData)

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react"
 import { supabase, isMockAuth } from "@/lib/supabase"
 import type { MockUser, MockSession } from "@/lib/mock-auth"
+import { useAuthStore } from "@/stores/auth-store"
 
 // Unified types that work with both Supabase and Mock
 type User = MockUser
@@ -50,6 +51,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Mirror auth state into the global Zustand store (thesis sec. 3.3) so any
+  // component can read it without the React context.
+  const syncStore = useAuthStore((s) => s.setAuth)
+  useEffect(() => {
+    syncStore({ user, session })
+  }, [user, session, syncStore])
 
   const authDisabled = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true'
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

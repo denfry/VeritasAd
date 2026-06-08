@@ -20,6 +20,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { getApiKey, regenerateApiKey, getApiKeyStats } from "@/lib/api-client"
 import { useAuth } from "@/contexts/auth-context"
+import { useLanguage } from "@/contexts/language-context"
 
 const container = {
   hidden: { opacity: 0 },
@@ -36,6 +37,7 @@ const item = {
 
 export default function ApiSettingsPage() {
   const { user } = useAuth()
+  const { t } = useLanguage()
   const [apiKey, setApiKey] = useState<string | null>(null)
   const [hasKey, setHasKey] = useState(false)
   const [showKey, setShowKey] = useState(false)
@@ -57,7 +59,7 @@ export default function ApiSettingsPage() {
       setHasKey(keyData.has_key)
       setStats(statsData)
     } catch {
-      toast.error("Failed to load API key data")
+      toast.error(t.toasts.apiKeyLoadFailed)
     } finally {
       setLoading(false)
     }
@@ -73,16 +75,16 @@ export default function ApiSettingsPage() {
       setApiKey(result.api_key)
       setHasKey(true)
       setShowKey(true)
-      toast.success("API key regenerated. Store it securely!")
+      toast.success(t.toasts.apiKeyRegenerated)
     } catch {
-      toast.error("Failed to regenerate API key")
+      toast.error(t.toasts.apiKeyRegenFailed)
     }
   }
 
   const handleCopy = () => {
     if (apiKey) {
       navigator.clipboard.writeText(apiKey)
-      toast.success("API key copied to clipboard")
+      toast.success(t.toasts.apiKeyCopied)
     }
   }
 

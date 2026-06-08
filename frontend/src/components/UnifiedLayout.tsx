@@ -25,6 +25,7 @@ import { ThemeToggle } from "./ThemeToggle"
 import { CurrencySelectorCompact } from "./SiteHeader"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { useLanguage } from "@/contexts/language-context"
 
 interface UnifiedLayoutProps {
   children: ReactNode
@@ -53,6 +54,7 @@ export function UnifiedLayout({ children }: UnifiedLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, signOut } = useAuth()
+  const { t } = useLanguage()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
@@ -74,10 +76,10 @@ export function UnifiedLayout({ children }: UnifiedLayoutProps) {
     try {
       setIsSigningOut(true)
       await signOut()
-      toast.success("Signed out successfully")
+      toast.success(t.toasts.signedOut)
       router.push("/auth/login")
     } catch (error) {
-      toast.error("Failed to sign out")
+      toast.error(t.toasts.signOutFailed)
       console.error("Sign out error:", error)
     } finally {
       setIsSigningOut(false)

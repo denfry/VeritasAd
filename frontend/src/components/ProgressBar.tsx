@@ -1,46 +1,29 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { CloudUpload, FileText, SearchCheck, Video } from "lucide-react"
-import { useMemo, type ComponentType } from "react"
+import { AudioLines, Check, CloudDownload, Eye, FileText, Loader2, type LucideIcon } from "lucide-react"
+import { useMemo } from "react"
+import { useLanguage } from "@/contexts/language-context"
 
-type StageKey =
-  | "upload"
-  | "analyze"
-  | "brand_detection"
-  | "report"
-  | "complete"
-  | "processing"
-  | "idle"
-  | "prepare"
-
-interface Stage {
-  key: StageKey
+interface Step {
+  key: "download" | "visual" | "audio" | "report"
   label: string
-  minProgress: number
-  maxProgress: number
-  icon: ComponentType<{ className?: string }>
+  hint: string
+  start: number
+  end: number
+  icon: LucideIcon
 }
 
-const STAGES: Stage[] = [
-  { key: "upload", label: "File upload", minProgress: 0, maxProgress: 20, icon: CloudUpload },
-  { key: "analyze", label: "Video analysis", minProgress: 20, maxProgress: 55, icon: Video },
-  { key: "brand_detection", label: "Brand recognition", minProgress: 55, maxProgress: 85, icon: SearchCheck },
-  { key: "report", label: "Report generation", minProgress: 85, maxProgress: 100, icon: FileText },
-]
-
-function stageIndexFromProgress(progress: number): number {
-  if (progress >= 100) return STAGES.length - 1
-  return Math.max(
-    0,
-    STAGES.findIndex((stage) => progress >= stage.minProgress && progress < stage.maxProgress),
-  )
-}
-
+/**
+ * Steps are driven by the progress value (which is monotonic and reliable),
+ * not by the backend `stage` string — the backend reuses stage="analyze" at
+ * several different progress points, so keying off it made steps light up out
+ * of order. Thresholds mirror the real pipeline in video_analysis.py:
+ *   0–20  download, 20–64 video+brands, 64–94 audio+disclosure, 94–100 report.
+ */
 export function ProgressBar({
   value,
   label,
-  stage,
   showPercentage = true,
 }: {
   value: number
@@ -48,67 +31,99 @@ export function ProgressBar({
   stage?: string
   showPercentage?: boolean
 }) {
-  const clampedValue = Math.min(100, Math.max(0, value))
+  const { t } = useLanguage()
+  const a = t.analyze
+  const clamped = Math.min(100, Math.max(0, value))
 
-  const currentStageIndex = useMemo(() => {
-    const stageKey = (stage ?? "idle") as StageKey
-    if (stageKey === "complete") return STAGES.length - 1
-    const byKey = STAGES.findIndex((s) => s.key === stageKey)
-    if (byKey >= 0) return byKey
-    return stageIndexFromProgress(clampedValue)
-  }, [clampedValue, stage])
+  const steps: Step[] = useMemo(
+    () => [
+      { key: "download", label: a.steps.download, hint: a.stepHintDownload, start: 0, end: 20, icon: CloudDownload },
+      { key: "visual", label: a.steps.visual, hint: a.stepHintVisual, start: 20, end: 64, icon: Eye },
+      { key: "audio", label: a.steps.audio, hint: a.stepHintAudio, start: 64, end: 94, icon: AudioLines },
+      { key: "report", label: a.steps.report, hint: a.stepHintReport, start: 94, end: 100, icon: FileText },
+    ],
+    [a],
+  )
 
-  const currentStage = STAGES[currentStageIndex]
-  const currentStageProgress = useMemo(() => {
-    const range = currentStage.maxProgress - currentStage.minProgress || 1
-    const local = clampedValue - currentStage.minProgress
-    return Math.max(0, Math.min(100, (local / range) * 100))
-  }, [clampedValue, currentStage])
+  const activeIndex = useMemo(() => {
+    if (clamped >= 100) return steps.length - 1
+    const idx = steps.findIndex((s) => clamped >= s.start && clamped < s.end)
+    return idx === -1 ? 0 : idx
+  }, [clamped, steps])
+
+  const isComplete = clamped >= 100
+  const activeStep = steps[activeIndex]
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {STAGES.map((stageItem, idx) => {
-          const Icon = stageItem.icon
-          const isActive = idx === currentStageIndex && clampedValue < 100
-          const isComplete = clampedValue >= stageItem.maxProgress || clampedValue >= 100
-          return (
-            <div
-              key={stageItem.key}
-              className={`rounded-lg border px-2 py-1.5 text-[11px] transition-all ${
-                isActive
-                  ? "border-primary/50 bg-primary/10"
-                  : isComplete
-                    ? "border-emerald-500/30 bg-emerald-500/10"
-                    : "border-border/60 bg-muted/30"
-              }`}
-            >
-              <div className="flex items-center gap-1.5">
-                <Icon className={`h-3.5 w-3.5 ${isActive ? "text-primary" : isComplete ? "text-emerald-500" : "text-muted-foreground"}`} />
-                <span className="truncate text-muted-foreground">{stageItem.label}</span>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      <div className="flex items-center justify-between text-xs">
-        <p className="text-sm font-medium text-foreground">{label || currentStage.label}</p>
-        {showPercentage && <span className="text-xs font-semibold tabular-nums">{clampedValue}%</span>}
-      </div>
-
-      <div className="relative h-3 w-full overflow-hidden rounded-[10px] bg-muted/80 border border-border/50 shadow-inner">
+    <div className="space-y-4">
+      {/* Stepper */}
+      <div className="relative">
+        {/* connector track */}
+        <div className="absolute left-0 right-0 top-5 mx-[12.5%] h-0.5 bg-border/70" aria-hidden />
         <motion.div
-          className="absolute inset-y-0 left-0 rounded-[10px] bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400"
+          className="absolute left-0 top-5 mx-[12.5%] h-0.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400"
+          aria-hidden
           initial={{ width: 0 }}
-          animate={{ width: `${clampedValue}%` }}
+          animate={{ width: `${(clamped / 100) * 75}%` }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         />
+        <div className="relative grid grid-cols-4">
+          {steps.map((step, idx) => {
+            const Icon = step.icon
+            const done = isComplete || idx < activeIndex || clamped >= step.end
+            const active = !done && idx === activeIndex
+            return (
+              <div key={step.key} className="flex flex-col items-center gap-2 text-center">
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors duration-300 ${
+                    done
+                      ? "border-emerald-500 bg-emerald-500 text-white"
+                      : active
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-muted/40 text-muted-foreground"
+                  }`}
+                >
+                  {done ? (
+                    <Check className="h-5 w-5" />
+                  ) : active ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Icon className="h-5 w-5" />
+                  )}
+                </div>
+                <div className="space-y-0.5">
+                  <p
+                    className={`text-[11px] font-semibold leading-tight ${
+                      done ? "text-emerald-600" : active ? "text-foreground" : "text-muted-foreground"
+                    }`}
+                  >
+                    {step.label}
+                  </p>
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
+                    {done ? a.stepDone : active ? `${clamped}%` : a.stepWaiting}
+                  </p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>{currentStage.label}</span>
-        <span className="tabular-nums">{currentStageProgress.toFixed(0)}% of stage</span>
+      {/* Overall bar */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-3 text-xs">
+          <p className="truncate font-medium text-foreground">{label || activeStep.hint}</p>
+          {showPercentage && <span className="shrink-0 font-mono font-semibold tabular-nums">{clamped}%</span>}
+        </div>
+        <div className="relative h-2.5 w-full overflow-hidden rounded-full border border-border/50 bg-muted/80 shadow-inner">
+          <motion.div
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400"
+            initial={{ width: 0 }}
+            animate={{ width: `${clamped}%` }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          />
+        </div>
+        {!isComplete && <p className="text-[11px] leading-snug text-muted-foreground/80">{a.etaNote}</p>}
       </div>
     </div>
   )

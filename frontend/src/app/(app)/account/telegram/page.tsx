@@ -26,10 +26,12 @@ import {
   type TelegramLinkStatus,
 } from "@/lib/api-client"
 import { TelegramLogin } from "@/components/TelegramLogin"
+import { useLanguage } from "@/contexts/language-context"
 
 const BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "VeritasAdBot"
 
 export default function TelegramPage() {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [linkStatus, setLinkStatus] = useState<TelegramLinkStatus | null>(null)
   const [generating, setGenerating] = useState(false)
@@ -44,7 +46,7 @@ export default function TelegramPage() {
       const status = await getTelegramLinkStatus()
       setLinkStatus(status)
     } catch {
-      toast.error("Failed to load Telegram link status")
+      toast.error(t.toasts.telegramStatusFailed)
     } finally {
       setLoading(false)
     }
@@ -60,9 +62,9 @@ export default function TelegramPage() {
       const result = await generateTelegramLinkToken()
       setLinkToken(result.token)
       setTokenExpiry(result.expires_in)
-      toast.success("Link token generated successfully")
+      toast.success(t.toasts.linkTokenGenerated)
     } catch {
-      toast.error("Failed to generate link token")
+      toast.error(t.toasts.linkTokenFailed)
     } finally {
       setGenerating(false)
     }
@@ -73,7 +75,7 @@ export default function TelegramPage() {
     const botLink = `https://t.me/${BOT_USERNAME.replace("@", "")}?start=${linkToken}`
     await navigator.clipboard.writeText(botLink)
     setCopied(true)
-    toast.success("Link copied to clipboard")
+    toast.success(t.toasts.linkCopied)
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -84,9 +86,9 @@ export default function TelegramPage() {
       setLinkStatus({ is_linked: false })
       setLinkToken(null)
       setTokenExpiry(null)
-      toast.success("Telegram account unlinked")
+      toast.success(t.toasts.telegramUnlinked)
     } catch {
-      toast.error("Failed to unlink Telegram account")
+      toast.error(t.toasts.telegramUnlinkFailed)
     } finally {
       setUnlinking(false)
     }
@@ -102,7 +104,7 @@ export default function TelegramPage() {
     hash: string
   }) => {
     if (!linkToken) {
-      toast.error("Please generate a link token first")
+      toast.error(t.toasts.generateTokenFirst)
       return
     }
     try {
@@ -111,13 +113,13 @@ export default function TelegramPage() {
         link_token: linkToken,
         username: authData.username,
       })
-      toast.success("Telegram account linked successfully")
+      toast.success(t.toasts.telegramLinked)
       await fetchStatus()
       setLinkToken(null)
       setTokenExpiry(null)
       setShowWidget(false)
     } catch {
-      toast.error("Failed to link Telegram account")
+      toast.error(t.toasts.telegramLinkFailed)
     }
   }
 

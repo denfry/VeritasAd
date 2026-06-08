@@ -3,8 +3,9 @@
 import { useEffect, useState, useCallback, type ReactNode, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
-import { 
-  getCurrentUserProfile, 
+import { useLanguage } from "@/contexts/language-context"
+import {
+  getCurrentUserProfile,
   getUserCredits, 
   getCreditHistory, 
   updateCurrentUserProfile,
@@ -33,6 +34,7 @@ type AccountTab = "overview" | "profile" | "security" | "billing"
 export default function AccountPage() {
   const router = useRouter()
   const { user, signOut, loading: authLoading } = useAuth()
+  const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState<AccountTab>("overview")
   
   // Data state
@@ -105,9 +107,9 @@ export default function AccountPage() {
     try {
       const updated = await updateCurrentUserProfile({ email: emailInput })
       setProfile(updated)
-      toast.success("Profile updated successfully")
+      toast.success(t.toasts.profileUpdated)
     } catch {
-      toast.error("Failed to update profile")
+      toast.error(t.toasts.profileUpdateFailed)
     } finally {
       setIsUpdating(false)
     }
@@ -117,19 +119,19 @@ export default function AccountPage() {
     try {
       await revokeUserSession(sessionId)
       setSessions(prev => prev.filter(s => s.id !== sessionId))
-      toast.success("Session revoked")
+      toast.success(t.toasts.sessionRevoked)
     } catch {
-      toast.error("Failed to revoke session")
+      toast.error(t.toasts.sessionRevokeFailed)
     }
   }
 
   const handleSignOut = async () => {
     try {
       await signOut()
-      toast.success("Signed out successfully")
+      toast.success(t.toasts.signedOut)
       router.push("/")
     } catch {
-      toast.error("Failed to sign out")
+      toast.error(t.toasts.signOutFailed)
     }
   }
 
@@ -442,7 +444,7 @@ export default function AccountPage() {
                       <p className="text-xs text-muted-foreground leading-relaxed max-w-md">Use apps like Google Authenticator or 1Password to generate secure verification codes.</p>
                    </div>
                    <button 
-                    onClick={() => toast.info("2FA setup will be available after admin approval")}
+                    onClick={() => toast.info(t.toasts.twoFaSoon)}
                     className={`btn ${is2faEnabled ? 'btn-outline' : 'btn-primary'} rounded-full font-semibold px-6 h-11`}
                    >
                       {is2faEnabled ? "Disable 2FA" : "Enable 2FA"}

@@ -14,6 +14,21 @@ const nextConfig = {
       "https://telegram.org",
       ...(isDev ? ["'unsafe-eval'"] : []),
     ].join(" ")
+    // Allow the configured backend origin (and its ws:// variant) in connect-src
+    // so changing NEXT_PUBLIC_API_URL (e.g. a non-8000 port) doesn't break CSP.
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+    const apiWsUrl = apiUrl.replace(/^http/, "ws")
+    const connectSrc = [
+      "'self'",
+      apiUrl,
+      apiWsUrl,
+      "http://localhost:8000",
+      "ws://localhost:8000",
+      "https:",
+      "ws:",
+      "wss:",
+      "*.supabase.co",
+    ].join(" ")
     return [
       {
         source: "/(.*)",
@@ -26,7 +41,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self'",
-              "connect-src 'self' http://localhost:8000 https: ws://localhost:8000 ws: wss: *.supabase.co",
+              "connect-src " + connectSrc,
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

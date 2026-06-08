@@ -57,7 +57,7 @@ export default function RegisterPage() {
     try {
       await signUp(email.trim(), password)
       if (isMock) {
-        toast.success("Mock mode: account created locally.")
+        toast.success(t.toasts.mockAccountCreated)
       } else {
         toast.success(`Registration successful. Check ${email} to confirm your account.`, { duration: 8000 })
       }

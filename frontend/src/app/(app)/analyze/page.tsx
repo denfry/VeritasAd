@@ -78,7 +78,7 @@ export default function AnalyzePage() {
         setProgress(data.progress ?? 0)
         setProgressStage(loadedStatus === "processing" ? "analyze" : "upload")
       }
-      setProgressStatus(data.error || data.status || "Queued for analysis")
+      setProgressStatus(data.error || data.status || a.statusQueued)
     } catch (error: unknown) {
       console.error("Failed to load task result:", error)
       toast.error(t.errors.loadFailed)
@@ -150,9 +150,9 @@ export default function AnalyzePage() {
     const droppedFile = e.dataTransfer.files?.[0]
     if (droppedFile && droppedFile.type.startsWith("video/")) {
       setFile(droppedFile)
-      toast.success(`File selected: ${droppedFile.name}`)
+      toast.success(`${a.fileSelected}: ${droppedFile.name}`)
     } else {
-      toast.error("Please drop a valid video file")
+      toast.error(t.errors.dropVideo)
     }
   }
 
@@ -193,7 +193,7 @@ export default function AnalyzePage() {
             signal: analysisAbortRef.current.signal,
             onMessage: (payload) => {
               setProgress(payload.progress ?? 0)
-              setProgressStatus(payload.message ?? payload.status ?? "Processing")
+              setProgressStatus(payload.message ?? payload.status ?? a.statusProcessing)
               setProgressStage(payload.stage ?? "processing")
             },
             onError: (error) => {
@@ -206,7 +206,7 @@ export default function AnalyzePage() {
             const finalResult = await fetchAnalysisResult({ taskId: response.task_id })
             setResult(finalResult)
             setProgress(100)
-            setProgressStatus(finalResult.status ?? "Completed")
+            setProgressStatus(finalResult.status ?? a.statusCompleted)
             setProgressStage("complete")
             setUrl("")
           } catch (error: unknown) {
@@ -219,14 +219,14 @@ export default function AnalyzePage() {
           }
         } else {
           setProgress(100)
-          setProgressStatus("Completed")
+          setProgressStatus(a.statusCompleted)
           setProgressStage("complete")
           setUrl("")
         }
       }
     } catch (error: unknown) {
       if (error instanceof Error && error.name === "AbortError") {
-        setProgressStatus("Analysis cancelled")
+        setProgressStatus(t.errors.cancelled)
         setProgressStage("idle")
       } else if (error instanceof ApiError && error.response.status === 401) {
         await handleAuthExpired()
@@ -407,7 +407,7 @@ export default function AnalyzePage() {
                       exit={{ opacity: 0 }}
                     >
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>{progressStatus || a.processing}</span>
+                      <span>{a.processing}</span>
                     </motion.div>
                   ) : (
                     <motion.div
@@ -455,7 +455,13 @@ export default function AnalyzePage() {
                   {isSubmitting ? a.reportProcessing : a.reportIdle}
                 </p>
                 <div className="mt-4">
-                  <ProgressBar value={progress} label={progressStatus || a.idle} stage={progressStage} />
+                  {/* Let ProgressBar show its localized per-step hint while active;
+                      only override with the idle label before anything starts. */}
+                  <ProgressBar
+                    value={progress}
+                    label={isSubmitting || progress > 0 ? undefined : a.idle}
+                    stage={progressStage}
+                  />
                 </div>
               </div>
 
@@ -559,7 +565,7 @@ export default function AnalyzePage() {
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.22em]">{a.postDetails}</p>
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-purple-500/10 text-purple-500 border border-purple-500/20">
                             <MessageSquare className="h-3 w-3" />
-                            Post Analysis
+                            {a.postAnalysisBadge}
                           </span>
                         </div>
                         {result.title && (
@@ -651,7 +657,7 @@ export default function AnalyzePage() {
                                   <span className="text-xs font-mono font-bold text-primary">{Math.round((brand.confidence ?? 0) * 100)}%</span>
                                 </div>
                                 <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground font-medium">
-                                  <span className="flex items-center gap-1"><Tag className="h-3 w-3" /> {brand.detections || 1} hits</span>
+                                  <span className="flex items-center gap-1"><Tag className="h-3 w-3" /> {brand.detections || 1} {a.brandHits}</span>
                                   <span className="flex items-center gap-1"><Timer className="h-3 w-3" /> {brand.total_exposure_seconds?.toFixed(1) || 0}s</span>
                                 </div>
                               </div>
@@ -679,20 +685,20 @@ export default function AnalyzePage() {
                         <button 
                           onClick={async () => {
                             try {
-                              toast.info("Generating PDF report...")
+                              toast.info(a.pdfGenerating)
                               const blob = await downloadPdfReport(currentVideoId)
                               const url = window.URL.createObjectURL(blob)
-                              const a = document.createElement('a')
-                              a.href = url
-                              a.download = `veritasad-report-${currentVideoId}.pdf`
-                              document.body.appendChild(a)
-                              a.click()
+                              const link = document.createElement('a')
+                              link.href = url
+                              link.download = `veritasad-report-${currentVideoId}.pdf`
+                              document.body.appendChild(link)
+                              link.click()
                               window.URL.revokeObjectURL(url)
-                              document.body.removeChild(a)
-                              toast.success("PDF report downloaded")
+                              document.body.removeChild(link)
+                              toast.success(a.pdfDownloaded)
                             } catch (error) {
                               console.error("PDF download failed:", error)
-                              toast.error("Failed to download PDF report")
+                              toast.error(a.pdfFailed)
                             }
                           }}
                           className="btn btn-outline flex-1 text-xs h-10 font-semibold"
@@ -702,7 +708,7 @@ export default function AnalyzePage() {
                         <button
                           onClick={() => {
                             navigator.clipboard.writeText(window.location.href)
-                            toast.success("Results link copied to clipboard")
+                            toast.success(a.linkCopied)
                           }}
                           className="btn btn-outline flex-1 text-xs h-10 font-semibold"
                         >
@@ -720,8 +726,6 @@ export default function AnalyzePage() {
                     exit={{ opacity: 0 }}
                   >
                     <PendingState
-                      progress={progress}
-                      progressStatus={progressStatus}
                       progressStage={progressStage}
                       isSubmitting={isSubmitting}
                     />
@@ -874,13 +878,9 @@ function EmptyState() {
 }
 
 function PendingState({
-  progress,
-  progressStatus,
   progressStage,
   isSubmitting,
 }: {
-  progress: number
-  progressStatus: string
   progressStage: string
   isSubmitting: boolean
 }) {
@@ -909,19 +909,13 @@ function PendingState({
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {label}. {a.pipelineFinish}
           </p>
-          <div className="mt-4 space-y-3">
-            <ProgressBar value={progress} label={progressStatus || a.processing} stage={progressStage} />
-            <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-              <span className="rounded-full border border-border/60 bg-background/70 px-3 py-1">
-                {isSubmitting ? a.processingState : a.queuedState}
-              </span>
-              <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-primary">
-                {progress}{a.uploaded}
-              </span>
-              <span className="rounded-full border border-border/60 bg-background/70 px-3 py-1">
-                {a.waitingResult}
-              </span>
-            </div>
+          <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-primary">
+              {isSubmitting ? a.processingState : a.queuedState}
+            </span>
+            <span className="rounded-full border border-border/60 bg-background/70 px-3 py-1">
+              {a.waitingResult}
+            </span>
           </div>
         </div>
       </div>

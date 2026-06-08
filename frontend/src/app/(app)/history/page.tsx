@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useState, useMemo } from "react"
 import {
   Download, Filter, RefreshCw, Search,
-  FileText, CheckCircle2, AlertCircle, Clock, ChevronRight, FilterX
+  FileText, CheckCircle2, AlertCircle, Clock, ChevronRight, FilterX, XCircle, Ban, Loader2
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { fetchAnalysisHistory, ApiError } from "@/lib/api-client"
+import { fetchAnalysisHistory, cancelAnalysis, ApiError } from "@/lib/api-client"
 import type { AnalysisHistoryItem } from "@/types/api"
 import { motion, AnimatePresence } from "framer-motion"
 import { formatDistanceToNow } from "date-fns"
@@ -61,6 +61,16 @@ export default function HistoryPage() {
   const [platformFilter, setPlatformFilter] = useState<string>("")
   const [statusFilter, setStatusFilter] = useState<string>("")
   const [showFilters, setShowFilters] = useState(false)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
+
+  // A task is cancellable while it has not reached a terminal state.
+  const isCancellable = (status: string) =>
+    ["queued", "processing", "pending"].includes((status ?? "").toLowerCase())
+
+  const statusLabel = (status: string): string => {
+    const key = (status ?? "").toLowerCase() as keyof typeof h.statuses
+    return h.statuses[key] ?? status
+  }
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -80,10 +90,10 @@ export default function HistoryPage() {
     } catch (error: unknown) {
       console.error("Failed to load history:", error)
       if (error instanceof ApiError && error.response.status === 401) {
-        toast.error("Session expired")
+        toast.error(t.toasts.sessionExpired)
         router.push("/auth/login")
       } else {
-        toast.error("Failed to load history")
+        toast.error(t.toasts.historyLoadFailed)
         setLoadError(error instanceof Error ? error.message : "Failed to load history")
       }
     } finally {
@@ -96,6 +106,32 @@ export default function HistoryPage() {
       loadHistory()
     }
   }, [user, page, loadHistory])
+
+  const handleCancel = useCallback(
+    async (taskId: string) => {
+      if (typeof window !== "undefined" && !window.confirm(h.cancelConfirm)) return
+      setCancellingId(taskId)
+      // Optimistically reflect the cancellation.
+      setHistory((prev) =>
+        prev.map((it) => (it.task_id === taskId ? { ...it, status: "cancelled" } : it)),
+      )
+      try {
+        await cancelAnalysis(taskId)
+        toast.success(h.cancelSuccess)
+      } catch (error: unknown) {
+        if (error instanceof ApiError && error.response.status === 401) {
+          toast.error(t.toasts.sessionExpired)
+          router.push("/auth/login")
+        } else {
+          toast.error(h.cancelFailed)
+        }
+        loadHistory() // revert optimistic change
+      } finally {
+        setCancellingId(null)
+      }
+    },
+    [h.cancelConfirm, h.cancelSuccess, h.cancelFailed, t.toasts.sessionExpired, router, loadHistory],
+  )
 
   const filteredHistory = useMemo(() => {
     return history.filter(item => {
@@ -322,10 +358,12 @@ export default function HistoryPage() {
                            <div className={`h-10 w-10 rounded-xl flex items-center justify-center border border-border/50 bg-background shadow-sm ${
                              item.status === 'completed' ? 'text-emerald-500' :
                              item.status === 'failed' ? 'text-red-500' :
+                             item.status === 'cancelled' ? 'text-muted-foreground' :
                              'text-blue-500'
                            }`}>
                              {item.status === 'completed' ? <CheckCircle2 className="h-5 w-5" /> :
                               item.status === 'failed' ? <AlertCircle className="h-5 w-5" /> :
+                              item.status === 'cancelled' ? <Ban className="h-5 w-5" /> :
                               <RefreshCw className="h-5 w-5 animate-spin" />}
                            </div>
                            <div>
@@ -334,9 +372,10 @@ export default function HistoryPage() {
                                 <span className={`text-[10px] font-black uppercase tracking-tighter ${
                                   item.status === 'completed' ? 'text-emerald-600' :
                                   item.status === 'failed' ? 'text-red-500' :
+                                  item.status === 'cancelled' ? 'text-muted-foreground' :
                                   'text-blue-500'
                                 }`}>
-                                  {item.status}
+                                  {statusLabel(item.status)}
                                 </span>
                              </div>
                            </div>
@@ -388,15 +427,40 @@ export default function HistoryPage() {
                         </div>
                       </td>
                       <td className="px-6 py-5 text-right">
-                        <button 
-                          className="p-2.5 rounded-xl hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all group-hover:scale-110 shadow-sm border border-transparent hover:border-border/50 bg-muted/20"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/analyze?taskId=${item.task_id}`);
-                          }}
-                        >
-                           <ChevronRight className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          {isCancellable(item.status) && (
+                            <button
+                              title={h.cancelTitle}
+                              disabled={cancellingId === item.task_id}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-500 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10 transition-all disabled:opacity-50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleCancel(item.task_id)
+                              }}
+                            >
+                              {cancellingId === item.task_id ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  {h.cancelling}
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="h-3.5 w-3.5" />
+                                  {h.cancel}
+                                </>
+                              )}
+                            </button>
+                          )}
+                          <button
+                            className="p-2.5 rounded-xl hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all group-hover:scale-110 shadow-sm border border-transparent hover:border-border/50 bg-muted/20"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/analyze?taskId=${item.task_id}`);
+                            }}
+                          >
+                             <ChevronRight className="h-4 w-4" />
+                          </button>
+                        </div>
                       </td>
                     </motion.tr>
                   ))

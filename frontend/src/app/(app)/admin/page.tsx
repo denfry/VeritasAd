@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 
 import { useAuth } from "@/contexts/auth-context"
+import { useLanguage } from "@/contexts/language-context"
 import { listUsers, getAnalytics, listAuditLogs, getSystemMetrics, getAnalyticsTrends } from "@/lib/api-client"
 import type { UserListItem, CursorPaginationResponse, AuditLogListItem } from "@/types/api"
 import type { SystemMetrics, TrendData } from "@/lib/api-client"
@@ -35,6 +36,7 @@ type StatCardLargeProps = {
 export default function AdminPage() {
   const router = useRouter()
   const { loading: authLoading, user } = useAuth()
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (!authLoading && user && user.role !== "admin") {
@@ -91,10 +93,10 @@ export default function AdminPage() {
         ? (error as { response?: { status?: number } }).response?.status
         : undefined
       if (status === 403) {
-        toast.error("Admin access denied")
+        toast.error(t.toasts.adminAccessDenied)
         router.push("/dashboard")
       } else if (!isSilent) {
-        toast.error("Failed to load admin data")
+        toast.error(t.toasts.adminLoadFailed)
       }
     } finally {
       setLoading(false)

@@ -128,6 +128,17 @@ export async function fetchAnalysisHistory(params: { limit?: number; offset?: nu
   })
 }
 
+export async function cancelAnalysis(taskId: string): Promise<{
+  task_id: string
+  status: string
+  cancelled: boolean
+  message: string
+}> {
+  return request(`/api/v1/analyze/${encodeURIComponent(taskId)}/cancel`, {
+    method: "POST",
+  })
+}
+
 export type { ProgressPayload }
 
 export async function downloadPdfReport(videoId: string): Promise<Blob> {

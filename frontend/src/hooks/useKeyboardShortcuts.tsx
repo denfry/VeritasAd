@@ -16,6 +16,7 @@
 import { useEffect, useCallback, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { useLanguage } from "@/contexts/language-context"
 
 type UseKeyboardShortcutsOptions = {
   enabled?: boolean
@@ -31,7 +32,8 @@ export function useKeyboardShortcuts(
   } = options
   
   const router = useRouter()
-  
+  const { t } = useLanguage()
+
   // Track if we're in a sequence (e.g., pressed 'g' waiting for next key)
   const sequence = useCallback(() => {
     let pendingKey: string | null = null
@@ -80,7 +82,7 @@ export function useKeyboardShortcuts(
         if (key === "d") {
           e.preventDefault()
           router.push("/dashboard")
-          toast.success("Navigated to Dashboard")
+          toast.success(t.toasts.navDashboard)
           sequenceState.clear()
           return
         }
@@ -88,7 +90,7 @@ export function useKeyboardShortcuts(
         if (key === "u") {
           e.preventDefault()
           router.push("/account")
-          toast.success("Navigated to Account")
+          toast.success(t.toasts.navAccount)
           sequenceState.clear()
           return
         }
@@ -96,7 +98,7 @@ export function useKeyboardShortcuts(
         if (key === "a") {
           e.preventDefault()
           router.push("/analyze")
-          toast.success("Navigated to Analysis")
+          toast.success(t.toasts.navAnalysis)
           sequenceState.clear()
           return
         }
@@ -104,7 +106,7 @@ export function useKeyboardShortcuts(
         if (key === "l") {
           e.preventDefault()
           router.push("/history")
-          toast.success("Navigated to History")
+          toast.success(t.toasts.navHistory)
           sequenceState.clear()
           return
         }
@@ -126,7 +128,7 @@ export function useKeyboardShortcuts(
       // ? - show help (would open modal in full implementation)
       if (key === "?" || (e.shiftKey && e.key === "/")) {
         e.preventDefault()
-        toast.info("Keyboard shortcuts help (coming soon)")
+        toast.info(t.toasts.shortcutsSoon)
         return
       }
       
@@ -136,7 +138,7 @@ export function useKeyboardShortcuts(
         const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement
         if (searchInput) {
           searchInput.focus()
-          toast.success("Search focused")
+          toast.success(t.toasts.searchFocused)
         }
         return
       }
@@ -159,7 +161,7 @@ export function useKeyboardShortcuts(
     
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [enabled, ignoreInputFields, router, sequenceState])
+  }, [enabled, ignoreInputFields, router, sequenceState, t])
 }
 
 
