@@ -1,11 +1,15 @@
 """Analysis domain - report generation and download."""
-from pathlib import Path
 import re
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 import structlog
 
 from app.core.dependencies import get_api_key
+from app.core.errors import ValidationException
+from app.models.database import get_db
+from app.domains.analysis.service import AnalysisService
+from app.domains.analysis.dependencies import get_analysis_service
 
 router = APIRouter()
 logger = structlog.get_logger(__name__)
@@ -16,8 +20,10 @@ VIDEO_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 async def get_report(
     video_id: str,
     api_key: str = Depends(get_api_key),
+    db: AsyncSession = Depends(get_db),
+    service: AnalysisService = Depends(get_analysis_service),
 ):
-    """Download PDF report for a specific video analysis."""
+    """Download PDF report for a specific video analysis (generated on demand)."""
     try:
         if not VIDEO_ID_PATTERN.fullmatch(video_id):
             raise HTTPException(
@@ -25,31 +31,24 @@ async def get_report(
                 detail="Invalid video_id format",
             )
 
-        report_dir = Path("../data/reports")
-        matching_reports = list(report_dir.glob(f"report_{video_id}_*.pdf"))
+        report_path = await service.get_or_generate_report(video_id=video_id, session=db)
 
-        if not matching_reports:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Report not found for video_id: {video_id}",
-            )
-
-        latest_report = max(matching_reports, key=lambda p: p.stat().st_mtime)
-
-        if not latest_report.exists():
+        if not report_path.exists():
             raise HTTPException(
                 status_code=404,
                 detail="Report file not found",
             )
 
         return FileResponse(
-            path=str(latest_report),
+            path=str(report_path),
             media_type="application/pdf",
-            filename=latest_report.name,
+            filename=report_path.name,
         )
 
     except HTTPException:
         raise
+    except ValidationException as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error("report_retrieval_failed", error=str(e))
         raise HTTPException(
@@ -58,6 +57,7 @@ async def get_report(
         )
 
 
+@router.post("/{video_id}/generate")  # alias: POST /api/v1/report/{id}/generate
 @router.post("/generate/{video_id}")
 async def generate_report(
     video_id: str,
