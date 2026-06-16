@@ -1,0 +1,5 @@
+# One video per line: either a bare URL or {"url": "..."}.
+# Mix disclosed (erid present) and ordinary videos across platforms.
+{"url": "https://www.youtube.com/watch?v=REPLACE_WITH_REAL_ID"}
+{"url": "https://vk.com/video-00000000_000000000"}
+{"url": "https://rutube.ru/video/REPLACE_WITH_REAL_ID/"}
