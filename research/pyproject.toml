@@ -1,0 +1,16 @@
+[project]
+name = "veritasad-research"
+version = "0.1.0"
+description = "Research tooling for VeritasAd: corpus harvesting and weak-label mining"
+requires-python = ">=3.12"
+dependencies = ["yt-dlp>=2025.1.1"]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
