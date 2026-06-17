@@ -5,8 +5,8 @@
 **Дата:** 2026-06-16
 **Автор брейншторма:** Claude (subagent-driven, под управлением пользователя)
 **Связанные документы:**
-- M1 (реализован): `docs/superpowers/plans/2026-06-16-corpus-erid-mining-pipeline.md` — корпус + ERID weak-labels (PR #5)
-- P0 (литобзор, gate новизны): `docs/research/related-work.md`
+- M1 (реализован): `docs/research/plans/master/2026-06-16-corpus-erid-mining-pipeline.md` — корпус + ERID weak-labels (PR #5)
+- P0 (литобзор, gate новизны): `docs/research/literature/related-work.md`
 
 ## Контекст и цель
 

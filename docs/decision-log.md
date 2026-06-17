@@ -19,3 +19,11 @@
 - Added a class-focused batch planner before expanding training data further.
 - Treat profile labels as reviewer hints only; gold labels must still come from manual review.
 - Keep collection orchestration separate from `auto_annotate.py` so the existing collector remains backward compatible.
+
+## 2026-06-17 - Research Workspace Structure
+
+- Consolidated scattered research artifacts into a single extensible tree `docs/research/`, organized **by artifact type** (roadmaps / prompts / plans / specs / reports / experiments / datasets / literature), each split into `master/` (2.0) and `phd/` (3.0) phases.
+- Migrated existing artifacts via `git mv` (history preserved): M2 spec, shared system prompts, and the related-work review; moved the two roadmaps into `roadmaps/`.
+- Fixed conventions in [`docs/research/README.md`](research/README.md): naming (`YYYY-MM-DD-<milestone>-<slug>.md`), YAML frontmatter, status lifecycle (`planned → draft → in-review → approved → done`), milestone map, and a path-correspondence table mapping the roadmaps' flat `docs/*.md` names to the new locations.
+- Kept dataset **documentation** (`docs/research/datasets/`) separate from the **data** (`data/datasets/`, with raw/large files git-ignored).
+- Left `GEMINI.md` in the repository root (Gemini CLI context file, read from root — moving it would break behavior).

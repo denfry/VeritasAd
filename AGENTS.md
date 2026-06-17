@@ -104,6 +104,20 @@ pre-commit run --all-files
 - API client contract (`frontend/src/lib/api-client.ts`) is frontend-backend contract-critical.
 - Config and limits (`backend/app/core/config.py`) are high-change and high-risk.
 
+## Research Workspace
+
+Research artifacts for the two academic tracks (VeritasAd 2.0 master's, VeritasAd 3.0 PhD) live under
+`docs/research/`, organized by artifact type (roadmaps / prompts / plans / specs / reports / experiments /
+datasets / literature), each split into `master/` and `phd/` phases.
+
+- Entry point and conventions: [`docs/research/README.md`](docs/research/README.md) (naming, frontmatter,
+  status lifecycle, milestone map, path-correspondence table).
+- Templates for every artifact type: `docs/research/_templates/`.
+- Dataset **documentation** (JSONL schemas, annotation guidelines) lives in `docs/research/datasets/`;
+  the **data itself** lives in `data/datasets/` (raw/large files are git-ignored there).
+- Same governance rules apply: preserve behavior, move-before-rewrite, keep linked docs in sync,
+  `docs/*` branches, `type(scope): ...` commits.
+
 ## Document and Git Synchronization Rules
 
 For every code change, validate related artifacts:

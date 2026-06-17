@@ -1,0 +1,43 @@
+# data/datasets/ — commit documentation, schemas, .gitkeep and small *.jsonl;
+# ignore raw media and large binary artifacts.
+
+# Video / audio
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.avi
+*.flv
+*.mp3
+*.wav
+*.m4a
+*.aac
+*.ogg
+
+# Images / screenshots
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.bmp
+*.tiff
+
+# Large / binary data artifacts
+*.npz
+*.npy
+*.pt
+*.bin
+*.parquet
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+# Always keep structure & documentation
+!.gitkeep
+!**/.gitkeep
+!README.md
+!**/README.md
+!*.md
+!**/*.md
