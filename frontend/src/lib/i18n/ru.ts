@@ -244,6 +244,71 @@ const ru: Translations = {
     statusProcessing: "Обработка",
     statusCompleted: "Готово",
   },
+  claims: {
+    // Заголовок секции (страница анализа)
+    title: "Проверяемые утверждения",
+    extract: "Извлечь утверждения",
+    extracting: "Извлекаем утверждения...",
+    extractFailed: "Не удалось извлечь утверждения",
+    statTotal: "Всего",
+    statCheckable: "Проверяемые",
+    statMeanCheckworthiness: "Ср. значимость для проверки",
+    exportJsonl: "Экспорт JSONL",
+    exportFailed: "Не удалось экспортировать утверждения",
+    timelineLabel: "Таймлайн утверждений",
+    // Таблица / список
+    empty: "Утверждения не извлечены.",
+    claimText: "Текст утверждения",
+    type: "Тип",
+    riskLevel: "Риск",
+    checkworthiness: "Значимость для проверки",
+    checkable: "Проверяемое",
+    // Карточка деталей
+    rawText: "Исходный фрагмент",
+    normalized: "Нормализованное утверждение",
+    source: "Источник",
+    timestamp: "Метка времени",
+    yes: "Да",
+    no: "Нет",
+    evidenceNeeded: "Нужны доказательства",
+    // Таймлайн
+    untimed: "Утверждения без меток времени",
+    noDuration: "Есть утверждения с метками времени, но длительность контента неизвестна.",
+    // Уровни риска
+    riskLow: "Низкий",
+    riskMedium: "Средний",
+    riskHigh: "Высокий",
+    riskCritical: "Критический",
+    // Подписи типов утверждений (11 классов)
+    typeLabels: {
+      quantitative: "Количественное",
+      comparative: "Сравнительное",
+      superlative: "Превосходное",
+      temporal: "Временное",
+      financial: "Финансовое",
+      health_safety: "Здоровье и безопасность",
+      legal_certification: "Юридическое / сертификация",
+      partnership: "Партнёрство",
+      availability: "Доступность",
+      subjective: "Субъективное",
+      non_checkable: "Непроверяемое",
+    },
+    // Корзины значимости для проверки
+    buckets: {
+      almost_none: "Почти отсутствует",
+      low: "Низкая",
+      desirable: "Желательна",
+      required: "Обязательна",
+    },
+    // Подписи модальностей источника
+    modalityLabels: {
+      ocr: "Текст на экране (OCR)",
+      asr: "Речь (ASR)",
+      metadata: "Метаданные",
+      link: "Ссылка",
+      description: "Описание",
+    },
+  },
   auth: {
     login: {
       premiumAccess: "Премиум-доступ",

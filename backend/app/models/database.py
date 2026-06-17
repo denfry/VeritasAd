@@ -308,6 +308,10 @@ class Analysis(Base):
     link_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     detected_brands: Mapped[Optional[Dict]] = mapped_column(JSONB_VARIANT, nullable=True)
     ad_segments: Mapped[Optional[List]] = mapped_column(JSONB_VARIANT, nullable=True)
+    # Extracted verifiable advertising claims (VeritasAd 2.0, M2). Stores a
+    # ClaimExtractionResult payload; populated on-demand or, when
+    # CLAIM_EXTRACTION_ENABLED, during analysis. Nullable / additive.
+    claims: Mapped[Optional[Dict]] = mapped_column(JSONB_VARIANT, nullable=True)
     detected_keywords: Mapped[Optional[List]] = mapped_column(JSONB_VARIANT, nullable=True)
     transcript: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     disclosure_markers: Mapped[Optional[List]] = mapped_column(JSONB_VARIANT, nullable=True)
@@ -585,6 +589,7 @@ async def _sync_sqlite_analysis_columns(conn) -> None:
         "cta_matches": "JSON",
         "commercial_urls": "JSON",
         "ad_segments": "JSON",
+        "claims": "JSON",
     }
 
     for column_name, column_type in desired_columns.items():

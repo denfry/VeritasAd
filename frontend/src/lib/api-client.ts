@@ -4,6 +4,8 @@ import type {
   AnalysisCheckResponse,
   AnalysisResult,
   AnalyticsResponse,
+  ClaimExtractionMethod,
+  ClaimExtractionResult,
   PaymentCreateResponse,
   ProgressPayload,
   UserListItem,
@@ -112,6 +114,40 @@ export async function fetchAnalysisResult(params: { taskId: string }): Promise<A
   return request<AnalysisResult>(`/api/v1/analysis/${encodeURIComponent(params.taskId)}/result`, {
     method: "GET",
   })
+}
+
+// ==================== CLAIM EXTRACTION (M2) ====================
+
+export async function extractClaimsFromAnalysis(params: {
+  taskId: string
+  method?: ClaimExtractionMethod
+  persist?: boolean
+}): Promise<ClaimExtractionResult> {
+  const search = new URLSearchParams()
+  if (params.method) {
+    search.set("method", params.method)
+  }
+  if (params.persist !== undefined) {
+    search.set("persist", String(params.persist))
+  }
+  const query = search.toString()
+  return request<ClaimExtractionResult>(
+    `/api/v1/claims/from-analysis/${encodeURIComponent(params.taskId)}${query ? `?${query}` : ""}`,
+    {
+      method: "POST",
+    },
+  )
+}
+
+export async function fetchClaims(params: { taskId: string }): Promise<ClaimExtractionResult> {
+  return request<ClaimExtractionResult>(`/api/v1/claims/${encodeURIComponent(params.taskId)}`, {
+    method: "GET",
+  })
+}
+
+export function claimsExportUrl(params: { taskId: string; format: "jsonl" | "csv" }): string {
+  const search = new URLSearchParams({ format: params.format })
+  return `${API_BASE_URL}/api/v1/claims/${encodeURIComponent(params.taskId)}/export?${search.toString()}`
 }
 
 export async function fetchAnalysisHistory(params: { limit?: number; offset?: number }): Promise<AnalysisHistoryItem[]> {

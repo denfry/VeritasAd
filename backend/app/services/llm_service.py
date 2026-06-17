@@ -176,6 +176,34 @@ class LLMService:
 
         user_lower = user_message.lower()
 
+        # Claim-extraction prompt (VeritasAd 2.0, M2): return a small JSON array of
+        # claims so the LLM extraction methods are demoable/testable offline.
+        full_text = " ".join(str(m.get("content", "")) for m in messages).lower()
+        if "проверяемых рекламных утвержден" in full_text or '"claim_type"' in full_text:
+            return json.dumps(
+                [
+                    {
+                        "raw_text": "скидка до 70%",
+                        "normalized_claim": "Скидка на товар достигает 70%",
+                        "claim_type": "quantitative",
+                        "risk_level": "medium",
+                        "is_checkable": True,
+                        "source_modality": "ocr",
+                        "brand": None,
+                    },
+                    {
+                        "raw_text": "вам точно понравится",
+                        "normalized_claim": "",
+                        "claim_type": "non_checkable",
+                        "risk_level": "low",
+                        "is_checkable": False,
+                        "source_modality": "asr",
+                        "brand": None,
+                    },
+                ],
+                ensure_ascii=False,
+            )
+
         mock_responses = {
             "disclosure": [
                 '{"analysis": "No clear disclosure of sponsored content detected. The content appears to be organic but may contain subtle promotional elements.", "disclosure_detected": false, "confidence": 0.72}',
