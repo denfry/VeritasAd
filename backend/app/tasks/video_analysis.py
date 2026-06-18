@@ -647,6 +647,49 @@ def analyze_video_task(
                         "reason": f"Model {model_score['model_version']} prediction.",
                     }
 
+                # Optional verifiable claim extraction (VeritasAd 2.0, M2 —
+                # roadmap §7). Behind CLAIM_EXTRACTION_ENABLED to preserve default
+                # behaviour and avoid forced LLM calls; failures never abort the
+                # analysis. The on-demand /api/v1/claims endpoints work regardless.
+                claims_payload = None
+                if settings.CLAIM_EXTRACTION_ENABLED:
+                    try:
+                        from app.models.database import UserPlan
+                        from app.schemas.claims import (
+                            ClaimExtractionRequest,
+                            ExtractionMethod,
+                        )
+                        from app.services.claim_extractor import claim_extractor
+
+                        try:
+                            plan_enum = UserPlan(str(user_plan))
+                        except (ValueError, TypeError):
+                            plan_enum = UserPlan.FREE
+
+                        claim_request = ClaimExtractionRequest(
+                            transcript=audio_result.get("transcript", ""),
+                            transcript_segments=audio_result.get("segments", []),
+                            description=description,
+                            detected_brands=all_detected_brands,
+                            disclosure_markers=disclosure_markers,
+                            cta_matches=cta_matches,
+                            commercial_urls=commercial_urls,
+                            method=ExtractionMethod(settings.CLAIM_EXTRACTION_METHOD),
+                            content_id=analysis.video_id,
+                            source_type=source_type,
+                            source_url=source_url,
+                        )
+                        claim_result = await claim_extractor.extract(
+                            claim_request, plan=plan_enum
+                        )
+                        claims_payload = claim_result.model_dump(mode="json")
+                    except Exception as claim_err:  # never abort analysis
+                        logger.warning(
+                            "claim_extraction_failed",
+                            task_id=task_id,
+                            error=str(claim_err),
+                        )
+
                 # Update analysis record
                 analysis.has_advertising = has_advertising
                 analysis.confidence_score = confidence_score
@@ -656,6 +699,7 @@ def analyze_video_task(
                 analysis.disclosure_score = disclosure_score
                 analysis.detected_brands = all_detected_brands
                 analysis.ad_segments = ad_segments
+                analysis.claims = claims_payload
                 analysis.detected_keywords = audio_result.get("keywords", [])
                 analysis.transcript = audio_result.get("transcript", "")
                 analysis.disclosure_markers = disclosure_markers
@@ -701,6 +745,7 @@ def analyze_video_task(
                     "link_score": link_score,
                     "detected_brands": all_detected_brands,
                     "ad_segments": ad_segments,
+                    "claims": claims_payload,
                     "detected_keywords": audio_result.get("keywords", []),
                     "transcript": audio_result.get("transcript", ""),
                     "disclosure_markers": disclosure_markers,

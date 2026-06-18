@@ -176,6 +176,18 @@ class Settings(BaseSettings):
     AD_MODEL_ENABLED: bool = False
     AD_MODEL_ARTIFACT_PATH: Optional[str] = None
 
+    # ==================== CLAIM EXTRACTION (VeritasAd 2.0, M2) ====================
+    # Verifiable advertising claim extraction. Disabled in the analysis pipeline
+    # by default to preserve existing behaviour and avoid forced LLM calls; the
+    # on-demand /api/v1/claims/* endpoints always work regardless of this flag.
+    # When enabled, finished analyses additionally extract and persist claims.
+    CLAIM_EXTRACTION_ENABLED: bool = False
+    # Default strategy: rule_based | llm_zero_shot | llm_few_shot. rule_based is
+    # fully offline; the LLM variants route through the unified LLM service.
+    CLAIM_EXTRACTION_METHOD: Literal["rule_based", "llm_zero_shot", "llm_few_shot"] = (
+        "rule_based"
+    )
+
     # Tiered Models (Power levels)
     # FREE: basic local model or cheap API
     FREE_LLM_MODEL: str = "gpt-4o-mini"

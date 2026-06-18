@@ -240,6 +240,71 @@ const en = {
     statusProcessing: "Processing",
     statusCompleted: "Completed",
   },
+  claims: {
+    // Section heading (analyze page)
+    title: "Verifiable claims",
+    extract: "Extract claims",
+    extracting: "Extracting claims...",
+    extractFailed: "Failed to extract claims",
+    statTotal: "Total",
+    statCheckable: "Checkable",
+    statMeanCheckworthiness: "Avg. checkworthiness",
+    exportJsonl: "Export JSONL",
+    exportFailed: "Failed to export claims",
+    timelineLabel: "Claims timeline",
+    // Table / list
+    empty: "No claims extracted.",
+    claimText: "Claim text",
+    type: "Type",
+    riskLevel: "Risk",
+    checkworthiness: "Checkworthiness",
+    checkable: "Checkable",
+    // Details card
+    rawText: "Original fragment",
+    normalized: "Normalized claim",
+    source: "Source",
+    timestamp: "Timestamp",
+    yes: "Yes",
+    no: "No",
+    evidenceNeeded: "Evidence needed",
+    // Timeline
+    untimed: "Claims without timestamps",
+    noDuration: "Timed claims found, but content duration is unknown.",
+    // Risk levels
+    riskLow: "Low",
+    riskMedium: "Medium",
+    riskHigh: "High",
+    riskCritical: "Critical",
+    // Claim type labels (11 classes)
+    typeLabels: {
+      quantitative: "Quantitative",
+      comparative: "Comparative",
+      superlative: "Superlative",
+      temporal: "Temporal",
+      financial: "Financial",
+      health_safety: "Health & safety",
+      legal_certification: "Legal / certification",
+      partnership: "Partnership",
+      availability: "Availability",
+      subjective: "Subjective",
+      non_checkable: "Non-checkable",
+    },
+    // Checkworthiness buckets
+    buckets: {
+      almost_none: "Almost none",
+      low: "Low",
+      desirable: "Desirable",
+      required: "Required",
+    },
+    // Source modality labels
+    modalityLabels: {
+      ocr: "On-screen text (OCR)",
+      asr: "Speech (ASR)",
+      metadata: "Metadata",
+      link: "Link",
+      description: "Description",
+    },
+  },
   auth: {
     login: {
       premiumAccess: "Premium access",

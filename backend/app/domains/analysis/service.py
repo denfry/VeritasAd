@@ -557,6 +557,7 @@ class AnalysisService:
             "disclosure_markers": analysis.disclosure_markers or [],
             "ad_classification": analysis.ad_classification,
             "ad_reason": analysis.ad_reason,
+            "claims": getattr(analysis, "claims", None),
             "duration": analysis.duration,
             "progress": analysis.progress,
             "error_message": analysis.error_message,

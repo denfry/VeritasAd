@@ -22,8 +22,10 @@ import {
 } from "lucide-react"
 import { ProgressBar } from "@/components/ProgressBar"
 import { VideoTimeline } from "@/components/VideoTimeline"
+import { ClaimsTable } from "@/components/ClaimsTable"
+import { ClaimTimeline } from "@/components/ClaimTimeline"
 import { useAuth } from "@/contexts/auth-context"
-import { analyzeVideo, analyzePost, fetchAnalysisResult, streamAnalysisProgress, downloadPdfReport, ApiError } from "@/lib/api-client"
+import { analyzeVideo, analyzePost, fetchAnalysisResult, streamAnalysisProgress, downloadPdfReport, extractClaimsFromAnalysis, claimsExportUrl, getAuthHeaders, ApiError } from "@/lib/api-client"
 import type { AnalysisResult } from "@/types/api"
 import { getPlatformIcon } from "@/lib/platforms"
 import { useLanguage } from "@/contexts/language-context"
@@ -36,6 +38,7 @@ export default function AnalyzePage() {
   const { user, loading: authLoading, signOut } = useAuth()
   const { t } = useLanguage()
   const a = t.analyze
+  const c = t.claims
   const [url, setUrl] = useState("")
   const [file, setFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -44,6 +47,7 @@ export default function AnalyzePage() {
   const [progressStatus, setProgressStatus] = useState("")
   const [progressStage, setProgressStage] = useState("idle")
   const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [isExtractingClaims, setIsExtractingClaims] = useState(false)
   const analysisAbortRef = useRef<AbortController | null>(null)
   const currentVideoId = result?.analysis_type === "video" ? result.video_id : undefined
 
@@ -246,6 +250,51 @@ export default function AnalyzePage() {
     setProgressStage("idle")
     setProgressStatus(t.errors.cancelled)
     toast.message(t.errors.cancelledMsg)
+  }
+
+  const handleExtractClaims = async () => {
+    const taskId = result?.task_id
+    if (!taskId) return
+    setIsExtractingClaims(true)
+    try {
+      const claims = await extractClaimsFromAnalysis({ taskId, method: "rule_based" })
+      setResult((prev) => (prev ? { ...prev, claims } : prev))
+    } catch (error: unknown) {
+      if (error instanceof ApiError && error.response.status === 401) {
+        await handleAuthExpired()
+        return
+      }
+      console.error("Claim extraction failed:", error)
+      toast.error(c.extractFailed)
+    } finally {
+      setIsExtractingClaims(false)
+    }
+  }
+
+  const handleExportClaims = async () => {
+    const taskId = result?.task_id
+    if (!taskId) return
+    try {
+      const response = await fetch(claimsExportUrl({ taskId, format: "jsonl" }), {
+        method: "GET",
+        headers: await getAuthHeaders(),
+      })
+      if (!response.ok) {
+        throw new Error(`Export failed with status ${response.status}`)
+      }
+      const blob = await response.blob()
+      const objectUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = objectUrl
+      link.download = `claims-${taskId}.jsonl`
+      document.body.appendChild(link)
+      link.click()
+      window.URL.revokeObjectURL(objectUrl)
+      document.body.removeChild(link)
+    } catch (error) {
+      console.error("Claims export failed:", error)
+      toast.error(c.exportFailed)
+    }
   }
 
   return (
@@ -677,6 +726,80 @@ export default function AnalyzePage() {
                       <VideoTimeline duration={result.duration ?? 0} markers={markers} showFilter={true} />
                     </div>
                     </>
+                    )}
+
+                    {/* Verifiable Claims (M2) */}
+                    {result.task_id && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.22em]">{c.title}</p>
+                          {result.claims?.claims && result.claims.claims.length > 0 && (
+                            <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
+                              {result.claims.claims.length}
+                            </span>
+                          )}
+                        </div>
+
+                        {result.claims?.claims && result.claims.claims.length > 0 ? (
+                          <motion.div
+                            className="space-y-4"
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                          >
+                            {/* Stats summary */}
+                            <div className="grid gap-3 sm:grid-cols-3">
+                              <SignalChip label={c.statTotal} value={result.claims.stats.total} />
+                              <SignalChip label={c.statCheckable} value={result.claims.stats.checkable} />
+                              <div className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{c.statMeanCheckworthiness}</div>
+                                <div className="mt-1 text-lg font-semibold tabular-nums">
+                                  {Math.round((result.claims.stats.mean_checkworthiness ?? 0) * 100)}%
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Claims table */}
+                            <ClaimsTable claims={result.claims.claims} />
+
+                            {/* Claims timeline */}
+                            <div className="space-y-3">
+                              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.22em]">{c.timelineLabel}</p>
+                              <ClaimTimeline claims={result.claims.claims} duration={result.duration ?? undefined} />
+                            </div>
+
+                            {/* Export */}
+                            <button
+                              type="button"
+                              onClick={handleExportClaims}
+                              className="btn btn-outline w-full text-xs h-10 font-semibold"
+                            >
+                              {c.exportJsonl}
+                            </button>
+                          </motion.div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleExtractClaims}
+                            disabled={isExtractingClaims}
+                            className="btn btn-outline w-full h-10 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <span className="inline-flex items-center gap-2">
+                              {isExtractingClaims ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  {c.extracting}
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="h-4 w-4" />
+                                  {c.extract}
+                                </>
+                              )}
+                            </span>
+                          </button>
+                        )}
+                      </div>
                     )}
 
                     {/* Export Actions - New Section */}

@@ -5,6 +5,7 @@ from app.domains.users import router as users_router
 from app.domains.admin import router as admin_router
 from app.domains.payment import router as payment_router
 from app.domains.analysis import router as analysis_router
+from app.domains.claims import router as claims_router
 from app.domains.upload import router as upload_router
 from app.domains.health import router as health_router
 from app.domains.security import router as security_router
@@ -17,6 +18,7 @@ api_router = APIRouter()
 api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
 api_router.include_router(upload_router, prefix="/upload", tags=["upload"])
 api_router.include_router(analysis_router, tags=["analysis"])
+api_router.include_router(claims_router, tags=["claims"])
 api_router.include_router(payment_router, prefix="/payment", tags=["payment"])
 api_router.include_router(users_router, prefix="/users", tags=["users"])
 api_router.include_router(admin_router, prefix="/admin", tags=["admin"])

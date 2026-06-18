@@ -47,7 +47,76 @@ export type AnalysisCheckResponse = {
   progress?: number
 }
 
-export type AnalysisResult = AnalysisCheckResponse
+/** Claim extraction (VeritasAd 2.0, M2) - mirrors backend app/schemas/claims.py */
+
+export type ClaimType =
+  | "quantitative"
+  | "comparative"
+  | "superlative"
+  | "temporal"
+  | "financial"
+  | "health_safety"
+  | "legal_certification"
+  | "partnership"
+  | "availability"
+  | "subjective"
+  | "non_checkable"
+
+export type RiskLevel = "low" | "medium" | "high" | "critical"
+
+export type SourceModality = "ocr" | "asr" | "metadata" | "link" | "description"
+
+export type CheckworthinessBucket =
+  | "almost_none"
+  | "low"
+  | "desirable"
+  | "required"
+
+export type ClaimExtractionMethod =
+  | "rule_based"
+  | "llm_zero_shot"
+  | "llm_few_shot"
+
+export type Claim = {
+  id: string
+  raw_text: string
+  normalized_claim: string
+  source_modality: SourceModality
+  timestamp_start: number | null
+  timestamp_end: number | null
+  claim_type: ClaimType
+  is_checkable: boolean
+  checkworthiness_score: number
+  checkworthiness_bucket: CheckworthinessBucket
+  risk_level: RiskLevel
+  brand: string | null
+  evidence_needed: boolean
+  features: Record<string, number>
+}
+
+export type ClaimStats = {
+  total: number
+  checkable: number
+  non_checkable: number
+  by_type: Record<string, number>
+  by_risk: Record<string, number>
+  mean_checkworthiness: number
+}
+
+export type ClaimExtractionResult = {
+  claims: Claim[]
+  method: ClaimExtractionMethod
+  model: string | null
+  content_id: string | null
+  source_type: string | null
+  source_url: string | null
+  stats: ClaimStats
+  total_claims: number
+}
+
+export type AnalysisResult = AnalysisCheckResponse & {
+  claims?: ClaimExtractionResult | null
+}
 
 export type AnalysisHistoryItem = {
   task_id: string
